@@ -1,0 +1,14 @@
+# Registry of distribution licensees and their service territories.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
+#
+# Each entry:
+#   code: short licensee code (e.g. BESCOM, MSEDCL)
+#   name: official name
+#   regulator_code: code from regulators.yaml
+#   jurisdiction_code: code from jurisdictions.yaml
+#   service_territory: free-text or geo reference describing coverage area
+#
+# This file is a placeholder. Populate during Wave 0 registry build-out.
+
+schema_version: "1.0.0"
+licensees: []

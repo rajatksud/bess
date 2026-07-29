@@ -1,0 +1,13 @@
+# Registry of Indian states and Union Territories in scope for tariff coverage.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 3.1 and 5.1.
+#
+# Each entry:
+#   code: ISO 3166-2:IN style short code used as the jurisdiction_code in tariff records
+#   name: official name
+#   type: STATE | UNION_TERRITORY
+#   status: NOT_STARTED | IN_PROGRESS | COVERED | BLOCKED
+#
+# This file is a placeholder. Populate during Wave 0 registry build-out.
+
+schema_version: "1.0.0"
+jurisdictions: []

@@ -1,0 +1,17 @@
+# Registry of monitored authoritative sources (listing pages, APIs, feeds, documents).
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1.
+#
+# Each entry:
+#   source_id: unique identifier
+#   licensee_code / regulator_code: owning entity, from other registry files
+#   url: source URL (do not assume stability)
+#   source_type: TARIFF_ORDER | TARIFF_SCHEDULE | GAZETTE_NOTIFICATION | LICENSEE_CIRCULAR | BILL_CALCULATOR | SECONDARY_SUMMARY
+#   authority_rank: 1-6 per the source hierarchy in section 4
+#   monitoring_status: ACTIVE | BLOCKED | NOT_CONFIGURED
+#
+# This file is a placeholder. Populate during Wave 0 registry build-out,
+# starting from the Forum of Regulators directory:
+# https://forumofregulators.gov.in/important-websites.html
+
+schema_version: "1.0.0"
+sources: []

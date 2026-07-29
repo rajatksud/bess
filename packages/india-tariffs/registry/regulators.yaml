@@ -1,0 +1,14 @@
+# Registry of State/Joint Electricity Regulatory Commissions.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
+#
+# Each entry:
+#   code: short regulator code (e.g. KERC, DERC)
+#   name: official name
+#   type: SERC | JERC
+#   jurisdiction_codes: list of jurisdiction codes served
+#   website: primary regulator website
+#
+# This file is a placeholder. Populate during Wave 0 registry build-out.
+
+schema_version: "1.0.0"
+regulators: []
