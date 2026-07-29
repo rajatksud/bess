@@ -9,6 +9,18 @@ import {
 } from '../types/bess';
 import { Battery, Zap, Fuel, Sun, DollarSign, SlidersHorizontal, Info } from 'lucide-react';
 
+const FieldLabel: React.FC<{ label: string; tooltip: string }> = ({ label, tooltip }) => (
+  <label className="flex items-center gap-1 text-slate-400 mb-1">
+    <span>{label}</span>
+    <span className="group relative inline-flex">
+      <Info className="w-3 h-3 text-slate-600 cursor-help" />
+      <span className="pointer-events-none absolute left-1/2 bottom-full z-20 mb-1.5 w-56 -translate-x-1/2 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[11px] font-normal normal-case text-slate-200 opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
+        {tooltip}
+      </span>
+    </span>
+  </label>
+);
+
 interface QuickEstimateWizardProps {
   currency: CurrencySymbol;
   system: BessSystemInput;
@@ -70,7 +82,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Rated Power (kW)</label>
+              <FieldLabel label="Rated Power (kW)" tooltip="Maximum continuous charge/discharge power of the battery inverter (PCS). Sets the ceiling on peak shaving and how fast the battery can respond to load." />
               <input
                 type="number"
                 value={system.ratedPowerKw}
@@ -79,7 +91,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Nameplate Energy (kWh)</label>
+              <FieldLabel label="Nameplate Energy (kWh)" tooltip="Total rated energy storage capacity of the battery before any DoD, reserve, or efficiency losses are applied." />
               <input
                 type="number"
                 value={system.ratedEnergyKwh}
@@ -88,7 +100,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Usable DoD (%)</label>
+              <FieldLabel label="Usable DoD (%)" tooltip="Depth of Discharge: the percentage of nameplate energy that can actually be cycled without harming battery life. Reduces effective deliverable capacity below nameplate." />
               <input
                 type="number"
                 value={system.usableDodPct}
@@ -97,7 +109,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Reserve SOC (%)</label>
+              <FieldLabel label="Reserve SOC (%)" tooltip="Extra state-of-charge held back on top of the minimum SOC floor, e.g. for guaranteed backup runtime. Further reduces usable capacity available for daily dispatch." />
               <input
                 type="number"
                 value={system.reserveSocPct}
@@ -106,7 +118,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Inverter Efficiency (%)</label>
+              <FieldLabel label="Inverter Efficiency (%)" tooltip="Round-trip conversion efficiency applied on both charge and discharge. Lower efficiency means more energy is lost as heat and must be replaced by extra grid charging." />
               <input
                 type="number"
                 value={system.dischargeEfficiencyPct}
@@ -115,7 +127,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Annual Degradation (%)</label>
+              <FieldLabel label="Annual Degradation (%)" tooltip="Yearly loss of usable battery capacity due to calendar and cycle aging. Compounds each year in the multi-year financial projection, reducing savings over time." />
               <input
                 type="number"
                 step="0.1"
@@ -139,7 +151,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Energy Charge ({currency}/kWh)</label>
+              <FieldLabel label={`Energy Charge (${currency}/kWh)`} tooltip="Per-unit price charged by the utility for imported energy. Drives the value of arbitrage, solar self-consumption, and diesel-displacement savings." />
               <input
                 type="number"
                 step="0.1"
@@ -149,7 +161,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Demand Charge ({currency}/kVA/mo)</label>
+              <FieldLabel label={`Demand Charge (${currency}/kVA/mo)`} tooltip="Monthly charge per kVA of billed peak demand. This is what peak shaving directly reduces — multiplied by 12 for the annual demand-charge saving." />
               <input
                 type="number"
                 value={tariff.demandChargePerKvaMonth}
@@ -158,7 +170,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Contract Demand (kVA)</label>
+              <FieldLabel label="Contract Demand (kVA)" tooltip="The contracted kVA ceiling with the utility. Billed demand is capped at this value and floored by the minimum billing demand percentage below." />
               <input
                 type="number"
                 value={tariff.contractDemandKva}
@@ -167,7 +179,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Site Power Factor (0-1)</label>
+              <FieldLabel label="Site Power Factor (0-1)" tooltip="Ratio of real power (kW) to apparent power (kVA) at the site. Since demand charges bill on kVA, a lower power factor means more kVA is needed to deliver the same kW of shaving." />
               <input
                 type="number"
                 step="0.01"
@@ -177,7 +189,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-slate-400 mb-1">Demand Window & Ratchet Rule</label>
+              <FieldLabel label="Demand Window & Ratchet Rule" tooltip="The utility's billing interval for measuring peak demand, and the minimum percentage of contract demand you're billed for regardless of actual usage. Configured in the Interval Simulation tab." />
               <div className="flex items-center space-x-2 text-slate-300 text-[11px]">
                 <span className="bg-slate-900 px-2 py-1 rounded border border-slate-700">{tariff.billingDemandWindowMinutes} Min Window</span>
                 <span className="bg-slate-900 px-2 py-1 rounded border border-slate-700">Min Billing: {tariff.minimumBillingDemandPct}% Contract kVA</span>
@@ -198,7 +210,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Diesel Price ({currency}/Litre)</label>
+              <FieldLabel label={`Diesel Price (${currency}/Litre)`} tooltip="Fuel cost per litre. Combined with specific fuel consumption, this sets the ₹/kWh cost of running the diesel generator that the battery displaces." />
               <input
                 type="number"
                 value={diesel.dieselPricePerLitre}
@@ -207,7 +219,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Specific Fuel (L/kWh)</label>
+              <FieldLabel label="Specific Fuel (L/kWh)" tooltip="Litres of diesel burned per kWh generated by the DG set. Typical mid-load gensets run around 0.25-0.35 L/kWh." />
               <input
                 type="number"
                 step="0.01"
@@ -217,7 +229,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Outage Hours/Month</label>
+              <FieldLabel label="Outage Hours/Month" tooltip="Average grid downtime per month during which load would otherwise run on diesel. Used as a reference figure; the interval simulation tab models the actual outage schedule per preset." />
               <input
                 type="number"
                 value={diesel.outageHoursPerMonth}
@@ -226,7 +238,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">DG Capacity (kVA)</label>
+              <FieldLabel label="DG Capacity (kVA)" tooltip="Installed diesel generator capacity. Used as a sizing reference to check the battery can realistically cover the backup load during outages." />
               <input
                 type="number"
                 value={diesel.dgCapacityKva}
@@ -249,7 +261,16 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Daily Surplus Solar (kWh)</label>
+              <FieldLabel label="Installed Capacity (kWp)" tooltip="Installed rooftop/ground-mount solar array size. This is what actually drives the solar generation curve in the Interval Simulation and dashboard results — scales the preset's hourly solar profile up or down." />
+              <input
+                type="number"
+                value={solar.installedCapacityKwp}
+                onChange={e => setSolar({ ...solar, installedCapacityKwp: Number(e.target.value) })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-yellow-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <FieldLabel label="Daily Surplus Solar (kWh)" tooltip="Reference daily excess solar energy figure. Note: this only feeds the simplified Comparison (legacy sales-pitch) tab as an illustrative number — it does not affect the Interval Simulation or main dashboard results. Use Installed Capacity (kWp) to change actual solar output there." />
               <input
                 type="number"
                 value={solar.dailySurplusSolarKwh}
@@ -258,7 +279,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Export Credit ({currency}/kWh)</label>
+              <FieldLabel label={`Export Credit (${currency}/kWh)`} tooltip="Compensation rate (feed-in tariff) received per kWh of solar exported to the grid. Lower than the energy charge, so self-consuming solar via the battery is usually worth more than exporting it." />
               <input
                 type="number"
                 step="0.5"
@@ -268,7 +289,15 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div className="col-span-2 flex items-center justify-between pt-1">
-              <span className="text-slate-400">Zero-Export Constraint</span>
+              <span className="flex items-center gap-1 text-slate-400">
+                Zero-Export Constraint
+                <span className="group relative inline-flex">
+                  <Info className="w-3 h-3 text-slate-600 cursor-help" />
+                  <span className="pointer-events-none absolute left-1/2 bottom-full z-20 mb-1.5 w-56 -translate-x-1/2 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[11px] font-normal normal-case text-slate-200 opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
+                    When active, the site is not permitted to export surplus solar to the grid — any unabsorbed solar must be curtailed instead of earning export credit.
+                  </span>
+                </span>
+              </span>
               <button
                 onClick={() => setSolar({ ...solar, exportAllowed: !solar.exportAllowed })}
                 className={`px-3 py-1 rounded text-xs font-semibold ${
@@ -293,7 +322,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Turnkey CapEx ({currency})</label>
+              <FieldLabel label={`Turnkey CapEx (${currency})`} tooltip="Total upfront installed cost of the BESS project (battery, PCS, EPC, integration). The numerator in the simple payback calculation." />
               <input
                 type="number"
                 value={financial.initialCapex}
@@ -302,7 +331,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Fixed Annual O&M ({currency})</label>
+              <FieldLabel label={`Fixed Annual O&M (${currency})`} tooltip="Yearly fixed operations & maintenance cost (service contracts, monitoring, insurance), independent of how much the battery is cycled. Subtracted from gross savings each year." />
               <input
                 type="number"
                 value={financial.fixedAnnualOm}
@@ -311,7 +340,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Discount Rate (%)</label>
+              <FieldLabel label="Discount Rate (%)" tooltip="Annual rate used to discount future cash flows to present value in the NPV/IRR calculation. Reflects the cost of capital or required rate of return." />
               <input
                 type="number"
                 value={financial.discountRatePct}
@@ -320,7 +349,7 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Tariff Escalation (%/yr)</label>
+              <FieldLabel label="Tariff Escalation (%/yr)" tooltip="Assumed annual increase in utility energy/demand rates. Higher escalation increases the value of avoided grid purchases in later years of the project." />
               <input
                 type="number"
                 value={financial.tariffEscalationPct}

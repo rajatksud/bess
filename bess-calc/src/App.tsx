@@ -181,7 +181,7 @@ export function App() {
     );
 
     // 2. Generate interval dataset from profile
-    const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff);
+    const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff, solar);
 
     // 3. Run Single-Balance Dispatch Engine
     const { simulatedIntervals, savings, technical } = runIntervalDispatch(
