@@ -1,13 +1,157 @@
 # Registry of Indian states and Union Territories in scope for tariff coverage.
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 3.1 and 5.1.
+# Validated against schemas/jurisdiction.schema.json.
 #
-# Each entry:
-#   code: ISO 3166-2:IN style short code used as the jurisdiction_code in tariff records
-#   name: official name
-#   type: STATE | UNION_TERRITORY
-#   status: NOT_STARTED | IN_PROGRESS | COVERED | BLOCKED
-#
-# This file is a placeholder. Populate during Wave 0 registry build-out.
+# status: NOT_STARTED | IN_PROGRESS | COVERED | BLOCKED
+# Wave 1 jurisdictions (Maharashtra, Gujarat, Karnataka, Tamil Nadu, Telangana, Delhi)
+# are marked IN_PROGRESS; all others start NOT_STARTED per the Wave 0/1 rollout plan (section 13).
 
 schema_version: "1.0.0"
-jurisdictions: []
+jurisdictions:
+  # States
+  - code: AP
+    name: Andhra Pradesh
+    type: STATE
+    status: NOT_STARTED
+  - code: AR
+    name: Arunachal Pradesh
+    type: STATE
+    status: NOT_STARTED
+  - code: AS
+    name: Assam
+    type: STATE
+    status: NOT_STARTED
+  - code: BR
+    name: Bihar
+    type: STATE
+    status: NOT_STARTED
+  - code: CG
+    name: Chhattisgarh
+    type: STATE
+    status: NOT_STARTED
+  - code: GA
+    name: Goa
+    type: STATE
+    status: NOT_STARTED
+  - code: GJ
+    name: Gujarat
+    type: STATE
+    status: IN_PROGRESS
+  - code: HR
+    name: Haryana
+    type: STATE
+    status: NOT_STARTED
+  - code: HP
+    name: Himachal Pradesh
+    type: STATE
+    status: NOT_STARTED
+  - code: JH
+    name: Jharkhand
+    type: STATE
+    status: NOT_STARTED
+  - code: KA
+    name: Karnataka
+    type: STATE
+    status: IN_PROGRESS
+  - code: KL
+    name: Kerala
+    type: STATE
+    status: NOT_STARTED
+  - code: MP
+    name: Madhya Pradesh
+    type: STATE
+    status: NOT_STARTED
+  - code: MH
+    name: Maharashtra
+    type: STATE
+    status: IN_PROGRESS
+  - code: MN
+    name: Manipur
+    type: STATE
+    status: NOT_STARTED
+  - code: ML
+    name: Meghalaya
+    type: STATE
+    status: NOT_STARTED
+  - code: MZ
+    name: Mizoram
+    type: STATE
+    status: NOT_STARTED
+  - code: NL
+    name: Nagaland
+    type: STATE
+    status: NOT_STARTED
+  - code: OD
+    name: Odisha
+    type: STATE
+    status: NOT_STARTED
+  - code: PB
+    name: Punjab
+    type: STATE
+    status: NOT_STARTED
+  - code: RJ
+    name: Rajasthan
+    type: STATE
+    status: NOT_STARTED
+  - code: SK
+    name: Sikkim
+    type: STATE
+    status: NOT_STARTED
+  - code: TN
+    name: Tamil Nadu
+    type: STATE
+    status: IN_PROGRESS
+  - code: TS
+    name: Telangana
+    type: STATE
+    status: IN_PROGRESS
+  - code: TR
+    name: Tripura
+    type: STATE
+    status: NOT_STARTED
+  - code: UP
+    name: Uttar Pradesh
+    type: STATE
+    status: NOT_STARTED
+  - code: UK
+    name: Uttarakhand
+    type: STATE
+    status: NOT_STARTED
+  - code: WB
+    name: West Bengal
+    type: STATE
+    status: NOT_STARTED
+
+  # Union Territories
+  - code: AN
+    name: Andaman and Nicobar Islands
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: CH
+    name: Chandigarh
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: DN
+    name: Dadra and Nagar Haveli and Daman and Diu
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: DL
+    name: Delhi (National Capital Territory)
+    type: UNION_TERRITORY
+    status: IN_PROGRESS
+  - code: JK
+    name: Jammu and Kashmir
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: LA
+    name: Ladakh
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: LD
+    name: Lakshadweep
+    type: UNION_TERRITORY
+    status: NOT_STARTED
+  - code: PY
+    name: Puducherry
+    type: UNION_TERRITORY
+    status: NOT_STARTED

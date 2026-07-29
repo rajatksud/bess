@@ -1,14 +1,34 @@
 # Registry of State/Joint Electricity Regulatory Commissions.
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
+# Validated against schemas/regulator.schema.json.
 #
-# Each entry:
-#   code: short regulator code (e.g. KERC, DERC)
-#   name: official name
-#   type: SERC | JERC
-#   jurisdiction_codes: list of jurisdiction codes served
-#   website: primary regulator website
-#
-# This file is a placeholder. Populate during Wave 0 registry build-out.
+# IMPORTANT: This file is seeded only with regulators explicitly named in the
+# strategy document (section 4) for the Wave 1 jurisdictions. Names, codes and
+# websites below have NOT been independently re-verified against the regulator's
+# own site during this scaffolding pass and must be confirmed against an
+# authoritative source (section 4 hierarchy) before being marked reviewed.
+# Remaining Wave 1 jurisdictions (Tamil Nadu, Telangana) and all later-wave
+# jurisdictions still need their regulators added.
 
 schema_version: "1.0.0"
-regulators: []
+regulators:
+  - code: KERC
+    name: Karnataka Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["KA"]
+    website: "https://kerc.karnataka.gov.in/96/tariff-order/en"
+  - code: DERC
+    name: Delhi Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["DL"]
+    website: "https://www.derc.gov.in/tarriff-orders"
+  - code: GERC
+    name: Gujarat Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["GJ"]
+    website: "https://gercin.org/tariff-schedules/"
+  - code: MERC
+    name: Maharashtra Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["MH"]
+    website: "https://www.mahadiscom.in/consumer/en/tariff-details/"

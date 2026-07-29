@@ -1,14 +1,18 @@
 # Registry of distribution licensees and their service territories.
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
+# Validated against schemas/licensee.schema.json.
 #
-# Each entry:
-#   code: short licensee code (e.g. BESCOM, MSEDCL)
-#   name: official name
-#   regulator_code: code from regulators.yaml
-#   jurisdiction_code: code from jurisdictions.yaml
-#   service_territory: free-text or geo reference describing coverage area
-#
-# This file is a placeholder. Populate during Wave 0 registry build-out.
+# IMPORTANT: Only MSEDCL is named explicitly in the strategy document (section 4).
+# Karnataka, Gujarat, Delhi, Tamil Nadu and Telangana each have multiple licensees
+# (e.g. Karnataka: BESCOM/MESCOM/CESC/HESCOM/GESCOM; Delhi: BRPL/BYPL/TPDDL/NDMC/MES)
+# that must be confirmed against each regulator's own tariff order before being
+# added here — do not treat this comment as a source of record. Populate this
+# registry as each licensee's authoritative source is confirmed (section 4 hierarchy).
 
 schema_version: "1.0.0"
-licensees: []
+licensees:
+  - code: MSEDCL
+    name: Maharashtra State Electricity Distribution Company Limited
+    regulator_code: MERC
+    jurisdiction_code: MH
+    licensee_type: STATE_UTILITY

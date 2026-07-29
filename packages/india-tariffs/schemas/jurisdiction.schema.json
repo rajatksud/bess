@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/jurisdiction.schema.json",
+  "title": "Jurisdiction",
+  "description": "State or Union Territory identity. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 3.1 and 5.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "name",
+    "type",
+    "status"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,3}$",
+      "description": "Short jurisdiction code used as jurisdiction_code in tariff records."
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "STATE",
+        "UNION_TERRITORY"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "COVERED",
+        "BLOCKED"
+      ],
+      "description": "Coverage status per section 16 definition of done."
+    },
+    "blocker_notes": {
+      "type": "string",
+      "description": "Reason for BLOCKED status, if applicable."
+    }
+  }
+}

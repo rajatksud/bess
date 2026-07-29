@@ -1,17 +1,46 @@
 # Registry of monitored authoritative sources (listing pages, APIs, feeds, documents).
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1.
+# Validated against schemas/authoritative_source.schema.json.
 #
-# Each entry:
-#   source_id: unique identifier
-#   licensee_code / regulator_code: owning entity, from other registry files
-#   url: source URL (do not assume stability)
-#   source_type: TARIFF_ORDER | TARIFF_SCHEDULE | GAZETTE_NOTIFICATION | LICENSEE_CIRCULAR | BILL_CALCULATOR | SECONDARY_SUMMARY
-#   authority_rank: 1-6 per the source hierarchy in section 4
-#   monitoring_status: ACTIVE | BLOCKED | NOT_CONFIGURED
-#
-# This file is a placeholder. Populate during Wave 0 registry build-out,
-# starting from the Forum of Regulators directory:
-# https://forumofregulators.gov.in/important-websites.html
+# Seeded from the URLs explicitly listed in the strategy document. Each entry's
+# authority_rank and source_type are provisional pending an actual crawl/review
+# pass (section 8) — these are listing pages, not yet-classified individual
+# documents. monitoring_status is NOT_CONFIGURED until the crawler is built.
 
 schema_version: "1.0.0"
-sources: []
+sources:
+  - source_id: FOR-DIRECTORY
+    url: "https://forumofregulators.gov.in/important-websites.html"
+    source_type: SECONDARY_SUMMARY
+    authority_rank: 6
+    monitoring_status: NOT_CONFIGURED
+    notes: "Forum of Regulators directory. Discovery only, per section 4 — never a source of record."
+
+  - source_id: GERC-TARIFF-SCHEDULES
+    regulator_code: GERC
+    url: "https://gercin.org/tariff-schedules/"
+    source_type: TARIFF_SCHEDULE
+    authority_rank: 2
+    monitoring_status: NOT_CONFIGURED
+
+  - source_id: KERC-TARIFF-ORDERS
+    regulator_code: KERC
+    url: "https://kerc.karnataka.gov.in/96/tariff-order/en"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+
+  - source_id: DERC-TARIFF-ORDERS
+    regulator_code: DERC
+    url: "https://www.derc.gov.in/tarriff-orders"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+
+  - source_id: MSEDCL-TARIFF-DETAILS
+    licensee_code: MSEDCL
+    url: "https://www.mahadiscom.in/consumer/en/tariff-details/"
+    source_type: TARIFF_SCHEDULE
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    notes: "Licensee publication; confirm against MERC order before treating values as authoritative (section 4 ranks licensee circulars below commission orders/schedules)."

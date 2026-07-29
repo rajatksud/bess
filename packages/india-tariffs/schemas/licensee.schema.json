@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/licensee.schema.json",
+  "title": "Licensee",
+  "description": "Distribution licensee and service territory. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "name",
+    "regulator_code",
+    "jurisdiction_code"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Short licensee code, e.g. BESCOM, MSEDCL."
+    },
+    "name": {
+      "type": "string"
+    },
+    "regulator_code": {
+      "type": "string",
+      "description": "Code from regulators.yaml."
+    },
+    "jurisdiction_code": {
+      "type": "string",
+      "description": "Code from jurisdictions.yaml."
+    },
+    "service_territory": {
+      "type": "string",
+      "description": "Free-text or geo reference describing the licensee's coverage area."
+    },
+    "licensee_type": {
+      "type": "string",
+      "enum": [
+        "STATE_UTILITY",
+        "PRIVATE_DISCOM",
+        "DEEMED_LICENSEE",
+        "OTHER"
+      ]
+    }
+  }
+}

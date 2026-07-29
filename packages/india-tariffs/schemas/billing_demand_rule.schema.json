@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/billing_demand_rule.schema.json",
+  "title": "BillingDemandRule",
+  "description": "Formula used to determine billed demand. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "strategy"
+  ],
+  "properties": {
+    "strategy": {
+      "type": "string",
+      "enum": [
+        "ACTUAL_RECORDED",
+        "MAX_RECORDED_OR_PERCENT_CONTRACT",
+        "MAX_RECORDED_OR_PERCENT_HISTORICAL",
+        "FIXED_CONTRACT_DEMAND",
+        "EXCESS_DEMAND_MULTIPLIER",
+        "SEPARATE_NORMAL_AND_EXCESS",
+        "TEXT_ONLY_UNSUPPORTED"
+      ],
+      "description": "TEXT_ONLY_UNSUPPORTED marks rules not yet executable; such tariffs must not receive a high confidence grade (section 5.4, 9.2)."
+    },
+    "minimum_contract_demand_pct": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Used with MAX_RECORDED_OR_PERCENT_CONTRACT."
+    },
+    "historical_lookback_months": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Used with MAX_RECORDED_OR_PERCENT_HISTORICAL."
+    },
+    "historical_demand_pct": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Used with MAX_RECORDED_OR_PERCENT_HISTORICAL."
+    },
+    "excess_demand_multiplier": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Used with EXCESS_DEMAND_MULTIPLIER."
+    },
+    "demand_window_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Integration window for recorded demand, e.g. 15."
+    },
+    "unsupported_rule_text": {
+      "type": "string",
+      "description": "Reviewed source text for TEXT_ONLY_UNSUPPORTED strategies."
+    }
+  }
+}
