@@ -1,0 +1,6 @@
+{
+  "name": "BESS ROI & Profitability Platform",
+  "description": "Battery Energy Storage System (BESS) sizing, dispatch simulation, financial ROI calculation, and multi-scenario decision support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
