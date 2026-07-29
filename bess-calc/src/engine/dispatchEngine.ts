@@ -61,7 +61,28 @@ export function runIntervalDispatch(
 
   // Calculate target grid demand for peak shaving (e.g., target 60-70% of peak, bounded by battery rated kW)
   // Max achievable peak shaving in kW = min(system.ratedPowerKw, peakBeforeKw * 0.4)
-  const targetPeakKw = Math.max(0, peakBeforeKw - system.ratedPowerKw);
+  //
+  // Bug fixed here: max(0, peakBeforeKw - ratedPowerKw) collapses to 0 whenever the
+  // battery is rated at or above the profile's peak load (a battery "big enough to
+  // shave the whole peak"). With target = 0, the peak_shaving priority below
+  // (loadKw > targetPeakKw) would then match EVERY interval with any load at all,
+  // discharging the battery against ordinary base load that was never actually a
+  // demand-charge problem - starving every lower-priority use (solar charging,
+  // arbitrage) of any opportunity to claim the battery, and typically flattening SOC
+  // to its floor well before intervals that genuinely need it (e.g. an evening
+  // outage or TOU-peak window later the same day).
+  //
+  // Fix: shave down toward the NEXT-highest distinct load level actually observed in
+  // the profile, not toward zero. This correctly distinguishes a genuine, rare peak
+  // spike (a profile with one dominant maximum - shave it down as far as the battery
+  // allows, per the original single-peak intent) from a profile with several
+  // recurring load levels through the day (e.g. a low midday base load and a higher
+  // evening load) - ordinary recurring load levels are never treated as "the peak"
+  // needing to be shaved toward zero.
+  const distinctLoadLevelsDesc = Array.from(new Set(intervals.map(inv => inv.loadKw)))
+    .sort((a, b) => b - a);
+  const nextHighestLoadLevelKw = distinctLoadLevelsDesc.length > 1 ? distinctLoadLevelsDesc[1] : 0;
+  const targetPeakKw = Math.max(nextHighestLoadLevelKw, peakBeforeKw - system.ratedPowerKw);
 
   const simulatedIntervals: IntervalRecord[] = [];
 
