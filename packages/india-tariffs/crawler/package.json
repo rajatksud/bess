@@ -1,0 +1,23 @@
+{
+  "name": "@bess/india-tariffs-crawler",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Automated discovery-zone crawler for India C&I tariff authoritative sources. See docs/architecture/AUTHORITATIVE_TARIFF_CRAWLER_ARCHITECTURE.md.",
+  "scripts": {
+    "build": "tsc",
+    "crawl": "tsc && node dist/src/cli.js crawl",
+    "verify": "tsc && node dist/src/cli.js verify",
+    "test": "tsc && node --test dist/tests/",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3"
+  }
+}

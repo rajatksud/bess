@@ -10,7 +10,10 @@
     "url",
     "source_type",
     "authority_rank",
-    "monitoring_status"
+    "monitoring_status",
+    "allowed_domains",
+    "discovery_method",
+    "adapter"
   ],
   "properties": {
     "source_id": {
@@ -26,7 +29,8 @@
     },
     "url": {
       "type": "string",
-      "format": "uri"
+      "format": "uri",
+      "description": "Listing URL to discover documents from."
     },
     "source_type": {
       "type": "string",
@@ -49,9 +53,77 @@
       "type": "string",
       "enum": [
         "ACTIVE",
+        "PAUSED",
+        "DEGRADED",
         "BLOCKED",
         "NOT_CONFIGURED"
       ]
+    },
+    "allowed_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Hostnames the fetcher may contact for this source. Redirects outside this list must be refused (crawler architecture section 5.3, 8)."
+    },
+    "discovery_method": {
+      "type": "string",
+      "enum": [
+        "HTML_LINKS",
+        "PAGINATED_LISTING",
+        "SITEMAP",
+        "RSS_ATOM",
+        "JSON_API",
+        "DIRECT_DOCUMENT",
+        "SEARCH_ENDPOINT",
+        "BROWSER_RENDERED"
+      ]
+    },
+    "adapter": {
+      "type": "string",
+      "description": "Name of the discovery adapter implementation, e.g. generic_regulator_listing."
+    },
+    "schedule": {
+      "type": "string",
+      "enum": [
+        "HOURLY",
+        "EVERY_6_HOURS",
+        "DAILY",
+        "WEEKLY"
+      ],
+      "default": "DAILY"
+    },
+    "rate_limit_requests_per_minute": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 6
+    },
+    "include_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Substrings/keywords a discovered link's URL or text must contain to be a candidate document."
+    },
+    "exclude_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Substrings/keywords that disqualify an otherwise-matching link (e.g. petition, public-hearing)."
+    },
+    "permitted_content_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["text/html", "application/pdf"]
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date",
+      "description": "Date a human last confirmed this source configuration still matches the live site."
     },
     "notes": {
       "type": "string"

@@ -16,7 +16,7 @@ regulators:
     name: Karnataka Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["KA"]
-    website: "https://kerc.karnataka.gov.in/96/tariff-order/en"
+    website: "https://kerc.karnataka.gov.in/143/tariff-order/en"
   - code: DERC
     name: Delhi Electricity Regulatory Commission
     type: SERC

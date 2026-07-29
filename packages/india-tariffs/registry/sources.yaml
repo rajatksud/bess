@@ -1,11 +1,14 @@
 # Registry of monitored authoritative sources (listing pages, APIs, feeds, documents).
-# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1, and
+# docs/architecture/AUTHORITATIVE_TARIFF_CRAWLER_ARCHITECTURE.md section 4.
 # Validated against schemas/authoritative_source.schema.json.
 #
 # Seeded from the URLs explicitly listed in the strategy document. Each entry's
-# authority_rank and source_type are provisional pending an actual crawl/review
-# pass (section 8) — these are listing pages, not yet-classified individual
-# documents. monitoring_status is NOT_CONFIGURED until the crawler is built.
+# authority_rank, source_type, include/exclude patterns and adapter are
+# provisional pending an actual crawl/review pass (section 8) — these are
+# listing pages, not yet-classified individual documents. monitoring_status
+# stays NOT_CONFIGURED until a source has been through at least one manual
+# verification run (crawler:verify) and last_verified is set.
 
 schema_version: "1.0.0"
 sources:
@@ -14,6 +17,10 @@ sources:
     source_type: SECONDARY_SUMMARY
     authority_rank: 6
     monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["forumofregulators.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: WEEKLY
     notes: "Forum of Regulators directory. Discovery only, per section 4 — never a source of record."
 
   - source_id: GERC-TARIFF-SCHEDULES
@@ -22,6 +29,12 @@ sources:
     source_type: TARIFF_SCHEDULE
     authority_rank: 2
     monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["gercin.org"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "schedule", "order", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing", "public-notice"]
 
   - source_id: KERC-TARIFF-ORDERS
     regulator_code: KERC
@@ -29,6 +42,12 @@ sources:
     source_type: TARIFF_ORDER
     authority_rank: 1
     monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["kerc.karnataka.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "retail-supply", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
 
   - source_id: DERC-TARIFF-ORDERS
     regulator_code: DERC
@@ -36,6 +55,12 @@ sources:
     source_type: TARIFF_ORDER
     authority_rank: 1
     monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.derc.gov.in", "derc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
 
   - source_id: MSEDCL-TARIFF-DETAILS
     licensee_code: MSEDCL
@@ -43,4 +68,8 @@ sources:
     source_type: TARIFF_SCHEDULE
     authority_rank: 4
     monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.mahadiscom.in", "mahadiscom.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
     notes: "Licensee publication; confirm against MERC order before treating values as authoritative (section 4 ranks licensee circulars below commission orders/schedules)."
