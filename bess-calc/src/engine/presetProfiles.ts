@@ -1,11 +1,13 @@
-import { IntervalRecord, TariffInput } from '../types/bess';
+import { IntervalRecord, TariffInput, SolarInput } from '../types/bess';
 
 export interface ProfilePreset {
   id: string;
   name: string;
   description: string;
   industry: string;
-  generateIntervals: (resolutionMinutes: number, tariff: TariffInput) => IntervalRecord[];
+  /** Reference installed solar capacity (kWp) the hand-tuned curve below was authored against. */
+  referenceSolarKwp: number;
+  generateIntervals: (resolutionMinutes: number, tariff: TariffInput, solar: SolarInput) => IntervalRecord[];
 }
 
 export const PRESET_PROFILES: ProfilePreset[] = [
@@ -14,9 +16,11 @@ export const PRESET_PROFILES: ProfilePreset[] = [
     name: 'Industrial Textile / Commercial Manufacturing (Reference Case)',
     industry: 'Commercial & Industrial',
     description: '24/7 heavy base load (~180-300 kW peak), contract 300 kVA, daily 6-hour grid outages requiring DG, midday solar generation surplus.',
-    generateIntervals: (resolutionMinutes = 15, tariff) => {
+    referenceSolarKwp: 150,
+    generateIntervals: (resolutionMinutes = 15, tariff, solar) => {
       const intervalsCount = (24 * 60) / resolutionMinutes;
       const records: IntervalRecord[] = [];
+      const solarScale = solar.enableSolarIntegration ? (solar.installedCapacityKwp || 0) / 150 : 0;
 
       for (let i = 0; i < intervalsCount; i++) {
         const minuteOfDay = i * resolutionMinutes;
@@ -32,11 +36,11 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           baseKw = 200 + peakCurve * 100; // Peaks at 300 kW at 14:00
         }
 
-        // Solar curve (10:00 - 16:00, peaks at 150 kW at 13:00)
+        // Solar curve (10:00 - 16:00, peaks at 150 kW at 13:00 for a 150 kWp array)
         let solarKw = 0;
         if (hour >= 9 && hour <= 16) {
           const solarCurve = Math.sin(((hour - 9) / 7) * Math.PI);
-          solarKw = Math.max(0, solarCurve * 150);
+          solarKw = Math.max(0, solarCurve * 150) * solarScale;
         }
 
         // Grid Availability: Grid outages during peak evening 17:00 - 21:00 (4 hrs) + morning 06:00 - 08:00 (2 hrs) = 6 hrs/day
@@ -100,9 +104,11 @@ export const PRESET_PROFILES: ProfilePreset[] = [
     name: 'Commercial Office Plaza (High Peak Demand & TOU Tariff)',
     industry: 'Commercial Office',
     description: 'HVAC-driven daytime load spike (8am-6pm), high peak demand charges (₹600/kVA), 3-tier Time-Of-Use tariff.',
-    generateIntervals: (resolutionMinutes = 15, tariff) => {
+    referenceSolarKwp: 100,
+    generateIntervals: (resolutionMinutes = 15, tariff, solar) => {
       const intervalsCount = (24 * 60) / resolutionMinutes;
       const records: IntervalRecord[] = [];
+      const solarScale = solar.enableSolarIntegration ? (solar.installedCapacityKwp || 0) / 100 : 0;
 
       for (let i = 0; i < intervalsCount; i++) {
         const minuteOfDay = i * resolutionMinutes;
@@ -116,9 +122,10 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           baseKw = 80 + hvacCurve * 220; // Peak 300 kW at 13:00
         }
 
+        // Solar curve peaks at 100 kW for a 100 kWp array
         let solarKw = 0;
         if (hour >= 8 && hour <= 17) {
-          solarKw = Math.sin(((hour - 8) / 9) * Math.PI) * 100;
+          solarKw = Math.sin(((hour - 8) / 9) * Math.PI) * 100 * solarScale;
         }
 
         const gridAvailable = true; // Reliable grid
@@ -167,9 +174,11 @@ export const PRESET_PROFILES: ProfilePreset[] = [
     name: 'Solar-Heavy Agricultural Microgrid',
     industry: 'Agriculture / Microgrid',
     description: '200 kWp rooftop solar array with zero-export grid restriction. Heavy midday curtailment rescued by BESS.',
-    generateIntervals: (resolutionMinutes = 15, tariff) => {
+    referenceSolarKwp: 220,
+    generateIntervals: (resolutionMinutes = 15, tariff, solar) => {
       const intervalsCount = (24 * 60) / resolutionMinutes;
       const records: IntervalRecord[] = [];
+      const solarScale = solar.enableSolarIntegration ? (solar.installedCapacityKwp || 0) / 220 : 0;
 
       for (let i = 0; i < intervalsCount; i++) {
         const minuteOfDay = i * resolutionMinutes;
@@ -179,9 +188,10 @@ export const PRESET_PROFILES: ProfilePreset[] = [
 
         const baseKw = (hour >= 6 && hour <= 20) ? 90 : 30;
 
+        // Solar curve peaks at 220 kW for a 220 kWp array
         let solarKw = 0;
         if (hour >= 8 && hour <= 17) {
-          solarKw = Math.sin(((hour - 8) / 9) * Math.PI) * 220; // 220 kW solar peak
+          solarKw = Math.sin(((hour - 8) / 9) * Math.PI) * 220 * solarScale;
         }
 
         const gridAvailable = true;

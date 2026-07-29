@@ -17,7 +17,7 @@ import { ScenarioSensitivity } from './components/ScenarioSensitivity';
 import { LegacyComparisonModal } from './components/LegacyComparisonModal';
 import { ExportReportModal } from './components/ExportReportModal';
 import { PRESET_PROFILES, ProfilePreset } from './engine/presetProfiles';
-import { validateBessConfig } from './engine/validationEngine';
+import { validateBessConfig, validateSimulationResult } from './engine/validationEngine';
 import { runIntervalDispatch } from './engine/dispatchEngine';
 import { calculateFinancialMetrics } from './engine/financialEngine';
 
@@ -169,9 +169,9 @@ export function App() {
       initialCapex: financial.initialCapex * sensitivityMults.capexMult
     };
 
-    // 1. Validation & Audit
+    // 1. Validation & Audit (static input configuration)
     const mode = activeTab === 'comparison' ? 'legacy' : activeTab === 'quick' ? 'quick' : 'interval';
-    const { warnings, confidenceGrade, gradeReason } = validateBessConfig(
+    const { warnings: configWarnings, confidenceGrade, gradeReason } = validateBessConfig(
       adjustedSystem,
       adjustedTariff,
       adjustedDiesel,
@@ -181,7 +181,7 @@ export function App() {
     );
 
     // 2. Generate interval dataset from profile
-    const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff);
+    const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff, solar);
 
     // 3. Run Single-Balance Dispatch Engine
     const { simulatedIntervals, savings, technical } = runIntervalDispatch(
@@ -203,6 +203,18 @@ export function App() {
       adjustedSystem
     );
 
+    // 5. Validate simulation output (requires results from steps 3-4)
+    const simulationWarnings = validateSimulationResult(
+      simulatedIntervals,
+      adjustedSystem,
+      adjustedDiesel,
+      solar,
+      savings,
+      technical,
+      financialMetrics,
+      intervalResolution
+    );
+
     return {
       mode,
       confidenceGrade,
@@ -216,7 +228,7 @@ export function App() {
       savings,
       technical,
       financial: financialMetrics,
-      warnings,
+      warnings: [...configWarnings, ...simulationWarnings],
       intervals: simulatedIntervals
     };
   }, [system, tariff, diesel, solar, financial, selectedPreset, intervalResolution, dispatchPriorities, activeTab, sensitivityMults]);
