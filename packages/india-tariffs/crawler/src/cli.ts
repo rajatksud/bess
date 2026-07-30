@@ -7,16 +7,38 @@ import { loadDatabaseConfig } from "./db/env.js";
 import { migrate, currentMigrationVersion } from "./db/migrate.js";
 import { loadRegistryIntoDatabase } from "./db/registryLoader.js";
 
-// import.meta.dirname is dist/src at runtime; walk up to packages/india-tariffs.
-const PACKAGE_ROOT = resolve(import.meta.dirname, "..", "..", "..");
+// In local development, import.meta.dirname is
+// packages/india-tariffs/crawler/dist/src at runtime, three levels above
+// packages/india-tariffs. In the deployed container image (see Dockerfile),
+// dist/src instead sits directly under /app, alongside /app/registry and
+// /app/schemas copied from the same build context -- a different depth, so
+// CRAWLER_PACKAGE_ROOT lets deployment pin the correct root explicitly
+// rather than inferring it from directory depth.
+const PACKAGE_ROOT = process.env.CRAWLER_PACKAGE_ROOT
+  ? resolve(process.env.CRAWLER_PACKAGE_ROOT)
+  : resolve(import.meta.dirname, "..", "..", "..");
 const DEFAULT_REGISTRY_PATH = resolve(PACKAGE_ROOT, "registry", "sources.yaml");
-const DEFAULT_ARCHIVE_DIR = resolve(PACKAGE_ROOT, "crawler", ".archive");
-const DEFAULT_MANIFEST_PATH = resolve(PACKAGE_ROOT, "crawler", ".archive", "manifest.json");
+// CRAWLER_ARCHIVE_DIR overrides the archive location (set to a mounted
+// volume path in the deployed container, see Dockerfile); defaults to the
+// package-relative path for local development.
+const ARCHIVE_DIR = process.env.CRAWLER_ARCHIVE_DIR
+  ? resolve(process.env.CRAWLER_ARCHIVE_DIR)
+  : resolve(PACKAGE_ROOT, "crawler", ".archive");
+const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
+const DEFAULT_MANIFEST_PATH = resolve(ARCHIVE_DIR, "manifest.json");
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
+
+const USAGE =
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health> " +
+  "[--registry <path>] [--source <source_id>] [--production]";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
 
+  if (command === "--help" || command === "-h" || command === undefined) {
+    console.log(USAGE);
+    return;
+  }
   if (command === "crawl") {
     await runCrawl(args);
     return;
@@ -38,10 +60,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.error(
-    "Usage: cli.js <crawl|verify|migrate|registry-load|source-health> " +
-      "[--registry <path>] [--source <source_id>] [--production]",
-  );
+  console.error(USAGE);
   process.exitCode = 1;
 }
 
@@ -61,7 +80,7 @@ async function runMigrate(args: string[]): Promise<void> {
     return;
   }
 
-  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  const db = new CrawlerDatabase(loadDatabaseConfig(target, "admin"));
   try {
     const before = await currentMigrationVersion(db).catch(() => null);
     const result = await migrate(db, { allowProduction });
@@ -104,7 +123,7 @@ async function runSourceHealth(args: string[]): Promise<void> {
   const target = targetFromEnv();
   const db = new CrawlerDatabase(loadDatabaseConfig(target));
   try {
-    await db.ensureEnvironmentMarker();
+    await db.verifyEnvironmentMarker();
     const summary = await db.withClient(async (client) => {
       const { rows } = await client.query(
         `SELECT monitoring_status, count(*) FROM authoritative_sources GROUP BY monitoring_status ORDER BY 1`,

@@ -56,7 +56,17 @@ function parseAppEnv(raw: string | undefined): AppEnv {
  * match the requested target; a process started with APP_ENV=staging cannot
  * load production config, and vice versa.
  */
-export function loadDatabaseConfig(target: "staging" | "production"): DatabaseConfig {
+/**
+ * role: "app" (default) uses the least-privilege DB_*_USER, intended for
+ * normal crawl/read/candidate-write operations. role: "admin" uses
+ * DB_*_ADMIN_USER, the schema-owning role required to run migrations (DDL).
+ * Keeping these distinct means a compromised or buggy crawl process only
+ * ever holds the restricted app role's privileges.
+ */
+export function loadDatabaseConfig(
+  target: "staging" | "production",
+  role: "app" | "admin" = "app",
+): DatabaseConfig {
   const appEnv = parseAppEnv(process.env.APP_ENV);
   if (appEnv !== target) {
     throw new EnvironmentConfigError(
@@ -66,13 +76,15 @@ export function loadDatabaseConfig(target: "staging" | "production"): DatabaseCo
   }
 
   const prefix = target === "staging" ? "DB_STG" : "DB_PROD";
+  const userVar = role === "admin" ? `${prefix}_ADMIN_USER` : `${prefix}_USER`;
+  const passwordVar = role === "admin" ? `${prefix}_ADMIN_PASSWORD` : `${prefix}_PASSWORD`;
   return {
     appEnv,
     host: requireEnv(`${prefix}_HOST`),
     port: Number(requireEnv(`${prefix}_PORT`)),
     database: requireEnv(`${prefix}_NAME`),
-    user: requireEnv(`${prefix}_USER`),
-    password: requireEnv(`${prefix}_PASSWORD`),
+    user: requireEnv(userVar),
+    password: requireEnv(passwordVar),
     schema: process.env.CRAWLER_DATABASE_SCHEMA ?? "tariff_crawler",
     sslmode: process.env.DATABASE_SSLMODE ?? (target === "production" ? "require" : "disable"),
     poolMin: Number(process.env.DATABASE_POOL_MIN ?? "1"),

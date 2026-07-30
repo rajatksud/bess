@@ -119,7 +119,7 @@ export async function loadRegistryIntoDatabase(
     sharedTariffGroups?: string;
   },
 ): Promise<RegistryLoadResult> {
-  await db.ensureEnvironmentMarker();
+  await db.verifyEnvironmentMarker();
 
   const jurisdictions = (load(readFileSync(paths.jurisdictions, "utf8")) as { jurisdictions: JurisdictionYaml[] })
     .jurisdictions;
@@ -192,17 +192,19 @@ export async function loadRegistryIntoDatabase(
       }
     }
 
-    // Pass 1: upsert licensees without self-referential FKs (parent_licensee_id,
-    // shared_tariff_group_id) so insert order never trips a not-yet-loaded
-    // reference; pass 2 below fills those in once every code exists.
+    // Pass 1: upsert licensees without self-referential FKs (shares_schedule_with,
+    // parent_licensee_id, shared_tariff_group_id) so insert order never trips a
+    // not-yet-loaded reference (e.g. a licensee whose shares_schedule_with
+    // target appears later in the YAML file); pass 2 below fills those in
+    // once every code exists.
     for (const l of licensees) {
       await client.query(
         `INSERT INTO licensees (code, legal_name, common_name, jurisdiction_code, regulator_code, licensee_type,
                                  coverage_tier, ownership_type, c_and_i_relevance, service_territory, website,
-                                 status, shares_schedule_with, predecessor_licensee_ids, successor_licensee_ids,
+                                 status, predecessor_licensee_ids, successor_licensee_ids,
                                  overlap_licensee_ids, coverage_status, verification_status, confidence,
                                  last_verified_at, evidence_url, authoritative_source_ids, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
          ON CONFLICT (code) DO UPDATE SET
            legal_name = EXCLUDED.legal_name,
            common_name = EXCLUDED.common_name,
@@ -215,7 +217,6 @@ export async function loadRegistryIntoDatabase(
            service_territory = EXCLUDED.service_territory,
            website = EXCLUDED.website,
            status = EXCLUDED.status,
-           shares_schedule_with = EXCLUDED.shares_schedule_with,
            predecessor_licensee_ids = EXCLUDED.predecessor_licensee_ids,
            successor_licensee_ids = EXCLUDED.successor_licensee_ids,
            overlap_licensee_ids = EXCLUDED.overlap_licensee_ids,
@@ -239,7 +240,6 @@ export async function loadRegistryIntoDatabase(
           l.service_territory ?? null,
           l.website ?? null,
           l.status ?? "UNCERTAIN",
-          l.shares_schedule_with ?? null,
           l.predecessor_licensee_ids ?? [],
           l.successor_licensee_ids ?? [],
           l.overlap_licensee_ids ?? [],
@@ -254,13 +254,14 @@ export async function loadRegistryIntoDatabase(
       );
     }
 
-    // Pass 2: parent_licensee_id (self-FK). shared_tariff_group_id is set
-    // after shared_tariff_groups are loaded, further below.
+    // Pass 2: self-referential FKs (shares_schedule_with, parent_licensee_id).
+    // shared_tariff_group_id is set after shared_tariff_groups are loaded,
+    // further below.
     for (const l of licensees) {
-      await client.query(`UPDATE licensees SET parent_licensee_id = $2 WHERE code = $1`, [
-        l.code,
-        l.parent_licensee_id ?? null,
-      ]);
+      await client.query(
+        `UPDATE licensees SET shares_schedule_with = $2, parent_licensee_id = $3 WHERE code = $1`,
+        [l.code, l.shares_schedule_with ?? null, l.parent_licensee_id ?? null],
+      );
     }
 
     for (const s of sources) {

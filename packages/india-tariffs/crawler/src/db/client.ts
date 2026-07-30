@@ -68,6 +68,12 @@ export class CrawlerDatabase {
    * migration or data operation. Throws EnvironmentMismatchError rather than
    * silently proceeding if the database's recorded environment does not
    * match this process's APP_ENV.
+   *
+   * Creates the schema/table if missing (CREATE SCHEMA/TABLE IF NOT EXISTS),
+   * so this requires the admin/migration role's privileges. The
+   * least-privilege app role (used for registry loads and crawl operations)
+   * should call verifyEnvironmentMarker() instead, which only reads — the
+   * schema and table are expected to already exist from a prior migration.
    */
   async ensureEnvironmentMarker(): Promise<void> {
     if (this.markerVerified) return;
@@ -90,6 +96,37 @@ export class CrawlerDatabase {
         );
         this.markerVerified = true;
         return;
+      }
+      const recorded = rows[0].value as string;
+      if (recorded !== this.expectedAppEnv) {
+        throw new EnvironmentMismatchError(
+          `Database at ${this.config.host}:${this.config.port}/${this.config.database} is marked ` +
+            `environment="${recorded}" but this process is running with APP_ENV="${this.expectedAppEnv}". ` +
+            `Refusing to proceed to avoid cross-environment writes.`,
+        );
+      }
+      this.markerVerified = true;
+    });
+  }
+
+  /**
+   * Read-only counterpart to ensureEnvironmentMarker for the least-privilege
+   * app role: never issues DDL, only SELECTs the existing
+   * deployment_metadata row. Throws if the schema/table don't exist yet
+   * (meaning migrations haven't been run) or if the environment marker
+   * doesn't match this process's APP_ENV.
+   */
+  async verifyEnvironmentMarker(): Promise<void> {
+    if (this.markerVerified) return;
+    await this.withClient(async (client) => {
+      const { rows } = await client.query(
+        `SELECT value FROM ${quoteIdent(this.schema)}.deployment_metadata WHERE key = 'environment'`,
+      );
+      if (rows.length === 0) {
+        throw new EnvironmentMismatchError(
+          `No environment marker found in ${quoteIdent(this.schema)}.deployment_metadata -- ` +
+            `has "migrate" been run against this database yet?`,
+        );
       }
       const recorded = rows[0].value as string;
       if (recorded !== this.expectedAppEnv) {
