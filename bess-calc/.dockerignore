@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+dist
+server-dist
+coverage
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+docs
