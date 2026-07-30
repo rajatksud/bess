@@ -150,16 +150,20 @@ export async function loadRegistryIntoDatabase(
 
     for (const r of regulators) {
       await client.query(
-        `INSERT INTO regulators (code, legal_name, short_name, regulator_type, website, order_portal_url, active, last_verified_at, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO regulators (code, legal_name, short_name, regulator_type, website, order_portal_url,
+                                  schedule_portal_url, active, evidence_url, last_verified_at, source_health, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (code) DO UPDATE SET
            legal_name = EXCLUDED.legal_name,
            short_name = EXCLUDED.short_name,
            regulator_type = EXCLUDED.regulator_type,
            website = EXCLUDED.website,
            order_portal_url = EXCLUDED.order_portal_url,
+           schedule_portal_url = EXCLUDED.schedule_portal_url,
            active = EXCLUDED.active,
+           evidence_url = EXCLUDED.evidence_url,
            last_verified_at = EXCLUDED.last_verified_at,
+           source_health = EXCLUDED.source_health,
            notes = EXCLUDED.notes`,
         [
           r.code,
@@ -168,8 +172,11 @@ export async function loadRegistryIntoDatabase(
           r.type,
           r.website ?? null,
           r.order_portal_url ?? null,
+          r.schedule_portal_url ?? null,
           r.active ?? true,
+          r.evidence_url ?? null,
           r.last_verified ?? null,
+          r.source_health ?? "NOT_CHECKED",
           r.notes ?? null,
         ],
       );
@@ -185,25 +192,39 @@ export async function loadRegistryIntoDatabase(
       }
     }
 
+    // Pass 1: upsert licensees without self-referential FKs (parent_licensee_id,
+    // shared_tariff_group_id) so insert order never trips a not-yet-loaded
+    // reference; pass 2 below fills those in once every code exists.
     for (const l of licensees) {
       await client.query(
         `INSERT INTO licensees (code, legal_name, common_name, jurisdiction_code, regulator_code, licensee_type,
-                                 service_territory, website, status, shares_schedule_with, coverage_status,
-                                 last_verified_at, evidence_url, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                                 coverage_tier, ownership_type, c_and_i_relevance, service_territory, website,
+                                 status, shares_schedule_with, predecessor_licensee_ids, successor_licensee_ids,
+                                 overlap_licensee_ids, coverage_status, verification_status, confidence,
+                                 last_verified_at, evidence_url, authoritative_source_ids, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
          ON CONFLICT (code) DO UPDATE SET
            legal_name = EXCLUDED.legal_name,
            common_name = EXCLUDED.common_name,
            jurisdiction_code = EXCLUDED.jurisdiction_code,
            regulator_code = EXCLUDED.regulator_code,
            licensee_type = EXCLUDED.licensee_type,
+           coverage_tier = EXCLUDED.coverage_tier,
+           ownership_type = EXCLUDED.ownership_type,
+           c_and_i_relevance = EXCLUDED.c_and_i_relevance,
            service_territory = EXCLUDED.service_territory,
            website = EXCLUDED.website,
            status = EXCLUDED.status,
            shares_schedule_with = EXCLUDED.shares_schedule_with,
+           predecessor_licensee_ids = EXCLUDED.predecessor_licensee_ids,
+           successor_licensee_ids = EXCLUDED.successor_licensee_ids,
+           overlap_licensee_ids = EXCLUDED.overlap_licensee_ids,
            coverage_status = EXCLUDED.coverage_status,
+           verification_status = EXCLUDED.verification_status,
+           confidence = EXCLUDED.confidence,
            last_verified_at = EXCLUDED.last_verified_at,
            evidence_url = EXCLUDED.evidence_url,
+           authoritative_source_ids = EXCLUDED.authoritative_source_ids,
            notes = EXCLUDED.notes`,
         [
           l.code,
@@ -212,30 +233,50 @@ export async function loadRegistryIntoDatabase(
           l.jurisdiction_code,
           l.regulator_code,
           l.licensee_type,
+          l.coverage_tier ?? "TIER_A",
+          l.ownership_type ?? "UNKNOWN",
+          l.c_and_i_relevance ?? "MEDIUM",
           l.service_territory ?? null,
           l.website ?? null,
-          l.status ?? "UNKNOWN",
+          l.status ?? "UNCERTAIN",
           l.shares_schedule_with ?? null,
+          l.predecessor_licensee_ids ?? [],
+          l.successor_licensee_ids ?? [],
+          l.overlap_licensee_ids ?? [],
           l.coverage_status ?? "NOT_STARTED",
+          l.verification_status ?? "UNVERIFIED",
+          l.confidence ?? null,
           l.last_verified ?? null,
           l.evidence_url ?? null,
+          l.authoritative_source_ids ?? [],
           l.notes ?? null,
         ],
       );
     }
 
+    // Pass 2: parent_licensee_id (self-FK). shared_tariff_group_id is set
+    // after shared_tariff_groups are loaded, further below.
+    for (const l of licensees) {
+      await client.query(`UPDATE licensees SET parent_licensee_id = $2 WHERE code = $1`, [
+        l.code,
+        l.parent_licensee_id ?? null,
+      ]);
+    }
+
     for (const s of sources) {
+      const licenseeCodes = s.licensee_codes ?? (s.licensee_code ? [s.licensee_code] : []);
       await client.query(
         `INSERT INTO authoritative_sources (
-           source_id, jurisdiction_code, regulator_code, licensee_code, url, allowed_domains,
+           source_id, jurisdiction_code, regulator_code, licensee_code, licensee_codes, url, allowed_domains,
            source_type, authority_rank, discovery_method, adapter, schedule, rate_limit_per_minute,
            include_patterns, exclude_patterns, permitted_content_types, owner, monitoring_status,
-           last_verified_at, notes
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+           last_verified_at, source_health, last_live_check_at, notes
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
          ON CONFLICT (source_id) DO UPDATE SET
            jurisdiction_code = EXCLUDED.jurisdiction_code,
            regulator_code = EXCLUDED.regulator_code,
            licensee_code = EXCLUDED.licensee_code,
+           licensee_codes = EXCLUDED.licensee_codes,
            url = EXCLUDED.url,
            allowed_domains = EXCLUDED.allowed_domains,
            source_type = EXCLUDED.source_type,
@@ -250,12 +291,15 @@ export async function loadRegistryIntoDatabase(
            owner = EXCLUDED.owner,
            monitoring_status = EXCLUDED.monitoring_status,
            last_verified_at = EXCLUDED.last_verified_at,
+           source_health = EXCLUDED.source_health,
+           last_live_check_at = EXCLUDED.last_live_check_at,
            notes = EXCLUDED.notes`,
         [
           s.source_id,
           s.jurisdiction_code ?? null,
           s.regulator_code ?? null,
           s.licensee_code ?? null,
+          licenseeCodes,
           s.url,
           s.allowed_domains,
           s.source_type,
@@ -270,6 +314,8 @@ export async function loadRegistryIntoDatabase(
           s.owner ?? null,
           s.monitoring_status,
           s.last_verified ?? null,
+          s.source_health ?? "NOT_CHECKED",
+          s.last_live_check_at ?? null,
           s.notes ?? null,
         ],
       );
@@ -281,6 +327,55 @@ export async function loadRegistryIntoDatabase(
         [s.source_id, s.schedule ?? "DAILY"],
       );
     }
+
+    for (const g of sharedTariffGroups) {
+      await client.query(
+        `INSERT INTO shared_tariff_groups (group_id, name, regulator_code, basis, notes)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (group_id) DO UPDATE SET
+           name = EXCLUDED.name,
+           regulator_code = EXCLUDED.regulator_code,
+           basis = EXCLUDED.basis,
+           notes = EXCLUDED.notes`,
+        [g.group_id, g.name, g.regulator_code, g.basis ?? null, g.notes ?? null],
+      );
+
+      await client.query("DELETE FROM shared_tariff_group_jurisdictions WHERE group_id = $1", [g.group_id]);
+      for (const jc of g.jurisdiction_codes ?? []) {
+        await client.query(
+          `INSERT INTO shared_tariff_group_jurisdictions (group_id, jurisdiction_code) VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [g.group_id, jc],
+        );
+      }
+
+      await client.query("DELETE FROM shared_tariff_group_licensees WHERE group_id = $1", [g.group_id]);
+      for (const lc of g.licensee_codes) {
+        await client.query(
+          `INSERT INTO shared_tariff_group_licensees (group_id, licensee_code) VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [g.group_id, lc],
+        );
+      }
+
+      await client.query("DELETE FROM shared_tariff_group_sources WHERE group_id = $1", [g.group_id]);
+      for (const sid of g.authoritative_source_ids ?? []) {
+        await client.query(
+          `INSERT INTO shared_tariff_group_sources (group_id, source_id) VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [g.group_id, sid],
+        );
+      }
+    }
+
+    for (const l of licensees) {
+      if (l.shared_tariff_group_id) {
+        await client.query(`UPDATE licensees SET shared_tariff_group_id = $2 WHERE code = $1`, [
+          l.code,
+          l.shared_tariff_group_id,
+        ]);
+      }
+    }
   });
 
   return {
@@ -289,5 +384,6 @@ export async function loadRegistryIntoDatabase(
     regulatorJurisdictionLinks,
     licensees: licensees.length,
     sources: sources.length,
+    sharedTariffGroups: sharedTariffGroups.length,
   };
 }

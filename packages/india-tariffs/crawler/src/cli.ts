@@ -87,12 +87,14 @@ async function runRegistryLoad(args: string[]): Promise<void> {
       regulators: resolve(registryDir, "regulators.yaml"),
       licensees: resolve(registryDir, "licensees.yaml"),
       sources: resolve(registryDir, "sources.yaml"),
+      sharedTariffGroups: resolve(registryDir, "shared_tariff_groups.yaml"),
     });
     console.log(`Registry loaded into ${target}:`);
     console.log(`  jurisdictions: ${result.jurisdictions}`);
     console.log(`  regulators: ${result.regulators} (${result.regulatorJurisdictionLinks} jurisdiction links)`);
     console.log(`  licensees: ${result.licensees}`);
     console.log(`  sources: ${result.sources}`);
+    console.log(`  shared tariff groups: ${result.sharedTariffGroups}`);
   } finally {
     await db.close();
   }

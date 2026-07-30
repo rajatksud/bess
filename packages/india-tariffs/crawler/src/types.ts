@@ -22,8 +22,10 @@ export type DiscoveryMethod =
 
 export interface AuthoritativeSource {
   source_id: string;
+  jurisdiction_code?: string;
   regulator_code?: string;
   licensee_code?: string;
+  licensee_codes?: string[];
   url: string;
   source_type: SourceType;
   authority_rank: number;
@@ -37,6 +39,8 @@ export interface AuthoritativeSource {
   exclude_patterns?: string[];
   permitted_content_types?: string[];
   last_verified?: string;
+  source_health?: "HEALTHY" | "DEGRADED" | "BLOCKED" | "MANUAL" | "NOT_CHECKED";
+  last_live_check_at?: string;
   notes?: string;
 }
 
