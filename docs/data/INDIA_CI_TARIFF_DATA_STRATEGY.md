@@ -152,7 +152,7 @@ Examples demonstrating why the source model must support multiple licensees and 
 
 - Gujarat tariff schedules: <https://gercin.org/tariff-schedules/>
 - Karnataka tariff orders: <https://kerc.karnataka.gov.in/96/tariff-order/en>
-- Delhi tariff orders: <https://www.derc.gov.in/tarriff-orders>
+- Delhi tariff orders: <https://www.derc.gov.in/tariff-orders>
 - Maharashtra/MSEDCL consumer and tariff publications: <https://www.mahadiscom.in/consumer/en/tariff-details/>
 
 The registry must not assume that each authority uses stable URLs, consistent file names, searchable PDFs or a single annual order.
