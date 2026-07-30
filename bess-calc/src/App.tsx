@@ -7,7 +7,8 @@ import {
   FinancialInput, 
   CurrencySymbol, 
   DispatchPriorityType,
-  SimulationResult 
+  SimulationResult,
+  ValidationWarning
 } from './types/bess';
 import { Header } from './components/Header';
 import { QuickEstimateWizard } from './components/QuickEstimateWizard';
@@ -184,7 +185,7 @@ export function App() {
     const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff, solar);
 
     // 3. Run Single-Balance Dispatch Engine
-    const { simulatedIntervals, savings, technical } = runIntervalDispatch(
+    const { simulatedIntervals, savings, technical, assumptions: dispatchAssumptions } = runIntervalDispatch(
       rawIntervals,
       adjustedSystem,
       adjustedTariff,
@@ -194,6 +195,15 @@ export function App() {
       dispatchPriorities,
       intervalResolution
     );
+
+    const reactivePowerWarnings: ValidationWarning[] = dispatchAssumptions.map((message, i) => ({
+      id: `dispatch-assumption-${i}`,
+      level: 'info',
+      category: 'physical',
+      code: 'REACTIVE_POWER_ASSUMPTION',
+      message,
+      recommendation: 'Supply measured per-interval kVA or power factor for engineering-grade kVA billing figures.'
+    }));
 
     // 4. Run Financial Cash Flow Engine
     const financialMetrics = calculateFinancialMetrics(
@@ -228,7 +238,7 @@ export function App() {
       savings,
       technical,
       financial: financialMetrics,
-      warnings: [...configWarnings, ...simulationWarnings],
+      warnings: [...configWarnings, ...simulationWarnings, ...reactivePowerWarnings],
       intervals: simulatedIntervals
     };
   }, [system, tariff, diesel, solar, financial, selectedPreset, intervalResolution, dispatchPriorities, activeTab, sensitivityMults]);

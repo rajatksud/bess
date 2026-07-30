@@ -97,7 +97,7 @@ export interface IntervalRecord {
   dgRequiredKw: number;
   tariffImportRate: number;
   tariffPeriod?: string;
-  
+
   // Post-BESS values
   bessPowerKw: number; // positive = discharge, negative = charge
   bessSocPct: number;
@@ -109,7 +109,38 @@ export interface IntervalRecord {
   gridExportKw: number;
   solarCurtailedKw: number;
   bessAction: string; // "Peak Shaving", "Solar Charge", "Diesel Displacement", "TOU Discharge", "Idle"
+
+  // Explicit meter-side / physical energy-flow signals (Objective A).
+  // grossSiteLoadKw === loadKw; kept as an explicit alias so downstream billing
+  // code never has to guess whether `loadKw` is gross or net of solar.
+  grossSiteLoadKw: number;
+  solarGenerationKw: number;
+  /** Portion of solarGenerationKw actually consumed on-site this interval (<= min(solarGenerationKw, grossSiteLoadKw)). */
+  solarGenerationServingLoadKw: number;
+  /** Grid-side import that WOULD be metered with no BESS present: max(grossSiteLoadKw - solarGenerationServingLoadKw, 0). */
+  preBessGridImportKw: number;
+  /** Grid-side import actually metered post-BESS: max(grossSiteLoadKw - solarGenerationServingLoadKw - batteryDischargeKw + gridBatteryChargeKw, 0). */
+  postBessGridImportKw: number;
+  batteryChargeKw: number; // >= 0, total battery charge power this interval (any source)
+  batteryDischargeKw: number; // >= 0, total battery discharge power this interval
+  /** Portion of batteryChargeKw sourced from the grid (as opposed to solar). */
+  gridBatteryChargeKw: number;
+
+  // kVA billing equivalents, populated only when a reactive-power basis is available
+  // (see ReactivePowerBasis). Undefined means "no kVA billing quantity could be derived".
+  preBessGridImportKva?: number;
+  postBessGridImportKva?: number;
 }
+
+/**
+ * Deterministic precedence for deriving a kVA billing quantity from a kW value,
+ * per docs/architecture — Objective A reactive-power policy:
+ *   1. measured_kva    — validated measured interval grid-side kVA
+ *   2. measured_pf     — validated measured interval grid-side power factor
+ *   3. configured_pf   — configured site power factor
+ *   4. unavailable     — no valid basis; kVA fields must be omitted and a warning raised
+ */
+export type ReactivePowerBasis = 'measured_kva' | 'measured_pf' | 'configured_pf' | 'unavailable';
 
 export interface SavingsBreakdown {
   demandChargeSaving: number;
