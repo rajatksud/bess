@@ -2,33 +2,127 @@
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
 # Validated against schemas/regulator.schema.json.
 #
-# IMPORTANT: This file is seeded only with regulators explicitly named in the
-# strategy document (section 4) for the Wave 1 jurisdictions. Names, codes and
-# websites below have NOT been independently re-verified against the regulator's
-# own site during this scaffolding pass and must be confirmed against an
-# authoritative source (section 4 hierarchy) before being marked reviewed.
-# Remaining Wave 1 jurisdictions (Tamil Nadu, Telangana) and all later-wave
-# jurisdictions still need their regulators added.
+# IMPORTANT — sourcing status: entries below were seeded from general/model
+# knowledge (not a live crawl of each commission's own website) and are
+# candidates pending independent verification against the authoritative
+# source hierarchy in the strategy document, section 4. `notes` records the
+# verification-confidence caveats known at seeding time. Do not treat a
+# `website` value here as authoritative until a human has confirmed it
+# resolves to that commission's own official site (section 4 requires the
+# final source of record to be the regulator's own site, not a directory or
+# secondary summary).
+#
+# Two SERC codes were previously colliding in spirit: Karnataka's KERC vs.
+# Kerala's commission. Kerala is coded KSERC here specifically to avoid that
+# collision.
 
 schema_version: "1.0.0"
 regulators:
-  - code: KERC
-    name: Karnataka Electricity Regulatory Commission
-    type: SERC
-    jurisdiction_codes: ["KA"]
-    website: "https://kerc.karnataka.gov.in/143/tariff-order/en"
-  - code: DERC
-    name: Delhi Electricity Regulatory Commission
-    type: SERC
-    jurisdiction_codes: ["DL"]
-    website: "https://www.derc.gov.in/tarriff-orders"
-  - code: GERC
-    name: Gujarat Electricity Regulatory Commission
-    type: SERC
-    jurisdiction_codes: ["GJ"]
-    website: "https://gercin.org/tariff-schedules/"
   - code: MERC
     name: Maharashtra Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["MH"]
-    website: "https://www.mahadiscom.in/consumer/en/tariff-details/"
+    website: "https://www.mercindia.org.in"
+    notes: "UNVERIFIED. Prior registry version had this field pointing at MSEDCL's (the licensee's) tariff page, not MERC's own site -- corrected here to MERC's own domain but still needs a human verification pass per section 4."
+  - code: GERC
+    name: Gujarat Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["GJ"]
+    website: "https://gercin.org"
+    notes: "UNVERIFIED against source. Domain reused from the existing GERC-TARIFF-SCHEDULES source entry."
+  - code: KERC
+    name: Karnataka Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["KA"]
+    website: "https://kerc.karnataka.gov.in"
+    notes: "UNVERIFIED against source (carried over from prior registry version)."
+  - code: TNERC
+    name: Tamil Nadu Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["TN"]
+    website: "https://www.tnerc.tn.gov.in"
+    notes: "UNVERIFIED. Domain may also appear as tnerc.gov.in; needs confirmation."
+  - code: TSERC
+    name: Telangana State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["TS"]
+    website: "https://www.tserc.telangana.gov.in"
+    notes: "UNVERIFIED. Domain may also appear as tserc.gov.in; needs confirmation."
+  - code: APERC
+    name: Andhra Pradesh Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["AP"]
+    website: "https://www.aperc.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: DERC
+    name: Delhi Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["DL"]
+    website: "https://www.derc.gov.in"
+    notes: "UNVERIFIED against source (carried over; prior registry version and sources.yaml used a URL with a typo, tarriff-orders instead of tariff-orders -- see sources.yaml note)."
+  - code: RERC
+    name: Rajasthan Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["RJ"]
+    website: "https://www.rerc.rajasthan.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: UPERC
+    name: Uttar Pradesh Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["UP"]
+    website: "https://www.uperc.org"
+    notes: "UNVERIFIED against source."
+  - code: HERC
+    name: Haryana Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["HR"]
+    website: "https://herc.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: MPERC
+    name: Madhya Pradesh Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["MP"]
+    website: "https://mperc.in"
+    notes: "UNVERIFIED against source."
+  - code: OERC
+    name: Odisha Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["OD"]
+    website: "https://www.orierc.org"
+    notes: "UNVERIFIED against source; exact current domain has low confidence, may have changed."
+  - code: PSERC
+    name: Punjab State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["PB"]
+    website: "https://www.pserc.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: WBERC
+    name: West Bengal Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["WB"]
+    website: "https://www.wberc.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: KSERC
+    name: Kerala State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["KL"]
+    website: "https://www.keralaserc.gov.in"
+    notes: "UNVERIFIED against source. Coded KSERC (not KERC) specifically to avoid collision with Karnataka Electricity Regulatory Commission's KERC code."
+  - code: CSERC
+    name: Chhattisgarh State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["CG"]
+    website: "https://cserc.gov.in"
+    notes: "UNVERIFIED against source."
+  - code: BERC
+    name: Bihar Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["BR"]
+    website: "https://www.berc.co.in"
+    notes: "UNVERIFIED against source; exact domain low confidence."
+  - code: JSERC
+    name: Jharkhand State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["JH"]
+    website: "https://jserc.org"
+    notes: "UNVERIFIED against source."

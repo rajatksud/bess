@@ -26,6 +26,10 @@
         "JERC"
       ]
     },
+    "short_name": {
+      "type": "string",
+      "description": "Commonly used abbreviation, e.g. KERC, JERC (Goa/UTs)."
+    },
     "jurisdiction_codes": {
       "type": "array",
       "items": {
@@ -37,6 +41,38 @@
     "website": {
       "type": "string",
       "format": "uri"
+    },
+    "order_portal_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tariff-order portal, if distinct from the main website."
+    },
+    "schedule_portal_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tariff-schedule portal, if separate from the order portal."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "evidence_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Authoritative source confirming this regulator's identity and jurisdiction."
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date"
+    },
+    "source_health": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "BLOCKED", "MANUAL", "NOT_CHECKED"],
+      "default": "NOT_CHECKED"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes on shared or changing jurisdictional responsibility (e.g. JERC covering multiple UTs)."
     }
   }
 }

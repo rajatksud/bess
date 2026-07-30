@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/shared_tariff_group.schema.json",
+  "title": "SharedTariffGroup",
+  "description": "A many-to-many grouping of licensees that share a common commission-approved tariff schedule or ceiling tariff, e.g. multiple state DISCOMs on one MYT order, or a deemed licensee adopting another licensee's approved ceiling tariff. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1 and registry/shared_tariff_groups.yaml.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "group_id",
+    "name",
+    "regulator_code",
+    "licensee_codes"
+  ],
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "Stable ID referenced by licensee.shared_tariff_group_id."
+    },
+    "name": {
+      "type": "string"
+    },
+    "regulator_code": {
+      "type": "string",
+      "description": "Code from regulators.yaml that approves the shared schedule."
+    },
+    "jurisdiction_codes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Jurisdiction codes (jurisdictions.yaml) covered by this shared group, when it spans more than one (e.g. a JERC-approved schedule)."
+    },
+    "licensee_codes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Codes from licensees.yaml that share this tariff schedule."
+    },
+    "basis": {
+      "type": "string",
+      "enum": [
+        "COMMON_MYT_ORDER",
+        "CEILING_TARIFF_ADOPTED",
+        "SINGLE_ELECTRICITY_DEPARTMENT",
+        "JERC_COMMON_SCHEDULE",
+        "OTHER"
+      ],
+      "description": "Why the licensees are grouped: one order applying to several DISCOMs, a deemed licensee adopting another's ceiling tariff, a single UT electricity department, or a JERC-approved common schedule across jurisdictions."
+    },
+    "authoritative_source_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

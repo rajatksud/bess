@@ -3,155 +3,200 @@
 # Validated against schemas/jurisdiction.schema.json.
 #
 # status: NOT_STARTED | IN_PROGRESS | COVERED | BLOCKED
-# Wave 1 jurisdictions (Maharashtra, Gujarat, Karnataka, Tamil Nadu, Telangana, Delhi)
-# are marked IN_PROGRESS; all others start NOT_STARTED per the Wave 0/1 rollout plan (section 13).
+#
+# Priority order per docs/development/TARIFF_CRAWLER_14H_EXECUTION_LOG.md /
+# the crawler brief: Maharashtra, Gujarat, Karnataka, Tamil Nadu, Telangana,
+# Andhra Pradesh, Delhi, Rajasthan, Uttar Pradesh, Haryana, Madhya Pradesh,
+# Odisha, Punjab, West Bengal, Kerala, Chhattisgarh, Bihar, Jharkhand, then
+# remaining states/UTs. IN_PROGRESS here means "regulator and/or licensee
+# candidates identified, at least one source configured" — not "coverage
+# complete." No jurisdiction is marked COVERED until it has a verified,
+# ACTIVE-monitored source and at least one reviewed tariff record.
 
 schema_version: "1.0.0"
 jurisdictions:
-  # States
-  - code: AP
-    name: Andhra Pradesh
-    type: STATE
-    status: NOT_STARTED
-  - code: AR
-    name: Arunachal Pradesh
-    type: STATE
-    status: NOT_STARTED
-  - code: AS
-    name: Assam
-    type: STATE
-    status: NOT_STARTED
-  - code: BR
-    name: Bihar
-    type: STATE
-    status: NOT_STARTED
-  - code: CG
-    name: Chhattisgarh
-    type: STATE
-    status: NOT_STARTED
-  - code: GA
-    name: Goa
-    type: STATE
-    status: NOT_STARTED
-  - code: GJ
-    name: Gujarat
-    type: STATE
-    status: IN_PROGRESS
-  - code: HR
-    name: Haryana
-    type: STATE
-    status: NOT_STARTED
-  - code: HP
-    name: Himachal Pradesh
-    type: STATE
-    status: NOT_STARTED
-  - code: JH
-    name: Jharkhand
-    type: STATE
-    status: NOT_STARTED
-  - code: KA
-    name: Karnataka
-    type: STATE
-    status: IN_PROGRESS
-  - code: KL
-    name: Kerala
-    type: STATE
-    status: NOT_STARTED
-  - code: MP
-    name: Madhya Pradesh
-    type: STATE
-    status: NOT_STARTED
+  # States, in the brief's priority order
   - code: MH
     name: Maharashtra
     type: STATE
     status: IN_PROGRESS
-  - code: MN
-    name: Manipur
+    notes: "Priority 1. MERC regulator + MSEDCL and private Mumbai discoms identified; sources not yet ACTIVE-monitored."
+  - code: GJ
+    name: Gujarat
     type: STATE
-    status: NOT_STARTED
-  - code: ML
-    name: Meghalaya
+    status: IN_PROGRESS
+    notes: "Priority 2. GERC regulator + GUVNL-group discoms and Torrent Power identified; sources not yet ACTIVE-monitored."
+  - code: KA
+    name: Karnataka
     type: STATE
-    status: NOT_STARTED
-  - code: MZ
-    name: Mizoram
-    type: STATE
-    status: NOT_STARTED
-  - code: NL
-    name: Nagaland
-    type: STATE
-    status: NOT_STARTED
-  - code: OD
-    name: Odisha
-    type: STATE
-    status: NOT_STARTED
-  - code: PB
-    name: Punjab
-    type: STATE
-    status: NOT_STARTED
-  - code: RJ
-    name: Rajasthan
-    type: STATE
-    status: NOT_STARTED
-  - code: SK
-    name: Sikkim
-    type: STATE
-    status: NOT_STARTED
+    status: IN_PROGRESS
+    notes: "Priority 3. KERC regulator + BESCOM/MESCOM/CESCK/HESCOM/GESCOM identified; sources not yet ACTIVE-monitored."
   - code: TN
     name: Tamil Nadu
     type: STATE
     status: IN_PROGRESS
+    notes: "Priority 4. TNERC regulator + TANGEDCO identified; source not yet ACTIVE-monitored."
   - code: TS
     name: Telangana
     type: STATE
     status: IN_PROGRESS
-  - code: TR
-    name: Tripura
+    notes: "Priority 5. TSERC regulator + TSSPDCL/TSNPDCL identified; sources not yet ACTIVE-monitored."
+  - code: AP
+    name: Andhra Pradesh
     type: STATE
-    status: NOT_STARTED
+    status: IN_PROGRESS
+    notes: "Priority 6. APERC regulator + APSPDCL/APEPDCL/APCPDCL candidates identified; discom count/names post-2014 bifurcation need verification against APERC."
+  - code: DL
+    name: Delhi (National Capital Territory)
+    type: UNION_TERRITORY
+    status: IN_PROGRESS
+    notes: "Priority 7. DERC regulator + BRPL/BYPL/TPDDL/NDMC/MES identified; sources not yet ACTIVE-monitored."
+  - code: RJ
+    name: Rajasthan
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 8. RERC regulator + JVVNL/AVVNL/JDVVNL candidates identified; unverified."
   - code: UP
     name: Uttar Pradesh
     type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 9. UPERC regulator + discom candidates identified; PuVVNL/DVVNL privatization status unknown, needs verification."
+  - code: HR
+    name: Haryana
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 10. HERC regulator + UHBVN/DHBVN candidates identified; unverified."
+  - code: MP
+    name: Madhya Pradesh
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 11. MPERC regulator + MPPKVVCL/MPMKVVCL/MPPaKVVCL candidates identified; unverified."
+  - code: OD
+    name: Odisha
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 12. OERC regulator + Tata Power TPCODL/TPWODL/TPSODL/TPNODL candidates identified; discom ownership history is volatile (Reliance -> administrator -> Tata Power), needs verification."
+  - code: PB
+    name: Punjab
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 13. PSERC regulator + PSPCL candidate identified; unverified."
+  - code: WB
+    name: West Bengal
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 14. WBERC regulator + WBSEDCL/CESC candidates identified; unverified."
+  - code: KL
+    name: Kerala
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 15. KSERC regulator (code distinct from Karnataka's KERC) + KSEB candidate identified; unverified."
+  - code: CG
+    name: Chhattisgarh
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 16. CSERC regulator + CSPDCL candidate identified; unverified."
+  - code: BR
+    name: Bihar
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 17. BERC regulator + NBPDCL/SBPDCL candidates identified; unverified."
+  - code: JH
+    name: Jharkhand
+    type: STATE
+    status: IN_PROGRESS
+    notes: "Priority 18. JSERC regulator + JBVNL candidate identified; unverified."
+
+  # Remaining states
+  - code: AR
+    name: Arunachal Pradesh
+    type: STATE
+    status: BLOCKED
+    blocker_notes: "Regulatory arrangement unconfirmed (may have a standalone APSERC, historically colliding in acronym with Andhra Pradesh's APERC, or fall under a joint/central mechanism); low confidence, needs verification."
+  - code: AS
+    name: Assam
+    type: STATE
     status: NOT_STARTED
+    notes: "AERC regulator + APDCL licensee candidates identified from model knowledge only; no source configured."
   - code: UK
     name: Uttarakhand
     type: STATE
     status: NOT_STARTED
-  - code: WB
-    name: West Bengal
+    notes: "UERC regulator + UPCL licensee candidates identified from model knowledge only; no source configured."
+  - code: HP
+    name: Himachal Pradesh
     type: STATE
     status: NOT_STARTED
+    notes: "HPERC regulator + HPSEBL licensee candidates identified from model knowledge only; no source configured."
+  - code: GA
+    name: Goa
+    type: STATE
+    status: NOT_STARTED
+    notes: "Regulatory coverage believed to be JERC for Goa & UTs; Goa Electricity Department believed to be a government department rather than a corporatized licensee. Low confidence, no source configured."
+  - code: TR
+    name: Tripura
+    type: STATE
+    status: NOT_STARTED
+    notes: "TERC regulator + TSECL licensee candidates identified from model knowledge only; no source configured."
+  - code: MN
+    name: Manipur
+    type: STATE
+    status: NOT_STARTED
+    notes: "Regulatory arrangement believed to be JERC for Manipur; low confidence. No source configured."
+  - code: ML
+    name: Meghalaya
+    type: STATE
+    status: NOT_STARTED
+    notes: "MSERC regulator + MePDCL licensee candidates identified from model knowledge only; no source configured."
+  - code: MZ
+    name: Mizoram
+    type: STATE
+    status: BLOCKED
+    blocker_notes: "Regulatory arrangement and whether distribution is corporatized are both unconfirmed (low confidence); no authoritative source identified yet."
+  - code: NL
+    name: Nagaland
+    type: STATE
+    status: BLOCKED
+    blocker_notes: "Regulatory arrangement and whether distribution is corporatized are both unconfirmed (low confidence); no authoritative source identified yet."
+  - code: SK
+    name: Sikkim
+    type: STATE
+    status: BLOCKED
+    blocker_notes: "No confirmed standalone regulatory commission identified; distribution believed to be run by a state government department. Needs verification."
 
   # Union Territories
   - code: AN
     name: Andaman and Nicobar Islands
     type: UNION_TERRITORY
-    status: NOT_STARTED
+    status: BLOCKED
+    blocker_notes: "Isolated/diesel-based grid; regulatory tariff-setting body unconfirmed. Needs verification."
   - code: CH
     name: Chandigarh
     type: UNION_TERRITORY
-    status: NOT_STARTED
+    status: BLOCKED
+    blocker_notes: "Regulatory arrangement (JERC vs. joint Punjab/Haryana oversight) and licensee ownership (government department vs. privatized) both unconfirmed; known area of possible recent change."
   - code: DN
     name: Dadra and Nagar Haveli and Daman and Diu
     type: UNION_TERRITORY
     status: NOT_STARTED
-  - code: DL
-    name: Delhi (National Capital Territory)
-    type: UNION_TERRITORY
-    status: IN_PROGRESS
+    notes: "Believed covered by JERC for Goa & UTs post-2020 UT merger; licensee believed to be the UT administration's Electricity Department. Unverified."
   - code: JK
     name: Jammu and Kashmir
     type: UNION_TERRITORY
-    status: NOT_STARTED
+    status: BLOCKED
+    blocker_notes: "Institutional structure has been in flux since the 2019 reorganization into a Union Territory; current regulator/licensee status unconfirmed."
   - code: LA
     name: Ladakh
     type: UNION_TERRITORY
-    status: NOT_STARTED
+    status: BLOCKED
+    blocker_notes: "New UT (2019); regulatory/tariff arrangement for its small grid is unconfirmed."
   - code: LD
     name: Lakshadweep
     type: UNION_TERRITORY
-    status: NOT_STARTED
+    status: BLOCKED
+    blocker_notes: "Isolated grid; unclear whether conventional retail tariff regulation applies in the same sense as mainland jurisdictions."
   - code: PY
     name: Puducherry
     type: UNION_TERRITORY
     status: NOT_STARTED
+    notes: "Puducherry Electricity Department believed to be the licensee (government department, not corporatized); regulatory arrangement (JERC vs. separate) unconfirmed."

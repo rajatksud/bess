@@ -19,6 +19,10 @@
     "source_id": {
       "type": "string"
     },
+    "jurisdiction_code": {
+      "type": "string",
+      "description": "Code from jurisdictions.yaml this source primarily concerns. Required for jurisdiction-scoped validation even when regulator_code/licensee_code also identify it."
+    },
     "regulator_code": {
       "type": "string",
       "description": "Code from regulators.yaml, if this source is regulator-owned."
@@ -26,6 +30,15 @@
     "licensee_code": {
       "type": "string",
       "description": "Code from licensees.yaml, if this source is licensee-owned."
+    },
+    "licensee_codes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Codes from licensees.yaml, when a single source (e.g. a shared commission tariff order) covers multiple licensees."
+    },
+    "discovery_method_note": {
+      "type": "string",
+      "description": "How this source was found (e.g. regulator site navigation, FoR directory, licensee website search)."
     },
     "url": {
       "type": "string",
@@ -124,6 +137,17 @@
       "type": "string",
       "format": "date",
       "description": "Date a human last confirmed this source configuration still matches the live site."
+    },
+    "source_health": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "BLOCKED", "MANUAL", "NOT_CHECKED"],
+      "default": "NOT_CHECKED",
+      "description": "Result of the most recent live probe. HEALTHY requires an actual successful fetch, not just a syntactically valid URL."
+    },
+    "last_live_check_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent live probe, regardless of outcome."
     },
     "notes": {
       "type": "string"

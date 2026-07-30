@@ -5,19 +5,27 @@
   "type": "module",
   "description": "Automated discovery-zone crawler for India C&I tariff authoritative sources. See docs/architecture/AUTHORITATIVE_TARIFF_CRAWLER_ARCHITECTURE.md.",
   "scripts": {
-    "build": "tsc",
-    "crawl": "tsc && node dist/src/cli.js crawl",
-    "verify": "tsc && node dist/src/cli.js verify",
-    "test": "tsc && node --test \"dist/tests/*.test.js\"",
+    "build": "tsc && npm run copy-migrations",
+    "copy-migrations": "node -e \"const fs=require('fs'),path=require('path');fs.mkdirSync('dist/src/db/migrations',{recursive:true});for(const f of fs.readdirSync('src/db/migrations'))fs.copyFileSync(path.join('src/db/migrations',f),path.join('dist/src/db/migrations',f));\"",
+    "crawl": "npm run build && node dist/src/cli.js crawl",
+    "verify": "npm run build && node dist/src/cli.js verify",
+    "migrate": "npm run build && node dist/src/cli.js migrate",
+    "migrate:production": "npm run build && node dist/src/cli.js migrate --production",
+    "registry:load": "npm run build && node dist/src/cli.js registry-load",
+    "source-health": "npm run build && node dist/src/cli.js source-health",
+    "test": "npm run build && node --test \"dist/tests/*.test.js\"",
+    "test:integration": "npm run build && node --test \"dist/tests/integration/*.test.js\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.13.1",
+    "@types/pg": "^8.11.10",
     "typescript": "^5.7.3"
   }
 }

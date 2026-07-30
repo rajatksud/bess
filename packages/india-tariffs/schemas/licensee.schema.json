@@ -36,9 +36,103 @@
       "enum": [
         "STATE_UTILITY",
         "PRIVATE_DISCOM",
+        "MUNICIPAL",
         "DEEMED_LICENSEE",
+        "SPECIAL_AREA",
         "OTHER"
-      ]
+      ],
+      "description": "MUNICIPAL covers municipal-body distribution (e.g. BEST, NDMC). SPECIAL_AREA covers cantonment/special-area licensees (e.g. Military Engineer Services in Delhi Cantonment)."
+    },
+    "coverage_tier": {
+      "type": "string",
+      "enum": ["TIER_A", "TIER_B", "TIER_C"],
+      "default": "TIER_A",
+      "description": "TIER_A: mainstream state-owned/major-private/municipal distribution licensee serving a normal geographic retail area. TIER_B: extended C&I coverage (deemed/SEZ/industrial-area/port/airport/campus/parallel licensees). TIER_C: historical, renamed, merged, surrendered, unconfirmed or proposed entities, tracked but never presented as active."
+    },
+    "ownership_type": {
+      "type": "string",
+      "enum": ["STATE_GOVERNMENT", "PRIVATE", "MUNICIPAL_BODY", "CENTRAL_GOVERNMENT", "COOPERATIVE", "MIXED", "UNKNOWN"],
+      "default": "UNKNOWN"
+    },
+    "c_and_i_relevance": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW", "NONE"],
+      "default": "MEDIUM",
+      "description": "Materiality of this licensee's territory for HT/LT industrial and commercial tariff analysis."
+    },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ACTIVE", "INACTIVE", "UNCERTAIN"],
+      "default": "UNCERTAIN"
+    },
+    "shares_schedule_with": {
+      "type": "string",
+      "description": "Code of another licensee (licensees.yaml) whose tariff schedule this licensee shares, when applicable (e.g. licensees under a common holding company using one filed schedule)."
+    },
+    "shared_tariff_group_id": {
+      "type": ["string", "null"],
+      "description": "ID of a shared_tariff_group (see docs) when several licensees are governed by one common commission-approved schedule, e.g. multiple state DISCOMs on a single MYT order."
+    },
+    "predecessor_licensee_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Codes of licensees (licensees.yaml) this licensee succeeded via restructuring, merger or renaming."
+    },
+    "successor_licensee_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Codes of licensees (licensees.yaml) that succeeded this licensee, if applicable (e.g. this record is TIER_C/historical)."
+    },
+    "overlap_licensee_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Codes of other licensees (licensees.yaml) with an overlapping or parallel service territory (e.g. a deemed licensee inside a state DISCOM's area)."
+    },
+    "parent_licensee_id": {
+      "type": ["string", "null"],
+      "description": "Code of the parent distribution licensee (licensees.yaml), when this record is a franchisee rather than an independent licensee. A franchisee must not be represented as independent unless regulatory evidence confirms distinct licensee status."
+    },
+    "coverage_status": {
+      "type": "string",
+      "enum": ["NOT_STARTED", "IN_PROGRESS", "COVERED", "BLOCKED"],
+      "default": "NOT_STARTED"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["VERIFIED", "PROVISIONAL", "UNVERIFIED", "DISPUTED"],
+      "default": "UNVERIFIED",
+      "description": "VERIFIED: confirmed against an authoritative source in the section-4 hierarchy. PROVISIONAL: discovered but not yet confirmed against a primary source. UNVERIFIED: not yet checked. DISPUTED: conflicting authoritative evidence found."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW"],
+      "description": "Confidence in the accuracy of this record given the evidence found."
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date",
+      "description": "Date a human/agent last confirmed this licensee's identity/status against an authoritative source."
+    },
+    "evidence_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Authoritative source URL supporting this licensee's existence/details."
+    },
+    "authoritative_source_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Codes of sources.yaml entries providing evidence for this record."
+    },
+    "notes": {
+      "type": "string"
     }
   }
 }

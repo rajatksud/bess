@@ -1,0 +1,10 @@
+# Registry of shared-tariff groupings: sets of licensees governed by one
+# common commission-approved schedule (e.g. several state DISCOMs on a single
+# MYT order, a deemed licensee adopting another licensee's ceiling tariff, or
+# one electricity department serving a whole Union Territory).
+# Validated against schemas/shared_tariff_group.schema.json.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5 ("Shared and
+# multiple tariff schedules").
+
+schema_version: "1.0.0"
+shared_tariff_groups: []

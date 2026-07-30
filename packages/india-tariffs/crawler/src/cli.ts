@@ -2,12 +2,17 @@ import { resolve } from "node:path";
 import { DocumentArchive } from "./archive.js";
 import { crawlSource } from "./crawl.js";
 import { loadSourceRegistry, selectActiveSources } from "./registry.js";
+import { CrawlerDatabase } from "./db/client.js";
+import { loadDatabaseConfig } from "./db/env.js";
+import { migrate, currentMigrationVersion } from "./db/migrate.js";
+import { loadRegistryIntoDatabase } from "./db/registryLoader.js";
 
 // import.meta.dirname is dist/src at runtime; walk up to packages/india-tariffs.
 const PACKAGE_ROOT = resolve(import.meta.dirname, "..", "..", "..");
 const DEFAULT_REGISTRY_PATH = resolve(PACKAGE_ROOT, "registry", "sources.yaml");
 const DEFAULT_ARCHIVE_DIR = resolve(PACKAGE_ROOT, "crawler", ".archive");
 const DEFAULT_MANIFEST_PATH = resolve(PACKAGE_ROOT, "crawler", ".archive", "manifest.json");
+const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -20,9 +25,97 @@ async function main(): Promise<void> {
     runVerify(args);
     return;
   }
+  if (command === "migrate") {
+    await runMigrate(args);
+    return;
+  }
+  if (command === "registry-load") {
+    await runRegistryLoad(args);
+    return;
+  }
+  if (command === "source-health") {
+    await runSourceHealth(args);
+    return;
+  }
 
-  console.error("Usage: cli.js <crawl|verify> [--registry <path>] [--source <source_id>]");
+  console.error(
+    "Usage: cli.js <crawl|verify|migrate|registry-load|source-health> " +
+      "[--registry <path>] [--source <source_id>] [--production]",
+  );
   process.exitCode = 1;
+}
+
+function targetFromEnv(): "staging" | "production" {
+  const appEnv = process.env.APP_ENV;
+  if (appEnv === "production") return "production";
+  if (appEnv === "staging") return "staging";
+  throw new Error(`APP_ENV must be "staging" or "production" for database commands, got "${appEnv ?? "<unset>"}"`);
+}
+
+async function runMigrate(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const allowProduction = args.includes("--production");
+  if (target === "production" && !allowProduction) {
+    console.error('Refusing to migrate a production-configured environment without --production.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  try {
+    const before = await currentMigrationVersion(db).catch(() => null);
+    const result = await migrate(db, { allowProduction });
+    const after = await currentMigrationVersion(db);
+    console.log(`Migration target: ${target}`);
+    console.log(`Schema version before: ${before ?? "(none)"}`);
+    console.log(`Applied: ${result.applied.length > 0 ? result.applied.join(", ") : "(none, already current)"}`);
+    console.log(`Already current: ${result.alreadyCurrent.length}`);
+    console.log(`Schema version after: ${after ?? "(none)"}`);
+  } finally {
+    await db.close();
+  }
+}
+
+async function runRegistryLoad(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const registryDir = flagValue(args, "--registry-dir") ?? DEFAULT_REGISTRY_DIR;
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  try {
+    const result = await loadRegistryIntoDatabase(db, {
+      jurisdictions: resolve(registryDir, "jurisdictions.yaml"),
+      regulators: resolve(registryDir, "regulators.yaml"),
+      licensees: resolve(registryDir, "licensees.yaml"),
+      sources: resolve(registryDir, "sources.yaml"),
+    });
+    console.log(`Registry loaded into ${target}:`);
+    console.log(`  jurisdictions: ${result.jurisdictions}`);
+    console.log(`  regulators: ${result.regulators} (${result.regulatorJurisdictionLinks} jurisdiction links)`);
+    console.log(`  licensees: ${result.licensees}`);
+    console.log(`  sources: ${result.sources}`);
+  } finally {
+    await db.close();
+  }
+}
+
+async function runSourceHealth(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  try {
+    await db.ensureEnvironmentMarker();
+    const summary = await db.withClient(async (client) => {
+      const { rows } = await client.query(
+        `SELECT monitoring_status, count(*) FROM authoritative_sources GROUP BY monitoring_status ORDER BY 1`,
+      );
+      return rows;
+    });
+    console.log(`Source health summary (${target}):`);
+    for (const row of summary) {
+      console.log(`  ${row.monitoring_status}: ${row.count}`);
+    }
+  } finally {
+    await db.close();
+  }
 }
 
 async function runCrawl(args: string[]): Promise<void> {
