@@ -8,7 +8,7 @@
     "build": "tsc",
     "crawl": "tsc && node dist/src/cli.js crawl",
     "verify": "tsc && node dist/src/cli.js verify",
-    "test": "tsc && node --test dist/tests/",
+    "test": "tsc && node --test \"dist/tests/*.test.js\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

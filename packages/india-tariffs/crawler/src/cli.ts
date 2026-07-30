@@ -3,7 +3,8 @@ import { DocumentArchive } from "./archive.js";
 import { crawlSource } from "./crawl.js";
 import { loadSourceRegistry, selectActiveSources } from "./registry.js";
 
-const PACKAGE_ROOT = resolve(import.meta.dirname, "..", "..");
+// import.meta.dirname is dist/src at runtime; walk up to packages/india-tariffs.
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..", "..", "..");
 const DEFAULT_REGISTRY_PATH = resolve(PACKAGE_ROOT, "registry", "sources.yaml");
 const DEFAULT_ARCHIVE_DIR = resolve(PACKAGE_ROOT, "crawler", ".archive");
 const DEFAULT_MANIFEST_PATH = resolve(PACKAGE_ROOT, "crawler", ".archive", "manifest.json");

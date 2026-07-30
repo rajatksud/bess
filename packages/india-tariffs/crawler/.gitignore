@@ -1,0 +1,3 @@
+# Runtime archive: immutable but not meant to accumulate in normal Git history
+# (strategy doc section 7 — large source PDFs belong in object storage/release assets).
+.archive/
