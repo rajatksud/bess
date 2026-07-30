@@ -8,6 +8,7 @@
 # Dependencies and build outputs
 node_modules/
 dist/
+server-dist/
 build/
 coverage/
 *.tsbuildinfo
