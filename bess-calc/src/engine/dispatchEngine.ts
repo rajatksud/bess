@@ -41,6 +41,16 @@ export function runIntervalDispatch(
   let totalCurtailedSolarKwh = 0;
   let totalGridChargedKwh = 0;
 
+  // Rule 2 (no double counting): each kWh discharged is attributed to exactly ONE
+  // avoided-cost category based on the bessAction tag assigned in the priority loop
+  // below. These per-category accumulators are the ONLY inputs the savings
+  // calculation may use for peak-shaving/arbitrage energy. Do not derive per-category
+  // savings from the aggregate totalDischargedKwh/totalChargedKwh above — those two
+  // remain valid ONLY for physical/degradation purposes (SOC, cycle counting),
+  // because they intentionally mix energy from every avoided-cost category.
+  let totalArbitrageDischargedKwh = 0;
+  let totalArbitrageChargedKwh = 0;
+
   // Find Peak Before BESS across the profile
   let peakBeforeKw = 0;
   let peakBeforeKva = 0;
@@ -51,7 +61,28 @@ export function runIntervalDispatch(
 
   // Calculate target grid demand for peak shaving (e.g., target 60-70% of peak, bounded by battery rated kW)
   // Max achievable peak shaving in kW = min(system.ratedPowerKw, peakBeforeKw * 0.4)
-  const targetPeakKw = Math.max(0, peakBeforeKw - system.ratedPowerKw);
+  //
+  // Bug fixed here: max(0, peakBeforeKw - ratedPowerKw) collapses to 0 whenever the
+  // battery is rated at or above the profile's peak load (a battery "big enough to
+  // shave the whole peak"). With target = 0, the peak_shaving priority below
+  // (loadKw > targetPeakKw) would then match EVERY interval with any load at all,
+  // discharging the battery against ordinary base load that was never actually a
+  // demand-charge problem - starving every lower-priority use (solar charging,
+  // arbitrage) of any opportunity to claim the battery, and typically flattening SOC
+  // to its floor well before intervals that genuinely need it (e.g. an evening
+  // outage or TOU-peak window later the same day).
+  //
+  // Fix: shave down toward the NEXT-highest distinct load level actually observed in
+  // the profile, not toward zero. This correctly distinguishes a genuine, rare peak
+  // spike (a profile with one dominant maximum - shave it down as far as the battery
+  // allows, per the original single-peak intent) from a profile with several
+  // recurring load levels through the day (e.g. a low midday base load and a higher
+  // evening load) - ordinary recurring load levels are never treated as "the peak"
+  // needing to be shaved toward zero.
+  const distinctLoadLevelsDesc = Array.from(new Set(intervals.map(inv => inv.loadKw)))
+    .sort((a, b) => b - a);
+  const nextHighestLoadLevelKw = distinctLoadLevelsDesc.length > 1 ? distinctLoadLevelsDesc[1] : 0;
+  const targetPeakKw = Math.max(nextHighestLoadLevelKw, peakBeforeKw - system.ratedPowerKw);
 
   const simulatedIntervals: IntervalRecord[] = [];
 
@@ -128,6 +159,7 @@ export function runIntervalDispatch(
           if (dischargeKw > 0) {
             bessPowerKw = dischargeKw;
             bessAction = 'TOU Arbitrage Discharge';
+            totalArbitrageDischargedKwh += dischargeKw * dtHours;
           }
         } else if (inv.tariffPeriod === 'Off-Peak Discount' || inv.tariffImportRate < tariff.energyChargePerKwh * 0.8) {
           const chargeKw = remainingChargeKw;
@@ -135,6 +167,7 @@ export function runIntervalDispatch(
             bessPowerKw = -chargeKw;
             bessAction = 'TOU Off-Peak Charge';
             totalGridChargedKwh += chargeKw * dtHours;
+            totalArbitrageChargedKwh += chargeKw * dtHours;
           }
         }
       }
@@ -229,13 +262,40 @@ export function runIntervalDispatch(
   const annualSolarSelfConsumptionSaving = annualSolarStoredKwh * netSolarBenefitPerKwh;
 
   // 4. Energy Arbitrage Saving
+  //
+  // Rule 2 (no double counting): this MUST be computed only from energy the dispatch
+  // loop actually tagged 'TOU Arbitrage Discharge' / 'TOU Off-Peak Charge'
+  // (totalArbitrageDischargedKwh / totalArbitrageChargedKwh). Using the aggregate
+  // totalDischargedKwh here would re-monetize kWh already credited to demand-charge
+  // reduction (peak shaving) and diesel-fuel saving (backup/DG displacement) above,
+  // because those categories share the same physical battery and are mutually
+  // exclusive per interval, but totalDischargedKwh sums across ALL of them.
   const annualDischargedKwh = totalDischargedKwh * daysInYear;
   const annualChargedKwh = totalChargedKwh * daysInYear;
-  const annualEnergyArbitrageSaving = Math.max(0, (annualDischargedKwh * tariff.energyChargePerKwh * 0.2));
+  const annualArbitrageDischargedKwh = totalArbitrageDischargedKwh * daysInYear;
+  const annualArbitrageChargedKwh = totalArbitrageChargedKwh * daysInYear;
+  // Net arbitrage value = (peak-rate energy discharged x peak rate) - (off-peak energy
+  // charged x off-peak rate), consistent with CALCULATION_ENGINE_DESIGN.md section on
+  // Arbitrage and the coding spec's net-arbitrage-value formula. Falls back to the
+  // standard energy charge if no TOU periods are configured for this interval set.
+  const peakRate = tariff.enableTou
+    ? Math.max(tariff.energyChargePerKwh, ...tariff.touPeriods.map(p => p.importRatePerKwh))
+    : tariff.energyChargePerKwh;
+  const offPeakRate = tariff.enableTou && tariff.touPeriods.length > 0
+    ? Math.min(...tariff.touPeriods.map(p => p.importRatePerKwh))
+    : tariff.energyChargePerKwh;
+  // This is the GROSS arbitrage saving (avoided peak-rate import only). The cost of
+  // the off-peak grid energy used to charge is deducted once, below, via
+  // annualChargingCost - it must not also be netted out here or it would be
+  // subtracted from net savings twice.
+  const annualEnergyArbitrageSaving = Math.max(0, annualArbitrageDischargedKwh * peakRate);
 
   // Costs
+  // All grid (non-solar) charging in this simulation currently originates from the
+  // TOU off-peak-charge branch, so annualGridChargedKwh === annualArbitrageChargedKwh.
+  // Priced at the actual off-peak tariff rather than an approximated 0.8x factor.
   const annualGridChargedKwh = totalGridChargedKwh * daysInYear;
-  const annualChargingCost = annualGridChargedKwh * (tariff.energyChargePerKwh * 0.8);
+  const annualChargingCost = annualGridChargedKwh * offPeakRate;
 
   const annualAuxiliaryKwh = system.auxiliaryLoadKw * 24 * daysInYear;
   const annualAuxiliaryCost = annualAuxiliaryKwh * tariff.energyChargePerKwh;
