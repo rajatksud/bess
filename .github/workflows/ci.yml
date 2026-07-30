@@ -1,0 +1,111 @@
+name: BESS Calculator CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bess-calc/**'
+      - '.github/workflows/ci.yml'
+  push:
+    branches:
+      - 'feature/**'
+      - 'dev/**'
+    paths:
+      - 'bess-calc/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: bess-calc
+
+jobs:
+  test:
+    name: Test, typecheck, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read Node version
+        id: node-version
+        run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-version.outputs.version }}
+          cache: npm
+          cache-dependency-path: bess-calc/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Typecheck frontend and server
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build server
+        run: npm run build:server
+
+      - name: Audit dependencies (non-blocking)
+        run: npm audit --audit-level=high || true
+
+  docker:
+    name: Container build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: bess-calc
+          push: false
+          load: true
+          tags: bess-calculator:ci
+          build-args: |
+            GIT_COMMIT_SHA=${{ github.sha }}
+
+      - name: Validate docker-compose config
+        working-directory: bess-calc
+        run: docker compose config
+        env:
+          GIT_COMMIT_SHA: ${{ github.sha }}
+          IMAGE_TAG: ci
+
+      - name: Smoke-test the built image
+        working-directory: bess-calc
+        run: |
+          docker run -d --name bess-calc-ci -p 8080:8080 bess-calculator:ci
+          for i in $(seq 1 15); do
+            if curl -sf http://127.0.0.1:8080/api/v1/health >/dev/null; then
+              echo "Health check passed"
+              break
+            fi
+            if [ "$i" -eq 15 ]; then
+              echo "Health check failed after 15 attempts"
+              docker logs bess-calc-ci
+              exit 1
+            fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8080/api/v1/version
+          docker stop bess-calc-ci
+          docker rm bess-calc-ci
