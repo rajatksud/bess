@@ -10,7 +10,7 @@ This package owns tariff *data*: sources, provenance, normalized tariff records 
 
 ## Structure
 
-- `registry/` — jurisdictions, regulators, licensees and monitored sources (human-reviewed YAML, source of truth; loaded into PostgreSQL via `crawler/`'s `registry-load` command).
+- `registry/` — jurisdictions, regulators, licensees, shared tariff groups, an unresolved-entity review queue, and monitored sources (human-reviewed YAML, source of truth; loaded into PostgreSQL via `crawler/`'s `registry-load` command). See [`../../docs/data/INDIA_LICENSEE_REGISTRY.md`](../../docs/data/INDIA_LICENSEE_REGISTRY.md) and [`../../docs/data/INDIA_TARIFF_SOURCE_REGISTRY.md`](../../docs/data/INDIA_TARIFF_SOURCE_REGISTRY.md) for the licensee tier/verification model and source health model, respectively.
 - `schemas/` — JSON Schema definitions for registry, tariff, charge, time-band and provenance records.
 - `data/normalized/` — human-reviewed, schema-validated tariff records (source of truth).
 - `data/reference/` — supporting reference data (archetypes, taxonomies, etc.).
@@ -42,12 +42,16 @@ APP_ENV=staging node dist/src/cli.js source-health
 
 ## Status
 
-Wave 0 (Foundation) — in progress. PostgreSQL persistence, migrations,
-environment isolation (staging/production/test), and an idempotent registry
-loader are implemented and exercised against a real staging database. The
-jurisdiction/regulator/licensee registry has been expanded to cover all 36
-states/UTs and 18 priority-state regulators/licensees (see
+Wave 0/3 (Foundation / National coverage) — in progress. PostgreSQL
+persistence, migrations, environment isolation (staging/production/test),
+and an idempotent registry loader are implemented and exercised against a
+real staging database. The jurisdiction/regulator/licensee registry now
+covers all 36 states/UTs with an identified regulator and at least one
+licensee each (30 regulators, 72 licensees, 23 authoritative sources, 4
+shared-tariff-group records, 8 open review-queue items) — see
 [`../../docs/data/INDIA_TARIFF_COVERAGE.md`](../../docs/data/INDIA_TARIFF_COVERAGE.md)
-for exact counts and known gaps). The authoritative source registry (only 5
-entries) has not yet been expanded to match, and no source has been through
-a live verification crawl — no approved tariff records exist yet.
+for exact counts, per-jurisdiction status and known gaps. No source has an
+`ACTIVE` `monitoring_status` yet (source reachability has been live-probed,
+but document-discovery crawl adapters have not been validated), and no
+tariff order/schedule data has been extracted — no approved tariff records
+exist yet.
