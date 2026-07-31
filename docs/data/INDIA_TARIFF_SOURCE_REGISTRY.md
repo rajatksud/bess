@@ -36,15 +36,15 @@ field-level schema.
 
 Never conflate the two: a `HEALTHY` source is not automatically `ACTIVE`.
 
-## Current inventory (23 sources)
+## Current inventory (25 sources)
 
 | source_health | Count |
 |---|---:|
-| HEALTHY | 18 |
+| HEALTHY | 20 |
 | BLOCKED | 1 (`MSEDCL-TARIFF-DETAILS` — seeded URL now 404s) |
 | Not yet probed (pre-2026-07-31 seed entries) | 4 |
 
-All 23 sources reference a valid `jurisdiction_code`, and every
+All 25 sources reference a valid `jurisdiction_code`, and every
 `regulator_code`/`licensee_code`/`licensee_codes` reference resolves to a
 real registry entry — enforced by
 `crawler/tests/nationalRegistry.test.ts`. No source is orphaned (unscoped to

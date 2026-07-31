@@ -26,13 +26,13 @@ count below reflects registry identity coverage, not confirmed tariff data.
 | — Tier A (mainstream) | 1 | 70 |
 | — Tier B (extended/deemed/special) | 0 | 1 |
 | — Tier C (historical/uncertain) | 0 | 1 |
-| Authoritative sources | 5 | **23** |
-| — source_health HEALTHY | 0 (never probed) | 18 |
+| Authoritative sources | 5 | **25** |
+| — source_health HEALTHY | 0 (never probed) | 20 |
 | — source_health DEGRADED | 0 | 0 (regulators only; see regulator health below) |
 | — source_health BLOCKED | 0 | 1 |
 | — source_health unset (not yet probed) | 5 | 4 |
 | Shared tariff groups | 0 (empty stub) | **4** |
-| Review-queue entries (unresolved items) | 0 | **8** |
+| Review-queue entries (7 open, 1 resolved) | 0 | **8** |
 | Sources with `monitoring_status: ACTIVE` | 0 | 0 (unchanged — see note) |
 
 `monitoring_status` intentionally stays `NOT_CONFIGURED` on every source,
@@ -50,7 +50,7 @@ pass per the crawler architecture, not just a successful HTTP probe.
 | Gujarat (GJ) | GERC | 6 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
 | Karnataka (KA) | KERC | 5 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
 | Tamil Nadu (TN) | TNERC | 1 | 0 | 0 | 0 | 0 | PARTIAL_TIER_A |
-| Telangana (TS) | TSERC | 2 | 0 | 0 | 0 | 1 | SOURCE_BLOCKED |
+| Telangana (TS) | TGERC | 2 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
 | Andhra Pradesh (AP) | APERC | 3 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
 | Delhi (DL) | DERC | 5 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
 | Rajasthan (RJ) | RERC | 3 | 0 | 0 | 1 | 0 | PARTIAL_TIER_A |
@@ -101,9 +101,9 @@ Coverage-status legend used above:
 
 | Health | Count | Regulators |
 |---|---:|---|
-| HEALTHY | 17 | MERC, GERC, KERC, APERC, DERC, RERC, OERC, WBERC, BERC, JSERC, APSERC, MSERC, MZERC, HPERC, UERC, JERC-GOA-UT |
+| HEALTHY | 18 | MERC, GERC, KERC, APERC, DERC, RERC, OERC, WBERC, BERC, JSERC, APSERC, MSERC, MZERC, HPERC, UERC, JERC-GOA-UT, TGERC |
 | DEGRADED | 9 | TNERC, UPERC, HERC, MPERC, AERC, TERC, KSERC, CSERC, JERC-JKL |
-| BLOCKED | 3 | TSERC, PSERC, SSERC |
+| BLOCKED | 2 | PSERC, SSERC |
 | NOT_CHECKED | 1 | NERC |
 
 DEGRADED means the domain is very likely correct (confirmed via search or
@@ -133,16 +133,23 @@ the specific probe evidence.
   could not be confirmed against a primary gazette source — see review-queue
   item RQ-001.
 - **Sikkim's SSERC domain is dead/squatted.** The long-standing `sserc.in`
-  domain now resolves to an unrelated gambling site — see RQ-002.
-- **Telangana's TSERC has no confirmed-reachable domain** as of this probe
-  pass (both the original and search-suggested domains failed DNS
-  resolution) — see RQ-006.
+  domain now resolves to an unrelated gambling site, re-confirmed on a
+  second pass (both http/https, multiple paths). Explicitly ruled out being
+  JERC-covered — Sikkim is a genuine standalone state SERC; a working
+  fallback document source (`selfservice.powersikkim.in`) was found instead
+  — see RQ-002.
+- **Telangana's regulator was renamed TSERC → TGERC** (Telangana Electricity
+  Regulatory Commission, matching the state's shift from TS to TG as its
+  abbreviation) — confirmed live at tgerc.telangana.gov.in; the earlier
+  DNS-resolution failures were because the domain itself had changed, not a
+  transient fetch issue. RQ-006 resolved.
 - **UP's PuVVNL/DVVNL and AP's APCPDCL** ownership/existence questions are
   carried forward, unresolved, from the original registry seeding — see
   RQ-004 and RQ-005.
 
 See `packages/india-tariffs/registry/licensee_review_queue.yaml` for the
-full list of 8 open items with evidence checked and suggested next steps.
+full list of 8 items (7 open, 1 resolved) with evidence checked and
+suggested next steps.
 
 ## Source registry status
 
@@ -161,11 +168,11 @@ during this pass (HTTP 404 — MSEDCL restructured its site) and is recorded
 
 1. **No source has monitoring_status: ACTIVE.** Every source needs a
    crawl-adapter validation pass before document discovery can begin.
-2. **DEGRADED/BLOCKED/NOT_CHECKED regulator sites** (13 of 30) need a clean
+2. **DEGRADED/BLOCKED/NOT_CHECKED regulator sites** (12 of 30) need a clean
    re-probe, likely via a browser-rendered fetch for the JS-heavy ones
-   (UPERC, KSERC) and alternate-domain discovery for the DNS-failure ones
-   (TSERC, PSERC).
-3. **8 open review-queue items** need primary-source resolution before the
+   (UPERC, KSERC) and alternate-domain discovery for the remaining
+   DNS-failure one (PSERC).
+3. **7 open review-queue items** need primary-source resolution before the
    affected jurisdictions' regulator/licensee facts can be treated as
    stable (see above).
 4. **No tariff category, charge, or billing-demand data exists yet** for
