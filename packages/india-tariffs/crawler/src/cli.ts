@@ -1,11 +1,13 @@
 import { resolve } from "node:path";
 import { DocumentArchive } from "./archive.js";
 import { crawlSource } from "./crawl.js";
+import { FETCHER_VERSION } from "./fetcher.js";
 import { loadSourceRegistry, selectActiveSources } from "./registry.js";
 import { CrawlerDatabase } from "./db/client.js";
 import { loadDatabaseConfig } from "./db/env.js";
 import { migrate, currentMigrationVersion } from "./db/migrate.js";
 import { loadRegistryIntoDatabase } from "./db/registryLoader.js";
+import { startCrawlRun, finishCrawlRun } from "./db/crawlRunRepository.js";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -25,7 +27,6 @@ const ARCHIVE_DIR = process.env.CRAWLER_ARCHIVE_DIR
   ? resolve(process.env.CRAWLER_ARCHIVE_DIR)
   : resolve(PACKAGE_ROOT, "crawler", ".archive");
 const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
-const DEFAULT_MANIFEST_PATH = resolve(ARCHIVE_DIR, "manifest.json");
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
@@ -142,6 +143,7 @@ async function runSourceHealth(args: string[]): Promise<void> {
 }
 
 async function runCrawl(args: string[]): Promise<void> {
+  const target = targetFromEnv();
   const registryPath = flagValue(args, "--registry") ?? DEFAULT_REGISTRY_PATH;
   const onlySourceId = flagValue(args, "--source");
 
@@ -153,22 +155,42 @@ async function runCrawl(args: string[]): Promise<void> {
     return;
   }
 
-  const archive = new DocumentArchive(DEFAULT_ARCHIVE_DIR, DEFAULT_MANIFEST_PATH);
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  await db.verifyEnvironmentMarker();
+
+  const archive = new DocumentArchive(DEFAULT_ARCHIVE_DIR, db);
   let hadErrors = false;
 
-  for (const source of active) {
-    console.log(`\n[${source.source_id}] crawling ${source.url}`);
-    const result = await crawlSource(source, archive);
-    console.log(
-      `[${source.source_id}] links=${result.linksDiscovered} fetched=${result.documentsFetched} new=${result.newDocuments}`,
-    );
-    if (result.replacementsDetected.length > 0) {
-      console.warn(`[${source.source_id}] REPLACEMENT DETECTED:\n  ${result.replacementsDetected.join("\n  ")}`);
+  try {
+    for (const source of active) {
+      console.log(`\n[${source.source_id}] crawling ${source.url}`);
+      const run = await startCrawlRun(db, source.source_id, FETCHER_VERSION);
+      const result = await crawlSource(source, archive, db, run.id);
+
+      const status: "SUCCEEDED" | "FAILED" | "PARTIAL" =
+        result.errors.length === 0 ? "SUCCEEDED" : result.documentsFetched > 0 ? "PARTIAL" : "FAILED";
+      await finishCrawlRun(db, run.id, {
+        status,
+        linksDiscovered: result.linksDiscovered,
+        documentsFetched: result.documentsFetched,
+        newDocuments: result.newDocuments,
+        replacementsDetected: result.replacementsDetected.length,
+        errorSummary: result.errors.length > 0 ? result.errors.join("; ") : null,
+      });
+
+      console.log(
+        `[${source.source_id}] run #${run.id} status=${status} links=${result.linksDiscovered} fetched=${result.documentsFetched} new=${result.newDocuments}`,
+      );
+      if (result.replacementsDetected.length > 0) {
+        console.warn(`[${source.source_id}] REPLACEMENT DETECTED:\n  ${result.replacementsDetected.join("\n  ")}`);
+      }
+      if (result.errors.length > 0) {
+        hadErrors = true;
+        console.error(`[${source.source_id}] errors:\n  ${result.errors.join("\n  ")}`);
+      }
     }
-    if (result.errors.length > 0) {
-      hadErrors = true;
-      console.error(`[${source.source_id}] errors:\n  ${result.errors.join("\n  ")}`);
-    }
+  } finally {
+    await db.close();
   }
 
   if (hadErrors) {
