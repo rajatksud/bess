@@ -246,3 +246,47 @@ candidates, validation results, review queues.
 Not allowed, and not implemented by any command in this repo: automatically
 creating an `approved_tariffs` row, or otherwise bypassing the
 `review_decisions` → `approved_tariffs` path with a human `reviewer` value.
+
+## Deployed-image verification on prjxn2 (2026-07-31)
+
+Docker Engine 29.7.0 (installed in the Firecrawl-assessment pass above)
+was used to build and run the crawler image directly on `prjxn2` for the
+first time, as part of verifying the classification/extraction/validation/
+scheduler pipeline built in this session.
+
+- Build context (`packages/india-tariffs/`) transferred via `scp` and built
+  on-host with `docker build -t india-tariffs-crawler:<sha> -f Dockerfile .`
+  from commit `3c7feda35d8799fb458d5ec06a0d302dd2195b94`.
+- Image: `india-tariffs-crawler:3c7feda35d87`, 338MB, digest
+  `sha256:685064804e78563f91d452e5d794f5583d233236a19fa7213eec7e516447b7d1`.
+- `docker run --rm india-tariffs-crawler:3c7feda35d87 verify` succeeds:
+  loads and validates all 26 registry sources, matching the committed
+  `sources.yaml` exactly (including this session's 3 new `ACTIVE`
+  activations) — confirms the image's build/copy steps and the registry
+  schema/validation logic are all correct in the actual deployed artifact,
+  not just in local `tsc` output.
+- `docker run --rm india-tariffs-crawler:3c7feda35d87` (no args) prints the
+  full command surface including this session's new `extract`, `validate`,
+  and `schedule-run` commands, confirming they shipped correctly.
+
+**Known gap**: this container was not run against the staging database
+*from* `prjxn2` in this session. `tariff_crawler_staging` runs on the local
+development machine (`localhost:5433`), not on a network `prjxn2` can
+reach, and `prjxn2`'s own native PostgreSQL (used by unrelated services —
+see the Firecrawl assessment above) is a completely separate instance.
+Opening a network path between them (e.g. a reverse SSH tunnel) was
+correctly declined mid-session by the run's own safety guardrails, since it
+is an unreviewed topology change to a service outside this task's explicit
+scope, not a decision to make unilaterally. The full `migrate` /
+`registry-load` / `crawl` / `extract` / `validate` / `schedule-run`
+sequence was instead run and fully verified from the local dev
+environment against real staging Postgres (see the PR description's
+morning-report section for exact evidence) — only the "run the container
+specifically from prjxn2 against staging" leg remains undone.
+
+**Follow-up**: before `prjxn2` can run scheduled crawls against staging in
+production-like fashion, one of the following needs an explicit decision:
+(a) a reviewed, intentional network path from `prjxn2` to the staging
+Postgres host, (b) relocating/replicating staging Postgres to a host
+`prjxn2` can already reach, or (c) provisioning a `prjxn2`-local staging
+Postgres instance separate from its existing native PostgreSQL.
