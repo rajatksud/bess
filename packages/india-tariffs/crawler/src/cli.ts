@@ -15,6 +15,7 @@ import type { AcquisitionProvider } from "./acquisition/types.js";
 import { runExtraction } from "./extraction/extractionOrchestrator.js";
 import type { SourceDocumentRow } from "./extraction/extractionOrchestrator.js";
 import { runValidation } from "./validation/runValidation.js";
+import { runSchedulerBatch } from "./scheduler.js";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -37,7 +38,7 @@ const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
-  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate> " +
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate|schedule-run> " +
   "[--registry <path>] [--source <source_id>] [--document <document_id>] [--candidate <id>] [--production]";
 
 async function main(): Promise<void> {
@@ -73,6 +74,10 @@ async function main(): Promise<void> {
   }
   if (command === "validate") {
     await runValidateCommand(args);
+    return;
+  }
+  if (command === "schedule-run") {
+    await runScheduleRun(args);
     return;
   }
 
@@ -345,6 +350,37 @@ async function runValidateCommand(args: string[]): Promise<void> {
       if (result.reviewReady) reviewReadyCount++;
     }
     console.log(`\n${reviewReadyCount}/${candidateIds.length} candidate(s) reached REVIEW_READY`);
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Runs one scheduler pass: crawls every ACTIVE source whose crawl_schedules
+ * row is due, one at a time, each behind its own named advisory lock so
+ * multiple concurrently-running scheduler containers never double-crawl a
+ * source. Emits one structured JSON-line log per batch and exits nonzero if
+ * any source failed, so a cron/systemd-timer invocation surfaces failures in
+ * its own exit-code-based alerting without needing to parse the log itself.
+ */
+async function runScheduleRun(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const registryPath = flagValue(args, "--registry") ?? DEFAULT_REGISTRY_PATH;
+  const registry = loadSourceRegistry(registryPath);
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  await db.verifyEnvironmentMarker();
+
+  const archive = new DocumentArchive(DEFAULT_ARCHIVE_DIR, db);
+  const acquisition = buildAcquisitionProvider();
+  const schedulerInstanceId = process.env.SCHEDULER_INSTANCE_ID || `scheduler-${process.pid}-${Date.now()}`;
+
+  try {
+    const result = await runSchedulerBatch({ db, registry, archive, acquisition, schedulerInstanceId });
+    console.log(JSON.stringify({ event: "scheduler_batch_complete", schedulerInstanceId, ...result }));
+    if (result.failed > 0) {
+      process.exitCode = 1;
+    }
   } finally {
     await db.close();
   }
