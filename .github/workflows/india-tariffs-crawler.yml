@@ -62,11 +62,8 @@ jobs:
       - name: Typecheck
         run: npm run lint
 
-      - name: Unit tests (no live database, no live network)
+      - name: All tests (unit + DB-gated integration, disposable CI Postgres only)
         run: npm test
-
-      - name: Integration tests (disposable CI Postgres only)
-        run: npm run test:integration
 
       - name: Validate registry YAML loads and is internally consistent
         run: node dist/src/cli.js verify

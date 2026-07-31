@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { DocumentArchive } from "../../src/archive.js";
 import { CrawlerDatabase } from "../../src/db/client.js";
 import { loadTestDatabaseConfig } from "../../src/db/env.js";
+import { migrate } from "../../src/db/migrate.js";
 import type { FetchRecord } from "../../src/types.js";
 
 /**
@@ -85,6 +86,7 @@ test("put() stores a new document and adds it to the manifest", { skip: !config 
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const { archive, dir, sourceId } = await makeArchive(db);
     const body = Buffer.from("tariff order content v1");
     const { entry, isNewDocument } = await archive.put(body, record(sourceId, {}, body), "TARIFF_ORDER");
@@ -103,6 +105,7 @@ test("put() recognizes the same binary observed at a new URL as one document", {
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const { archive, dir, sourceId } = await makeArchive(db);
     const body = Buffer.from("tariff order content v1");
     const first = await archive.put(body, record(sourceId, { finalUrl: "https://example.gov.in/a.pdf" }, body), "TARIFF_ORDER");
@@ -128,6 +131,7 @@ test("findReplacement detects an unchanged URL now serving new content", { skip:
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const { archive, dir, sourceId } = await makeArchive(db);
     const url = "https://example.gov.in/a.pdf";
     const bodyV1 = Buffer.from("tariff order content v1");
@@ -155,6 +159,7 @@ test(
     const db = new CrawlerDatabase(config!);
     try {
       await db.ensureEnvironmentMarker();
+      await migrate(db);
       const { archive, dir, sourceId } = await makeArchive(db);
       const body = Buffer.from("concurrent put content");
       const sha = sha256(body);
@@ -187,6 +192,7 @@ test("writeBlobAtomic never leaves a partially-written or stray temp file at the
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const { archive, dir, sourceId } = await makeArchive(db);
     const body = Buffer.from("atomic write content");
     const { entry } = await archive.put(body, record(sourceId, {}, body), "TARIFF_ORDER");

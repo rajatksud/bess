@@ -38,9 +38,9 @@ async function seedSource(db: CrawlerDatabase, sourceId: string): Promise<void> 
     );
     await client.query(
       `INSERT INTO authoritative_sources (
-         source_id, url, allowed_domains, source_type, authority_rank,
+         source_id, regulator_code, url, allowed_domains, source_type, authority_rank,
          discovery_method, adapter, monitoring_status
-       ) VALUES ($1, 'https://example.gov.in/tariffs', ARRAY['example.gov.in'], 'TARIFF_ORDER', 1,
+       ) VALUES ($1, 'ZZREG', 'https://example.gov.in/tariffs', ARRAY['example.gov.in'], 'TARIFF_ORDER', 1,
                  'HTML_LINKS', 'generic_html_link_listing', 'ACTIVE')
        ON CONFLICT (source_id) DO NOTHING`,
       [sourceId],
@@ -71,6 +71,7 @@ test("finishCrawlRun transitions RUNNING -> SUCCEEDED with correct counters", { 
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const sourceId = `TEST-SRC-${randomUUID()}`;
     await seedSource(db, sourceId);
 
@@ -104,6 +105,7 @@ test("finishCrawlRun transitions RUNNING -> FAILED with error_summary populated"
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const sourceId = `TEST-SRC-${randomUUID()}`;
     await seedSource(db, sourceId);
 
@@ -129,6 +131,7 @@ test("recordFetchObservation inserts a row referencing the crawl_run_id", { skip
   const db = new CrawlerDatabase(config!);
   try {
     await db.ensureEnvironmentMarker();
+    await migrate(db);
     const sourceId = `TEST-SRC-${randomUUID()}`;
     await seedSource(db, sourceId);
     const run = await startCrawlRun(db, sourceId, "test-version");
@@ -149,7 +152,7 @@ test("recordFetchObservation inserts a row referencing the crawl_run_id", { skip
       client.query(`SELECT crawl_run_id, sha256, http_status FROM fetch_observations WHERE crawl_run_id = $1`, [run.id]),
     );
     assert.equal(rows.length, 1);
-    assert.equal(rows[0].crawl_run_id, run.id);
+    assert.equal(Number(rows[0].crawl_run_id), run.id);
     assert.equal(rows[0].sha256, "a".repeat(64));
     assert.equal(rows[0].http_status, 200);
   } finally {
@@ -164,6 +167,7 @@ test(
     const db = new CrawlerDatabase(config!);
     try {
       await db.ensureEnvironmentMarker();
+      await migrate(db);
       const sourceId = `TEST-SRC-${randomUUID()}`;
       await seedSource(db, sourceId);
       const run = await startCrawlRun(db, sourceId, "test-version");
