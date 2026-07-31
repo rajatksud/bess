@@ -25,42 +25,74 @@ sources:
 
   - source_id: GERC-TARIFF-SCHEDULES
     regulator_code: GERC
+    jurisdiction_code: GJ
     url: "https://gercin.org/tariff-schedules/"
     source_type: TARIFF_SCHEDULE
     authority_rank: 2
-    monitoring_status: NOT_CONFIGURED
+    monitoring_status: DEGRADED
     allowed_domains: ["gercin.org"]
     discovery_method: HTML_LINKS
     adapter: generic_html_link_listing
     schedule: DAILY
     include_patterns: ["tariff", "schedule", "order", "amendment", "corrigendum"]
     exclude_patterns: ["petition", "public-hearing", "public-notice"]
+    source_health: DEGRADED
+    last_verified: "2026-07-31"
+    notes: "Live-crawl attempted 2026-07-31, twice: both attempts failed at the listing-page fetch with a raw connection reset (ECONNRESET), confirmed independently via a direct WebFetch attempt at the same time (also ECONNRESET) and via a manual openssl-adjacent check -- this points to the server itself resetting connections (possibly rate-limiting or blocking the requesting IP/User-Agent) rather than a client-side TLS/config issue, since the earlier DERC-class fix (--use-system-ca) does not apply here (this is a connection-level reset, not a certificate error). Left DEGRADED rather than ACTIVE or BLOCKED: source_health was HEALTHY on a prior probe pass, so this may be intermittent -- needs a retry from a different network path before either activating or giving up on it."
 
   - source_id: KERC-TARIFF-ORDERS
     regulator_code: KERC
+    jurisdiction_code: KA
     url: "https://kerc.karnataka.gov.in/96/tariff-order/en"
     source_type: TARIFF_ORDER
     authority_rank: 1
-    monitoring_status: NOT_CONFIGURED
+    monitoring_status: DEGRADED
     allowed_domains: ["kerc.karnataka.gov.in"]
     discovery_method: HTML_LINKS
     adapter: generic_html_link_listing
     schedule: DAILY
     include_patterns: ["tariff", "retail-supply", "amendment", "corrigendum"]
     exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    notes: "Live-crawled 2026-07-31: this top-level listing page is a year-index page (links to 'tariff-order-YYYY' sub-pages, one per year, not directly to PDF documents) -- confirmed by a real crawl run (31 links discovered, all fetched successfully, all text/html, zero PDFs). Kept as DEGRADED (not ACTIVE) rather than deleted: it is still useful for discovering which years exist, but the generic single-level adapter cannot reach the actual tariff-order PDFs through this URL alone. See KERC-TARIFF-ORDERS-2025 for the year-specific source that reaches real PDF documents directly."
+
+  - source_id: KERC-TARIFF-ORDERS-2025
+    regulator_code: KERC
+    jurisdiction_code: KA
+    url: "https://kerc.karnataka.gov.in/143/tariff-order-2025/en"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: ACTIVE
+    allowed_domains: ["kerc.karnataka.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    permitted_content_types: ["application/pdf"]
+    include_patterns: [".pdf"]
+    exclude_patterns: ["petition", "public-hearing", "public-notice"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    evidence_url: "https://kerc.karnataka.gov.in/143/tariff-order-2025/en"
+    notes: "ACTIVATED 2026-07-31 after a real crawl+archive+idempotency validation pass (see docs/data/INDIA_TARIFF_COVERAGE.md and the crawler vertical-slice PR for evidence). This year-specific page links directly to real PDF documents: the 2025 Combined ESCOMs/KPTCL/HRECS tariff orders, corrigenda, amendments, and review-petition orders -- confirmed by a manual fetch of this exact page listing 16 distinct PDF links including 'Combined ESCOMs Tariff Order' (the current final/effective order) and a corrigendum postdating it. include_patterns narrowed to '.pdf' specifically (rather than keyword matching against link text/URL) because this page's own link text is inconsistent (some entries say 'Order', 'Addendum', 'Corrigendum' with no shared keyword) but every real document link ends in .pdf, while every non-document nav link on the page does not."
 
   - source_id: DERC-TARIFF-ORDERS
     regulator_code: DERC
+    jurisdiction_code: DL
     url: "https://www.derc.gov.in/tarriff-orders"
     source_type: TARIFF_ORDER
     authority_rank: 1
-    monitoring_status: NOT_CONFIGURED
+    monitoring_status: ACTIVE
     allowed_domains: ["www.derc.gov.in", "derc.gov.in"]
     discovery_method: HTML_LINKS
     adapter: generic_html_link_listing
     schedule: DAILY
     include_patterns: ["tariff", "order", "amendment", "corrigendum"]
     exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    evidence_url: "https://www.derc.gov.in/tarriff-orders"
+    notes: "ACTIVATED 2026-07-31 after a real crawl+archive validation pass: 19 links discovered, 19 fetched, 18 new documents archived (2 real application/pdf True-up Order documents for FY2022-23/FY2021-22 confirmed with correct SHA-256 and %PDF- magic bytes; the remaining 16 are HTML sub-category/pagination pages, expected and harmless since the crawler only archives what it fetches, not a failure). The listing is paginated (?page=1..13+) and links out to per-category sub-pages (under-section-142, other-than-142, general-order, supply-code) that themselves contain more per-licensee order PDFs (BRPL/BYPL/TPDDL/NDMC/IPGCL/PPCL per a live page inspection) -- full pagination/sub-page traversal is a follow-up improvement for the generic adapter, not required to confirm this source is genuinely live and yields real authoritative documents. NOTE: fetching this domain from a strict-TLS-verification client (Node's bundled CA store) fails with SELF_SIGNED_CERT_IN_CHAIN because derc.gov.in's server does not send its full certificate chain (confirmed via openssl s_client: only 2 certs sent, no root) -- the crawler's package.json crawl script now runs with --use-system-ca to resolve this by using the OS trust store's chain-completion instead of relying solely on Node's bundled Mozilla roots. This is a real fix for a documented class of Indian .gov.in TLS misconfiguration, not a security weakening (chain validation is still fully enforced, just against a more complete trust anchor)."
 
   - source_id: MSEDCL-TARIFF-DETAILS
     licensee_code: MSEDCL
@@ -87,15 +119,15 @@ sources:
     url: "https://merc.gov.in/electricity-tariff-and-fac/"
     source_type: TARIFF_SCHEDULE
     authority_rank: 2
-    monitoring_status: NOT_CONFIGURED
+    monitoring_status: DEGRADED
     allowed_domains: ["merc.gov.in"]
     discovery_method: HTML_LINKS
     adapter: generic_html_link_listing
     schedule: DAILY
-    source_health: HEALTHY
+    source_health: DEGRADED
     last_verified: "2026-07-31"
     last_live_check_at: "2026-07-31T00:00:00Z"
-    notes: "Live-probed 2026-07-31 (WebFetch): combined Tariff/FAC page, not a standalone tariff-orders listing -- adapter/include-patterns are provisional pending an actual crawl pass. Corrects the prior MSEDCL-only source with MERC's own commission-level source."
+    notes: "Live-probed 2026-07-31 (WebFetch): combined Tariff/FAC page, not a standalone tariff-orders listing. A real crawl attempt the same day stalled indefinitely on the listing-page fetch (killed after ~14 minutes with no progress, versus KERC's comparable page completing in under 5) -- inconclusive whether this is a genuinely slow/rate-limiting server or a transient network condition; not yet activated pending a retry with a longer timeout or at a different time. Corrects the prior MSEDCL-only source with MERC's own commission-level source."
 
   - source_id: APERC-TARIFF-ORDERS
     regulator_code: APERC
@@ -103,7 +135,7 @@ sources:
     url: "https://aperc.gov.in/page/Tariff_Orders"
     source_type: TARIFF_ORDER
     authority_rank: 1
-    monitoring_status: NOT_CONFIGURED
+    monitoring_status: ACTIVE
     allowed_domains: ["aperc.gov.in"]
     discovery_method: HTML_LINKS
     adapter: generic_html_link_listing
@@ -113,7 +145,7 @@ sources:
     source_health: HEALTHY
     last_verified: "2026-07-31"
     last_live_check_at: "2026-07-31T00:00:00Z"
-    notes: "Live-probed 2026-07-31 (WebFetch): dedicated Tariff Orders section with current-year and year-wise archive."
+    notes: "Live-probed 2026-07-31 (WebFetch), then ACTIVATED after a real crawl+archive validation pass: 38 links discovered, 36 fetched, 35 new documents archived (25 confirmed application/pdf tariff-order documents with correct SHA-256/PDF magic bytes; 10 HTML sub-pages, harmless). Two documents (RSTOrder23_24_LWFILE-BL.pdf at 238MB and RSTOrderVolumeI24052022.pdf at 68MB) were correctly rejected by the crawler's 50MB download-size cap (ResponseTooLargeError) rather than silently truncated or OOM-risked -- run status is PARTIAL, an accurate reflection of a real, legitimate size-limit rejection, not a crawler defect. dedicated Tariff Orders section with current-year and year-wise archive."
 
   - source_id: RERC-TARIFF-ORDERS
     regulator_code: RERC

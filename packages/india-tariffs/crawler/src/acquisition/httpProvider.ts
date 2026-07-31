@@ -15,9 +15,14 @@ export class HttpAcquisitionProvider implements AcquisitionProvider {
   async acquire(source: AuthoritativeSource, url: string): Promise<AcquisitionResult> {
     const startedAt = Date.now();
     try {
-      const { record, body } = await safeFetch(url, source, null, {
-        permittedContentTypes: source.permitted_content_types,
-      });
+      // Deliberately no permittedContentTypes restriction here: this is a
+      // listing/navigation page acquisition, and source.permitted_content_types
+      // describes the acceptable content types for the *documents this
+      // source yields* (enforced separately, per-document, in crawl.ts's
+      // safeFetch calls for each discovered link) -- a source configured to
+      // only accept application/pdf documents must still be able to fetch
+      // an ordinary HTML listing/index page to discover those PDF links.
+      const { record, body } = await safeFetch(url, source, null);
       const html = record.contentType?.includes("text/html") ? body.toString("utf8") : null;
       const discoveredLinks = html ? discoverLinks(html, url, source) : [];
 

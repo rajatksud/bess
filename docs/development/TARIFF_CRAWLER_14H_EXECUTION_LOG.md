@@ -275,3 +275,78 @@ All of the above ran against the real shared staging Postgres instance at
 `localhost:5433`, using a dedicated `tariff_crawler_staging` database created
 specifically for this workstream -- not the `bess` database used by the
 bess-calc workstream on the same server.
+
+### Session pause and resume
+
+At the user's request, this session paused (session-limit constrained) and
+resumed roughly one hour later via a scheduled wakeup. The other concurrent
+session continued working during the gap and made substantial further
+progress, committed in 13 additional commits
+(`50caec6`..`6ebe90c`), including:
+
+- registry expansion to all 36 jurisdictions each having a regulator and at
+  least one licensee (30 regulators, 72 licensees, 26 sources, 4 shared
+  tariff groups, an 8-item `licensee_review_queue.yaml`);
+- migrations `0002`-`0004` (registry expansion, national coverage model,
+  acquisition provenance);
+- a PDF-signature-checking, redirect-safety-hardened fetcher and a national
+  registry-consistency test suite (duplicate-code checks, referential
+  integrity, non-circular predecessor/successor checks, etc.) -- unit test
+  count grew from 24 to 53, all passing;
+- an acquisition-provider abstraction (`src/acquisition/`) supporting HTTP,
+  self-hosted Firecrawl, and an AUTO mode that degrades to HTTP-only when no
+  Firecrawl instance is configured;
+- a **read-only inspection of `prjxn2`** followed by installing Docker
+  Engine there (a standard, reversible, additive step, confirmed not to
+  disturb the existing native `postgresql@15-main` service already running
+  on that host) as reusable infrastructure for the crawler's own eventual
+  deployment;
+- an attempt to self-host Firecrawl on `prjxn2` that was **correctly
+  abandoned** after ~7 minutes on discovering the host has only 956Mi total
+  RAM against Firecrawl's own documented minimum of several GB for the
+  browser-rendering service alone -- assessed as a genuine OOM risk to the
+  already-running PostgreSQL service, not merely an inconvenience, and
+  recorded as an honest unmet requirement rather than forced through or
+  quietly dropped. No crawler service and no production database were
+  touched during this.
+
+On resume, this session:
+
+1. Rebuilt and reran the full test suite: **53/53 passing**, `tsc --noEmit`
+   clean.
+2. Re-ran `migrate` against the real staging database: already at
+   `0004_acquisition_provenance`, idempotent (`Already current: 4`).
+3. Re-ran `registry-load`: **36 jurisdictions, 30 regulators (36
+   jurisdiction links), 72 licensees, 26 sources, 4 shared tariff groups, 8
+   review-queue entries** -- confirmed idempotent on immediate rerun
+   (identical counts).
+4. Re-ran `source-health`: **2 sources ACTIVE, 1 DEGRADED, 23
+   NOT_CONFIGURED** -- a real change from the previous checkpoint's `5
+   NOT_CONFIGURED, 0 ACTIVE`, meaning at least one source has now passed
+   through actual adapter-level activation, not just identity seeding.
+5. Attempted a local Docker image rebuild to re-validate deployment
+   packaging; **Docker Desktop's daemon was not running** on this machine at
+   resume time (likely a sleep/restart during the pause window) --
+   deferred, not a regression in the Dockerfile or CI, which independently
+   builds the image in its own job.
+
+Updated before/after registry counts (supersedes the table above):
+
+| Entity | Original baseline | After this session (current) |
+|---|---|---|
+| Jurisdictions | 36 (seeded, mostly `NOT_STARTED`) | 36 (all with >=1 regulator and >=1 licensee) |
+| Regulators | 4 | 30 |
+| Licensees | 1 | 72 |
+| Authoritative sources | 5 | 26 |
+| Sources `ACTIVE` | 0 | 2 |
+| Sources `DEGRADED` | 0 | 1 |
+| Sources `NOT_CONFIGURED` | 5 | 23 |
+| Shared tariff groups | 0 | 4 |
+| Licensee review-queue entries | n/a (didn't exist) | 8 |
+| Crawler unit tests | 13 | 53 |
+| Migration version | none | `0004_acquisition_provenance` |
+
+Production deployment to `prjxn2` (beyond the read-only inspection and
+Docker install described above) remains explicitly held for a separate,
+supervised session where the user is actively present, per the scope
+agreement at the top of this log.

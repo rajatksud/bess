@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc && npm run copy-migrations",
     "copy-migrations": "node -e \"const fs=require('fs'),path=require('path');fs.mkdirSync('dist/src/db/migrations',{recursive:true});for(const f of fs.readdirSync('src/db/migrations'))fs.copyFileSync(path.join('src/db/migrations',f),path.join('dist/src/db/migrations',f));\"",
-    "crawl": "npm run build && node dist/src/cli.js crawl",
+    "crawl": "npm run build && node --use-system-ca dist/src/cli.js crawl",
     "verify": "npm run build && node dist/src/cli.js verify",
     "migrate": "npm run build && node dist/src/cli.js migrate",
     "migrate:production": "npm run build && node dist/src/cli.js migrate --production",
