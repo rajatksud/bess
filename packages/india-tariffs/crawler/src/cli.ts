@@ -12,6 +12,8 @@ import { HttpAcquisitionProvider } from "./acquisition/httpProvider.js";
 import { FirecrawlAcquisitionProvider } from "./acquisition/firecrawlProvider.js";
 import { AutoAcquisitionProvider } from "./acquisition/autoProvider.js";
 import type { AcquisitionProvider } from "./acquisition/types.js";
+import { runExtraction } from "./extraction/extractionOrchestrator.js";
+import type { SourceDocumentRow } from "./extraction/extractionOrchestrator.js";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -34,8 +36,8 @@ const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
-  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health> " +
-  "[--registry <path>] [--source <source_id>] [--production]";
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract> " +
+  "[--registry <path>] [--source <source_id>] [--document <document_id>] [--production]";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -62,6 +64,10 @@ async function main(): Promise<void> {
   }
   if (command === "source-health") {
     await runSourceHealth(args);
+    return;
+  }
+  if (command === "extract") {
+    await runExtract(args);
     return;
   }
 
@@ -221,6 +227,75 @@ async function runCrawl(args: string[]): Promise<void> {
 
   if (hadErrors) {
     process.exitCode = 1;
+  }
+}
+
+/**
+ * Runs classification + (conditionally) extraction for one already-archived
+ * document. Deliberately single-document, not a batch loop over every
+ * source_documents row -- batching extraction is future scheduler work (see
+ * scheduler.ts), and forcing --document here keeps this command's blast
+ * radius obvious when run by hand against staging.
+ */
+async function runExtract(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const documentId = flagValue(args, "--document");
+  if (!documentId) {
+    console.error("extract requires --document <document_id>");
+    process.exitCode = 1;
+    return;
+  }
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  await db.verifyEnvironmentMarker();
+
+  try {
+    const { rows } = await db.withClient((client) =>
+      client.query(
+        `SELECT sd.document_id, sd.source_id, sd.storage_uri, sd.content_type, sd.first_seen_at,
+                s.source_id AS s_source_id, s.jurisdiction_code, s.regulator_code, s.licensee_code, s.url,
+                s.source_type, s.authority_rank, s.monitoring_status, s.allowed_domains, s.discovery_method, s.adapter
+         FROM source_documents sd
+         JOIN authoritative_sources s ON s.source_id = sd.source_id
+         WHERE sd.document_id = $1`,
+        [documentId],
+      ),
+    );
+    if (rows.length === 0) {
+      console.error(`No source_documents row found for document_id=${documentId}`);
+      process.exitCode = 1;
+      return;
+    }
+    const row = rows[0];
+    const document: SourceDocumentRow = {
+      document_id: row.document_id,
+      source_id: row.source_id,
+      storage_uri: row.storage_uri,
+      content_type: row.content_type,
+      first_seen_at: row.first_seen_at.toISOString(),
+    };
+    const source = {
+      source_id: row.s_source_id,
+      jurisdiction_code: row.jurisdiction_code ?? undefined,
+      regulator_code: row.regulator_code ?? undefined,
+      licensee_code: row.licensee_code ?? undefined,
+      url: row.url,
+      source_type: row.source_type,
+      authority_rank: row.authority_rank,
+      monitoring_status: row.monitoring_status,
+      allowed_domains: row.allowed_domains,
+      discovery_method: row.discovery_method,
+      adapter: row.adapter,
+    };
+
+    const result = await runExtraction(db, document, source);
+    console.log(`[${documentId}] classification=${result.classification.documentClass} confidence=${result.classification.confidence}`);
+    console.log(`[${documentId}] status=${result.status}${result.reason ? ` (${result.reason})` : ""}`);
+    if (result.candidateTariffIds.length > 0) {
+      console.log(`[${documentId}] candidate_tariffs created: ${result.candidateTariffIds.join(", ")}`);
+    }
+  } finally {
+    await db.close();
   }
 }
 

@@ -1,10 +1,9 @@
 import { createHash } from "node:crypto";
 import { DocumentArchive } from "./archive.js";
-import { classifyDocument } from "./classifier.js";
 import { safeFetch, RateLimiter } from "./fetcher.js";
 import { recordFetchObservation } from "./db/crawlRunRepository.js";
 import type { CrawlerDatabase } from "./db/client.js";
-import type { AuthoritativeSource } from "./types.js";
+import type { AuthoritativeSource, DocumentType } from "./types.js";
 import type { AcquisitionProvider } from "./acquisition/types.js";
 
 export interface CrawlSourceResult {
@@ -106,7 +105,7 @@ export async function crawlSource(
         );
       }
 
-      const documentType = classifyDocument(source, record.contentType);
+      const documentType = inferArchivalDocumentType(source, record.contentType);
       const { isNewDocument } = await archive.put(body, record, documentType);
 
       result.documentsFetched++;
@@ -119,4 +118,24 @@ export async function crawlSource(
   }
 
   return result;
+}
+
+/**
+ * Lightweight, fetch-time-only document-type inference for
+ * source_documents.document_type (the coarse DocumentType enum shared with
+ * AuthoritativeSource.source_type). This is deliberately NOT the same thing
+ * as classifier.ts's classifyDocument -- that function produces the richer
+ * DocumentClass (final order vs. petition vs. corrigendum, etc.) using
+ * actual extracted text evidence, and only runs later, during extraction
+ * (see cli.ts's `extract` command), once a document has been archived and
+ * its text is available to inspect. At fetch time, all we reliably know is
+ * the response's content-type and the source's own declared type.
+ */
+function inferArchivalDocumentType(source: AuthoritativeSource, contentType: string | null): DocumentType {
+  if (contentType?.includes("text/html")) {
+    // An HTML hit against a document-oriented source is very likely a listing
+    // page fragment or index, not the document itself.
+    return "SECONDARY_SUMMARY";
+  }
+  return source.source_type;
 }
