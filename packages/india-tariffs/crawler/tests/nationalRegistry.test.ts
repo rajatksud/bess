@@ -14,7 +14,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { load } from "js-yaml";
 
-const REGISTRY_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "registry");
+// import.meta.url is dist/tests at runtime; walk up to packages/india-tariffs/registry.
+const REGISTRY_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "registry");
 
 interface Jurisdiction {
   code: string;

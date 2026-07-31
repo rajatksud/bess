@@ -23,7 +23,7 @@ licensees:
     regulator_code: MERC
     jurisdiction_code: MH
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "Carried over from prior registry version. Statewide licensee outside Mumbai's private-discom areas."
   - code: TATA-MUM
@@ -31,7 +31,7 @@ licensees:
     regulator_code: MERC
     jurisdiction_code: MH
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Serves suburban Mumbai."
   - code: ADANI-MUM
@@ -39,7 +39,7 @@ licensees:
     regulator_code: MERC
     jurisdiction_code: MH
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Formerly Reliance Infrastructure / Reliance Energy's Mumbai distribution business; acquired by Adani circa 2018. Verify current name/ownership against MERC filings."
   - code: BEST
@@ -47,7 +47,7 @@ licensees:
     regulator_code: MERC
     jurisdiction_code: MH
     licensee_type: MUNICIPAL
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Municipal undertaking distributing power in Mumbai's island city area."
 
@@ -57,7 +57,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of Gujarat Urja Vikas Nigam Limited (GUVNL)."
@@ -66,7 +66,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
@@ -75,7 +75,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
@@ -84,7 +84,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
@@ -93,7 +93,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shares_schedule_with: TORRENT-SUR
     shared_tariff_group_id: TORRENT-GJ-CIRCLES
@@ -103,7 +103,7 @@ licensees:
     regulator_code: GERC
     jurisdiction_code: GJ
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: TORRENT-GJ-CIRCLES
     notes: "UNVERIFIED."
@@ -114,7 +114,7 @@ licensees:
     regulator_code: KERC
     jurisdiction_code: KA
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Serves Bengaluru region."
   - code: MESCOM
@@ -122,7 +122,7 @@ licensees:
     regulator_code: KERC
     jurisdiction_code: KA
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: CESCK
@@ -130,7 +130,7 @@ licensees:
     regulator_code: KERC
     jurisdiction_code: KA
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Serves Mysuru area. Coded CESCK, not CESC, to avoid collision with West Bengal's CESC Limited (Kolkata)."
   - code: HESCOM
@@ -138,7 +138,7 @@ licensees:
     regulator_code: KERC
     jurisdiction_code: KA
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: GESCOM
@@ -146,7 +146,7 @@ licensees:
     regulator_code: KERC
     jurisdiction_code: KA
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -156,7 +156,7 @@ licensees:
     regulator_code: TNERC
     jurisdiction_code: TN
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Believed to be the sole statewide distribution licensee (no major private urban discom comparable to Delhi/Mumbai/Kolkata known)."
 
@@ -166,7 +166,7 @@ licensees:
     regulator_code: TSERC
     jurisdiction_code: TS
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Covers Hyderabad and southern Telangana; emerged from 2014 AP/Telangana bifurcation."
   - code: TSNPDCL
@@ -174,7 +174,7 @@ licensees:
     regulator_code: TSERC
     jurisdiction_code: TS
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Covers northern Telangana."
 
@@ -184,7 +184,7 @@ licensees:
     regulator_code: APERC
     jurisdiction_code: AP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Post-2014-bifurcation discom count/naming for AP needs confirmation against APERC's own site."
   - code: APEPDCL
@@ -192,7 +192,7 @@ licensees:
     regulator_code: APERC
     jurisdiction_code: AP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: APCPDCL
@@ -210,7 +210,7 @@ licensees:
     regulator_code: DERC
     jurisdiction_code: DL
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     shared_tariff_group_id: BSES-DELHI
     notes: "UNVERIFIED. Serves South & West Delhi. BSES ownership/stake structure has periodically been subject to government/private disputes -- verify current ownership."
@@ -219,7 +219,7 @@ licensees:
     regulator_code: DERC
     jurisdiction_code: DL
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     shared_tariff_group_id: BSES-DELHI
     coverage_status: NOT_STARTED
     shares_schedule_with: BRPL
@@ -229,7 +229,7 @@ licensees:
     regulator_code: DERC
     jurisdiction_code: DL
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Serves North & Northwest Delhi; formerly North Delhi Power Limited (NDPL)."
   - code: NDMC-PWR
@@ -237,7 +237,7 @@ licensees:
     regulator_code: DERC
     jurisdiction_code: DL
     licensee_type: MUNICIPAL
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Distributes power in the NDMC (Lutyens' Delhi) area."
   - code: MES-DELHI
@@ -255,7 +255,7 @@ licensees:
     regulator_code: RERC
     jurisdiction_code: RJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: AVVNL
@@ -263,7 +263,7 @@ licensees:
     regulator_code: RERC
     jurisdiction_code: RJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: JDVVNL
@@ -271,7 +271,7 @@ licensees:
     regulator_code: RERC
     jurisdiction_code: RJ
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -289,7 +289,7 @@ licensees:
     regulator_code: UPERC
     jurisdiction_code: UP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED, but not believed to be part of the current privatization track (unlike PuVVNL/DVVNL)."
   - code: MVVNL
@@ -297,7 +297,7 @@ licensees:
     regulator_code: UPERC
     jurisdiction_code: UP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED, but not believed to be part of the current privatization track."
   - code: DVVNL
@@ -323,7 +323,7 @@ licensees:
     regulator_code: HERC
     jurisdiction_code: HR
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: DHBVN
@@ -331,7 +331,7 @@ licensees:
     regulator_code: HERC
     jurisdiction_code: HR
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -341,7 +341,7 @@ licensees:
     regulator_code: MPERC
     jurisdiction_code: MP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Eastern circle (Jabalpur)."
   - code: MPMKVVCL
@@ -349,7 +349,7 @@ licensees:
     regulator_code: MPERC
     jurisdiction_code: MP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Central circle (Bhopal)."
   - code: MPPAKVVCL
@@ -357,7 +357,7 @@ licensees:
     regulator_code: MPERC
     jurisdiction_code: MP
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Western circle (Indore)."
 
@@ -401,7 +401,7 @@ licensees:
     regulator_code: PSERC
     jurisdiction_code: PB
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Believed to be the single statewide distribution utility."
 
@@ -411,7 +411,7 @@ licensees:
     regulator_code: WBERC
     jurisdiction_code: WB
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Covers most of the state outside the Kolkata/Howrah CESC area."
   - code: CESC
@@ -419,7 +419,7 @@ licensees:
     regulator_code: WBERC
     jurisdiction_code: WB
     licensee_type: PRIVATE_DISCOM
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Serves Kolkata and Howrah; RPSG (Sanjiv Goenka) Group. Coded CESC (not CESCK, which is Karnataka's Mysuru discom) -- see Karnataka licensee notes for the collision-avoidance rationale."
 
@@ -429,7 +429,7 @@ licensees:
     regulator_code: KSERC
     jurisdiction_code: KL
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Believed to be the sole vertically-integrated utility for the state."
 
@@ -439,7 +439,7 @@ licensees:
     regulator_code: CSERC
     jurisdiction_code: CG
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -449,7 +449,7 @@ licensees:
     regulator_code: BERC
     jurisdiction_code: BR
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
   - code: SBPDCL
@@ -457,7 +457,7 @@ licensees:
     regulator_code: BERC
     jurisdiction_code: BR
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -467,7 +467,7 @@ licensees:
     regulator_code: JSERC
     jurisdiction_code: JH
     licensee_type: STATE_UTILITY
-    status: ACTIVE
+    status: UNCERTAIN
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED."
 
@@ -606,7 +606,7 @@ licensees:
     coverage_tier: TIER_A
     ownership_type: STATE_GOVERNMENT
     c_and_i_relevance: LOW
-    status: ACTIVE
+    status: UNCERTAIN
     verification_status: PROVISIONAL
     confidence: LOW
     coverage_status: BLOCKED
