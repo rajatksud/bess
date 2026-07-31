@@ -97,6 +97,12 @@
       "type": "string",
       "description": "Name of the discovery adapter implementation, e.g. generic_regulator_listing."
     },
+    "acquisition_mode": {
+      "type": "string",
+      "enum": ["HTTP", "FIRECRAWL", "AUTO"],
+      "default": "AUTO",
+      "description": "How the source's pages are acquired, distinct from the adapter (which describes how a page is interpreted once acquired). HTTP uses the plain fetch path only; FIRECRAWL always uses the self-hosted Firecrawl service; AUTO tries HTTP first and falls back to Firecrawl per documented heuristics (SPA-shell detection, no matching links found, or discovery_method BROWSER_RENDERED)."
+    },
     "schedule": {
       "type": "string",
       "enum": [

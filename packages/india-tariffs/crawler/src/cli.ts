@@ -8,6 +8,10 @@ import { loadDatabaseConfig } from "./db/env.js";
 import { migrate, currentMigrationVersion } from "./db/migrate.js";
 import { loadRegistryIntoDatabase } from "./db/registryLoader.js";
 import { startCrawlRun, finishCrawlRun } from "./db/crawlRunRepository.js";
+import { HttpAcquisitionProvider } from "./acquisition/httpProvider.js";
+import { FirecrawlAcquisitionProvider } from "./acquisition/firecrawlProvider.js";
+import { AutoAcquisitionProvider } from "./acquisition/autoProvider.js";
+import type { AcquisitionProvider } from "./acquisition/types.js";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -142,6 +146,27 @@ async function runSourceHealth(args: string[]): Promise<void> {
   }
 }
 
+/**
+ * Builds the acquisition provider for the crawl command. Firecrawl is only
+ * constructed when FIRECRAWL_BASE_URL is set (deployment status is
+ * discovered from the environment, not assumed) -- AUTO mode then behaves
+ * as HTTP-only when Firecrawl was never deployed or the 90-minute
+ * deployment timebox was exhausted, per the mission's own fallback
+ * instructions (see acquisition/autoProvider.ts).
+ */
+function buildAcquisitionProvider(): AcquisitionProvider {
+  const http = new HttpAcquisitionProvider();
+  const firecrawlBaseUrl = process.env.FIRECRAWL_BASE_URL;
+  const firecrawl = firecrawlBaseUrl
+    ? new FirecrawlAcquisitionProvider({
+        baseUrl: firecrawlBaseUrl,
+        apiKey: process.env.FIRECRAWL_API_KEY || null,
+        timeoutMs: Number(process.env.FIRECRAWL_TIMEOUT_MS ?? "30000"),
+      })
+    : null;
+  return new AutoAcquisitionProvider({ http, firecrawl });
+}
+
 async function runCrawl(args: string[]): Promise<void> {
   const target = targetFromEnv();
   const registryPath = flagValue(args, "--registry") ?? DEFAULT_REGISTRY_PATH;
@@ -159,13 +184,14 @@ async function runCrawl(args: string[]): Promise<void> {
   await db.verifyEnvironmentMarker();
 
   const archive = new DocumentArchive(DEFAULT_ARCHIVE_DIR, db);
+  const acquisition = buildAcquisitionProvider();
   let hadErrors = false;
 
   try {
     for (const source of active) {
       console.log(`\n[${source.source_id}] crawling ${source.url}`);
       const run = await startCrawlRun(db, source.source_id, FETCHER_VERSION);
-      const result = await crawlSource(source, archive, db, run.id);
+      const result = await crawlSource(source, archive, db, run.id, acquisition);
 
       const status: "SUCCEEDED" | "FAILED" | "PARTIAL" =
         result.errors.length === 0 ? "SUCCEEDED" : result.documentsFetched > 0 ? "PARTIAL" : "FAILED";

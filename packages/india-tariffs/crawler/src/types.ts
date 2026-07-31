@@ -20,6 +20,17 @@ export type DiscoveryMethod =
   | "SEARCH_ENDPOINT"
   | "BROWSER_RENDERED";
 
+/**
+ * How a source's pages are acquired, distinct from how a page is
+ * interpreted once acquired (the `adapter` field). HTTP uses the plain
+ * safeFetch path; FIRECRAWL always uses the self-hosted Firecrawl service;
+ * AUTO tries HTTP first and falls back to Firecrawl per the heuristics in
+ * acquisition/autoProvider.ts (SPA-shell detection, no-meaningful-links,
+ * discovery_method === BROWSER_RENDERED). Defaults to AUTO at the database
+ * layer (migration 0004).
+ */
+export type AcquisitionMode = "HTTP" | "FIRECRAWL" | "AUTO";
+
 export interface AuthoritativeSource {
   source_id: string;
   jurisdiction_code?: string;
@@ -33,6 +44,7 @@ export interface AuthoritativeSource {
   allowed_domains: string[];
   discovery_method: DiscoveryMethod;
   adapter: string;
+  acquisition_mode?: AcquisitionMode;
   schedule?: "HOURLY" | "EVERY_6_HOURS" | "DAILY" | "WEEKLY";
   rate_limit_requests_per_minute?: number;
   include_patterns?: string[];

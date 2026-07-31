@@ -68,6 +68,7 @@ interface SourceYaml {
   allowed_domains: string[];
   discovery_method: string;
   adapter: string;
+  acquisition_mode?: "HTTP" | "FIRECRAWL" | "AUTO";
   schedule?: string;
   rate_limit_requests_per_minute?: number;
   include_patterns?: string[];
@@ -305,10 +306,10 @@ export async function loadRegistryIntoDatabase(
       await client.query(
         `INSERT INTO authoritative_sources (
            source_id, jurisdiction_code, regulator_code, licensee_code, licensee_codes, url, allowed_domains,
-           source_type, authority_rank, discovery_method, adapter, schedule, rate_limit_per_minute,
+           source_type, authority_rank, discovery_method, adapter, acquisition_mode, schedule, rate_limit_per_minute,
            include_patterns, exclude_patterns, permitted_content_types, owner, monitoring_status,
            last_verified_at, source_health, last_live_check_at, notes
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
          ON CONFLICT (source_id) DO UPDATE SET
            jurisdiction_code = EXCLUDED.jurisdiction_code,
            regulator_code = EXCLUDED.regulator_code,
@@ -320,6 +321,7 @@ export async function loadRegistryIntoDatabase(
            authority_rank = EXCLUDED.authority_rank,
            discovery_method = EXCLUDED.discovery_method,
            adapter = EXCLUDED.adapter,
+           acquisition_mode = EXCLUDED.acquisition_mode,
            schedule = EXCLUDED.schedule,
            rate_limit_per_minute = EXCLUDED.rate_limit_per_minute,
            include_patterns = EXCLUDED.include_patterns,
@@ -343,6 +345,7 @@ export async function loadRegistryIntoDatabase(
           s.authority_rank,
           s.discovery_method,
           s.adapter,
+          s.acquisition_mode ?? "AUTO",
           s.schedule ?? "DAILY",
           s.rate_limit_requests_per_minute ?? 6,
           s.include_patterns ?? [],
