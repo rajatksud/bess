@@ -209,6 +209,25 @@ export async function loadRegistryIntoDatabase(
       }
     }
 
+    // Reconcile: remove any regulator row whose code is no longer present in
+    // regulators.yaml (e.g. a code rename such as TSERC -> TGERC). registry
+    // YAML is the sole source of truth for this table (see function
+    // docstring), so a code's absence here means it was intentionally
+    // renamed or retired, not merely "not yet re-loaded". This intentionally
+    // has no ON DELETE CASCADE anywhere upstream: if a stale code is still
+    // referenced by a licensee or source, this DELETE fails loudly on the
+    // foreign key rather than silently orphaning or cascading, which is the
+    // desired behavior -- it surfaces a YAML inconsistency (a rename applied
+    // to regulators.yaml but not propagated to every referencing licensee/
+    // source) as a load-time error instead of leaving mismatched data.
+    {
+      const currentCodes = regulators.map((r) => r.code);
+      await client.query(
+        `DELETE FROM regulators WHERE code <> ALL($1::text[])`,
+        [currentCodes],
+      );
+    }
+
     // Pass 1: upsert licensees without self-referential FKs (shares_schedule_with,
     // parent_licensee_id, shared_tariff_group_id) so insert order never trips a
     // not-yet-loaded reference (e.g. a licensee whose shares_schedule_with

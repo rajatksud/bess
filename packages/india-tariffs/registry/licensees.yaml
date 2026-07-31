@@ -160,10 +160,10 @@ licensees:
     coverage_status: NOT_STARTED
     notes: "UNVERIFIED. Believed to be the sole statewide distribution licensee (no major private urban discom comparable to Delhi/Mumbai/Kolkata known)."
 
-  # --- Telangana (TS), regulator TSERC ---
+  # --- Telangana (TS), regulator TGERC ---
   - code: TSSPDCL
     name: Telangana State Southern Power Distribution Company Limited
-    regulator_code: TSERC
+    regulator_code: TGERC
     jurisdiction_code: TS
     licensee_type: STATE_UTILITY
     status: UNCERTAIN
@@ -171,7 +171,7 @@ licensees:
     notes: "UNVERIFIED. Covers Hyderabad and southern Telangana; emerged from 2014 AP/Telangana bifurcation."
   - code: TSNPDCL
     name: Telangana State Northern Power Distribution Company Limited
-    regulator_code: TSERC
+    regulator_code: TGERC
     jurisdiction_code: TS
     licensee_type: STATE_UTILITY
     status: UNCERTAIN
@@ -608,12 +608,12 @@ licensees:
     c_and_i_relevance: LOW
     status: UNCERTAIN
     verification_status: PROVISIONAL
-    confidence: LOW
+    confidence: MEDIUM
     coverage_status: BLOCKED
     website: null
     last_verified: "2026-07-31"
-    evidence_url: null
-    notes: "Research pass 2026-07-31: also referenced as 'PDS' in tariff-petition filings before SSERC. Direct WebFetch of power.sikkim.gov.in failed with a TLS certificate error -- content relied on search snippets only. website left null: the site could not be confirmed reachable with a valid certificate. coverage_status is BLOCKED (not just NOT_STARTED) because the regulator (SSERC) itself has no confirmed live website either -- see regulators.yaml SSERC entry and licensee_review_queue."
+    evidence_url: "https://selfservice.powersikkim.in/assets/home/Tariff-Schedule-FY-2025-26.pdf"
+    notes: "Research pass 2026-07-31 (re-verified on a second pass): also referenced as 'PDS' in tariff-petition filings before SSERC. Direct WebFetch of power.sikkim.gov.in still fails with a TLS certificate error. However, the department's self-service portal (selfservice.powersikkim.in) is confirmed reachable and hosts live tariff PDFs (Tariff-Schedule-FY-2025-26.pdf fetched successfully, 3.9MB, though not text-extractable via this tool) -- upgraded evidence_url and confidence accordingly. coverage_status remains BLOCKED because the regulator (SSERC) itself still has no confirmed live website -- see regulators.yaml SSERC entry and licensee_review_queue RQ-002 (confirmed: Sikkim is a genuine standalone state SERC, not JERC-covered -- ruled out explicitly on the second pass)."
 
   # --- Himachal Pradesh (HP), regulator HPERC ---
   - code: HPSEBL

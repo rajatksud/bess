@@ -40,7 +40,7 @@ jurisdictions:
     name: Telangana
     type: STATE
     status: IN_PROGRESS
-    notes: "Priority 5. TSERC regulator + TSSPDCL/TSNPDCL identified; sources not yet ACTIVE-monitored."
+    notes: "Priority 5. TGERC regulator + TSSPDCL/TSNPDCL identified; sources not yet ACTIVE-monitored."
   - code: AP
     name: Andhra Pradesh
     type: STATE

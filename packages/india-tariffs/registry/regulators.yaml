@@ -58,15 +58,17 @@ regulators:
     last_verified: "2026-07-31"
     source_health: DEGRADED
     notes: "Corrected domain from tnerc.tn.gov.in (not the live domain) to tnerc.gov.in per web search corroboration (office address SIDCO Corporate Office Building, Guindy, Chennai; tnerc@nic.in). Direct WebFetch of tnerc.gov.in failed twice with a connection reset (ECONNRESET) rather than a clean success or a clean domain-not-found -- recorded as DEGRADED, not HEALTHY, since reachability could not be positively confirmed by direct fetch even though the domain is correct per search evidence. Needs a re-probe."
-  - code: TSERC
-    name: Telangana State Electricity Regulatory Commission
+  - code: TGERC
+    name: Telangana Electricity Regulatory Commission
+    short_name: TGERC
     type: SERC
     jurisdiction_codes: ["TS"]
-    website: "https://tserc.gov.in"
-    evidence_url: null
+    website: "https://www.tgerc.telangana.gov.in"
+    order_portal_url: "https://www.tgerc.telangana.gov.in/currentyearorders.php"
+    evidence_url: "https://www.tgerc.telangana.gov.in"
     last_verified: "2026-07-31"
-    source_health: BLOCKED
-    notes: "Prior registry value www.tserc.telangana.gov.in does not resolve (DNS NXDOMAIN). Web search suggests tserc.gov.in (and www.tserc.gov.in) as the correct domain, but BOTH also failed to resolve on direct WebFetch (DNS NXDOMAIN for both apex and www). No working domain confirmed as of 2026-07-31 -- recorded BLOCKED. Needs re-verification; do not treat tserc.gov.in as confirmed live."
+    source_health: HEALTHY
+    notes: "RENAMED (2026-07-31 correction): this commission is now called Telangana Electricity Regulatory Commission (TGERC), not TSERC -- the state has shifted its own abbreviation from TS to TG. Live-probed and confirmed: 'Consequent to the formation of Telangana State, Telangana Electricity Regulatory Commission (TGERC) was constituted on 3rd November, 2014' -- the constitution date is unchanged from the original TSERC identity, this is a renaming of the same legal body, not a new commission. Historical references to 'TSERC' still appear throughout the site's own older content. Code changed from TSERC to TGERC to match; licensees.yaml TSSPDCL/TSNPDCL and jurisdictions.yaml's TS note updated accordingly. Tariff Orders section confirmed live (Tariff Schedule, Current Year Orders, Earlier Orders)."
   - code: APERC
     name: Andhra Pradesh Electricity Regulatory Commission
     type: SERC
@@ -262,7 +264,7 @@ regulators:
     evidence_url: null
     last_verified: "2026-07-31"
     source_health: BLOCKED
-    notes: "CRITICAL FINDING (research pass 2026-07-31): the commonly-cited SSERC domain www.sserc.in is DEAD/SQUATTED -- a direct WebFetch resolved it to an unrelated online-gambling ('Ice Fishing Game' slot) review site with no connection to electricity regulation. Do NOT use sserc.in anywhere. No replacement primary SSERC website was located in this research pass. Search snippets describe SSERC as constituted by gazette notification on 15 November 2003 but not functioning until April 2011, located at P.O. Deorali, Sikkim-737102 -- these facts are plausible but unverified against any live SSERC site. Sikkim's tariff orders currently appear to be published via the state Power Department's own site instead (see SK licensee note) rather than a distinct SSERC web presence. website left null deliberately rather than filled with a guessed/unverified URL."
+    notes: "CRITICAL FINDING (research pass 2026-07-31, RE-CONFIRMED on a second pass): the commonly-cited SSERC domain sserc.in is DEAD/SQUATTED by an unrelated online-gambling ('Ice Fishing Game' slot) site -- confirmed across both http:// and https://, both the root and content-path URLs (e.g. /content/energy-power-department-govt-sikkim), so this is not a single-page or protocol-specific issue. Search engines still show cached snippets referencing sserc.in with plausible-looking legitimate content (e.g. a 'Shri. K.B. Kunwar took charge as Chairperson' news item on sikkim.gov.in, and an SSERC-branded PDF at recregistryindia.nic.in confirming Gangtok-737102 as the commission's address) -- these confirm SSERC is a genuine, functioning, standalone state SERC (NOT JERC-covered; checked and ruled out -- Sikkim is a state, and JERC arrangements in India cover only Goa+UTs and J&K+Ladakh, no state-level JERC exists for Sikkim), but do not rescue the sserc.in domain itself, which is confirmed dead regardless of path. No replacement primary SSERC website was located. Sikkim's tariff orders are published instead via the Power Department's self-service portal (selfservice.powersikkim.in -- see SK-PD licensee note and the SSERC-TARIFF-DOCS source below), which hosts live, fetchable tariff PDFs even though the commission's own site does not. website left null deliberately rather than filled with a guessed/unverified URL."
   - code: HPERC
     name: Himachal Pradesh Electricity Regulatory Commission
     type: SERC

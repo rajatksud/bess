@@ -185,6 +185,40 @@ sources:
     last_live_check_at: "2026-07-31T00:00:00Z"
     notes: "Live-probed 2026-07-31 (WebFetch): Orders menu lists a current FY2026-27 SBPDCL/NBPDCL tariff order."
 
+  - source_id: SIKKIM-POWERSIKKIM-TARIFF
+    licensee_code: SK-PD
+    jurisdiction_code: SK
+    url: "https://selfservice.powersikkim.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["selfservice.powersikkim.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Power Department self-service portal. A direct tariff-schedule PDF (Tariff-Schedule-FY-2025-26.pdf) was fetched successfully (3.9MB, binary, not text-extractable via this tool but confirmed reachable) -- used as this jurisdiction's working document source given SSERC's own site (sserc.in) is confirmed dead. Ranked as a licensee/department circular (authority_rank 4), below a commission tariff order, since SSERC's own approval documents were not directly confirmed at this URL -- treat rates found here as provisional pending SSERC-side confirmation once/if a working SSERC site is found."
+
+  - source_id: TGERC-TARIFF-ORDERS
+    regulator_code: TGERC
+    jurisdiction_code: TS
+    url: "https://www.tgerc.telangana.gov.in/currentyearorders.php"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.tgerc.telangana.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "schedule", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch), confirming a user-supplied correction: this commission is now called Telangana Electricity Regulatory Commission (TGERC), not TSERC -- resolves review-queue item RQ-006. Tariff Orders navigation confirmed with Tariff Schedule, Current Year Orders and Earlier Orders sub-sections."
+
   - source_id: JSERC-TARIFF
     regulator_code: JSERC
     jurisdiction_code: JH
