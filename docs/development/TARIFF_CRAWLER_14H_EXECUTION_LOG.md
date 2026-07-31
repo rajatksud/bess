@@ -188,3 +188,90 @@ This is exactly the kind of environment-identity question the brief called
 out as something to resolve from explicit configuration/user input rather
 than assumption — recorded here as a real-time course correction, not a
 mistake to silently paper over.
+
+### Concurrent session on the same worktree
+
+Partway through, another Claude Code session was found to be actively
+editing the same files (`schemas/{licensee,regulator,authoritative_source}.schema.json`,
+a new `schemas/shared_tariff_group.schema.json`, `registry/*.yaml`, and later
+also `src/db/registryLoader.ts` and `src/db/migrations/0002_expand_registry.sql`,
+neither of which this session had touched). Confirmed with the user this was
+expected. To avoid two agents corrupting the same registry/schema files:
+
+- This session stopped editing `registry/{jurisdictions,regulators,licensees,sources}.yaml`
+  and the schema files, deferring that lane to the other session, which was
+  clearly further along (richer model: `verification_status`, `confidence`,
+  `shared_tariff_group`, predecessor/successor licensee tracking).
+- This session held off on git commits per the user's direction, leaving the
+  other session to own commits to the shared branch.
+- This session continued on lanes the other session hadn't touched: DB
+  least-privilege role wiring, unit tests, CI, Docker packaging, docs.
+
+### Least-privilege database role
+
+Migrations require the admin role (`DB_STG_ADMIN_USER`); normal
+registry-load/crawl/source-health operations use a separate, restricted role
+(`DB_STG_USER`). Added `loadDatabaseConfig(target, role)` with `role: "app" |
+"admin"` (`src/db/env.ts`) so callers explicitly choose. Also split
+`ensureEnvironmentMarker()` (creates schema/table if missing -- requires
+admin privileges) from a new `verifyEnvironmentMarker()` (read-only SELECT
+against the existing `deployment_metadata` table -- safe for the
+least-privilege app role, throws if migrations haven't run yet).
+`registry-load` and `source-health` now call `verifyEnvironmentMarker()`;
+`migrate` calls `ensureEnvironmentMarker()` via the admin role.
+
+On the real shared Postgres instance, the app role (`tariff_crawler_user`)
+initially had no grants on the `tariff_crawler_staging` database/schema.
+Applied, using the admin role (a safe, additive, non-destructive grant, not a
+privilege escalation): `GRANT CONNECT` on the database, `GRANT USAGE` on the
+`tariff_crawler` schema, `GRANT SELECT/INSERT/UPDATE/DELETE` on all its
+tables and sequences, plus matching `ALTER DEFAULT PRIVILEGES` so tables
+created by later migrations inherit the same grants automatically.
+
+### Real staging Postgres validation (localhost:5433, database `tariff_crawler_staging`)
+
+Once the user created the dedicated `tariff_crawler_staging` database on the
+shared instance and supplied credentials:
+
+```
+node dist/src/cli.js migrate
+  -> Applied: 0001_init, 0002_expand_registry
+node dist/src/cli.js migrate   (rerun)
+  -> Applied: (none, already current); Already current: 2       [idempotent]
+node dist/src/cli.js registry-load
+  -> jurisdictions: 36, regulators: 18 (18 links), licensees: 51,
+     sources: 5, shared tariff groups: 0
+node dist/src/cli.js registry-load   (rerun)
+  -> identical counts                                            [idempotent]
+node dist/src/cli.js source-health
+  -> NOT_CONFIGURED: 5   (no source falsely marked healthy/active)
+```
+
+Before/after registry counts (staging DB, real Postgres, not a mock):
+
+| Entity | Before (baseline) | After |
+|---|---|---|
+| Jurisdictions | 36 (all seeded, mostly `NOT_STARTED`) | 36 (18 `IN_PROGRESS`, 9 `NOT_STARTED`, 9 `BLOCKED` for genuinely uncertain UTs/small states) |
+| Regulators | 4 | 18 |
+| Licensees | 1 | 51 |
+| Authoritative sources | 5 | 5 (unchanged so far -- source expansion still pending) |
+| Sources with `monitoring_status: ACTIVE` | 0 | 0 (correctly -- no source has been live-verified yet) |
+
+**Bug found and fixed during this validation** (own bug, in code authored
+this session): `registryLoader.ts`'s licensee upsert originally set
+`shares_schedule_with` in the same INSERT as the rest of the row. Because
+that column has a self-referential foreign key
+(`licensees(shares_schedule_with) REFERENCES licensees(code)`) and licensees
+are inserted in YAML file order, a licensee referencing another licensee
+that appears later in the file (e.g. Torrent Power's Ahmedabad circle
+referencing its Surat circle) failed with a FK violation on first load. Fixed
+by deferring `shares_schedule_with` to a second UPDATE pass after all
+licensee codes exist -- by the time this was applied, the concurrent session
+had already made the equivalent fix independently while extending the same
+function for `parent_licensee_id`, so the final code reflects that merged
+fix rather than a duplicate one.
+
+All of the above ran against the real shared staging Postgres instance at
+`localhost:5433`, using a dedicated `tariff_crawler_staging` database created
+specifically for this workstream -- not the `bess` database used by the
+bess-calc workstream on the same server.
