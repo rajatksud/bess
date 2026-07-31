@@ -119,6 +119,71 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA tariff_crawler GRANT USAGE, SELECT ON SEQUENC
 The equivalent should be applied for the production app role before first
 use, with the production admin role, by whoever administers that instance.
 
+## Firecrawl (self-hosted) — assessment and decision (2026-07-31)
+
+**Not deployed. Blocked on host resources, not time.** Requirement #6 of
+the vertical-slice mission ("at least one source requires and successfully
+uses browser-rendered acquisition, preferably through self-hosted
+Firecrawl") is an **honest unmet blocker** for this run — see the acceptance
+criteria and the acquisition-provider work in
+`packages/india-tariffs/crawler/src/acquisition/`, which is fully
+implemented and tested but has no live Firecrawl instance to exercise it
+against. Per explicit instruction, no separate headless-browser fallback
+was built as a workaround; `AutoAcquisitionProvider` correctly degrades to
+HTTP-only when `FIRECRAWL_BASE_URL` is unset.
+
+**What was done:**
+
+1. Inspected `prjxn2` (read-only, before any change): 2 vCPU, 956Mi total
+   RAM (~80-90Mi free, ~510Mi "available" counting reclaimable cache), 2GiB
+   swap, 24GB free disk, Ubuntu 22.04, no Docker, no Node.js. A native
+   `postgresql@15-main` systemd service was already running (unrelated to
+   the crawler's staging database, which is a separate local instance) and
+   was left untouched throughout.
+2. Installed Docker Engine 29.7.0 + Compose plugin v5.3.1 via the official
+   Docker apt repository (`download.docker.com/linux/ubuntu`, `jammy`
+   channel) — a standard, reversible, additive system change, not a
+   destructive one. Added the `ubuntu` user to the `docker` group.
+   Confirmed via `systemctl is-active` immediately after that the existing
+   PostgreSQL service was unaffected and Docker introduced no container/
+   network state beyond the default bridge/host/none networks.
+3. Looked up self-hosted Firecrawl's own reference `docker-compose.yaml`
+   (`github.com/firecrawl/firecrawl`, current `main`) before writing any
+   deployment config. It defines 7 services (`api`, `playwright-service`,
+   `redis`, `rabbitmq`, `nuq-postgres`, `foundationdb`,
+   `foundationdb-init`), with **explicit resource limits of 4GB for
+   `playwright-service` alone and 8GB for `api`** — i.e. a minimum-viable
+   deployment needs on the order of 4-8GB RAM even before accounting for
+   Redis/RabbitMQ/Postgres/FoundationDB. Independently corroborated by
+   multiple current self-hosting guides citing 4GB minimum / 8-12GB
+   recommended for production.
+4. **Decision: stop before attempting `docker compose up`.** `prjxn2` has
+   956Mi total RAM — roughly 1/8 of Firecrawl's own documented minimum for
+   the browser service alone. This is not a marginal, worth-troubleshooting
+   shortfall; forcing the deployment would almost certainly trigger the
+   Linux OOM-killer, which does not respect container boundaries and could
+   kill unrelated host processes (including the existing PostgreSQL
+   service) rather than just the Firecrawl containers. That risk — "could
+   affect ... unrelated server services" — is one of this mission's
+   explicit stop conditions, and the mission's own Phase 4 instructions say
+   to treat a clearly-inadequate-resources finding as the stop case
+   "without spending the full 90 minutes forcing it." Total elapsed time
+   from starting the Docker install to this decision: **~7 minutes**, well
+   under the 90-minute cap — the cap was never the binding constraint here.
+5. Removed the empty `/opt/firecrawl` directory created for the abandoned
+   attempt. Docker itself was left installed (legitimate, reusable
+   infrastructure for the crawler's own eventual container deployment in
+   the "Service launch" section below, and installing it did not touch or
+   restart any existing service).
+
+**If Firecrawl is wanted in the future**, the two realistic paths are: (a)
+provision a separate, adequately-sized host for Firecrawl specifically
+(4-8GB+ RAM) and have the crawler reach it over a private network
+(`FIRECRAWL_BASE_URL` already supports any private hostname, not just
+`127.0.0.1`), or (b) use Firecrawl's hosted cloud API instead of self-
+hosting — both are outside this run's scope and require a separate resourcing
+decision.
+
 ## Service launch (planned)
 
 1. Choose an isolated, clearly named directory on `prjxn2` for this
