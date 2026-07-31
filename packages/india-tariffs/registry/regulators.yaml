@@ -2,15 +2,15 @@
 # See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
 # Validated against schemas/regulator.schema.json.
 #
-# IMPORTANT — sourcing status: entries below were seeded from general/model
-# knowledge (not a live crawl of each commission's own website) and are
-# candidates pending independent verification against the authoritative
-# source hierarchy in the strategy document, section 4. `notes` records the
-# verification-confidence caveats known at seeding time. Do not treat a
-# `website` value here as authoritative until a human has confirmed it
-# resolves to that commission's own official site (section 4 requires the
-# final source of record to be the regulator's own site, not a directory or
-# secondary summary).
+# Sourcing status: entries below were seeded from general/model knowledge and
+# then live-probed (WebFetch against each candidate domain, WebSearch to find
+# corrected domains where the seeded one didn't resolve) on 2026-07-31.
+# `source_health` reflects the actual outcome of that probe, not just URL
+# syntax validity. `verification_status`-equivalent detail is recorded in
+# `notes` per entry — a HEALTHY probe confirms the site identifies itself as
+# the named commission and exposes a tariff-orders link, but does not yet
+# constitute full section-4 authoritative-source review of specific tariff
+# facts.
 #
 # Two SERC codes were previously colliding in spirit: Karnataka's KERC vs.
 # Kerala's commission. Kerala is coded KSERC here specifically to avoid that
@@ -22,107 +22,281 @@ regulators:
     name: Maharashtra Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["MH"]
-    website: "https://www.mercindia.org.in"
-    notes: "UNVERIFIED. Prior registry version had this field pointing at MSEDCL's (the licensee's) tariff page, not MERC's own site -- corrected here to MERC's own domain but still needs a human verification pass per section 4."
+    website: "https://merc.gov.in"
+    order_portal_url: "https://merc.gov.in/electricity-tariff-and-fac/"
+    evidence_url: "https://merc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: merc.gov.in confirmed as MERC's own site (footer self-identifies as the official MERC website); tariff/FAC info is under a combined 'Electricity Tariff/FAC' page rather than a standalone tariff-orders page. Prior registry value mercindia.org.in returned a socket error on fetch and does not appear to be the live domain -- corrected to merc.gov.in, found via search corroboration (mercindia@mercindia.org.in remains a valid contact email even though that is not the working site domain)."
   - code: GERC
     name: Gujarat Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["GJ"]
     website: "https://gercin.org"
-    notes: "UNVERIFIED against source. Domain reused from the existing GERC-TARIFF-SCHEDULES source entry."
+    order_portal_url: "https://gercin.org/order-category/tariff-orders/"
+    schedule_portal_url: "https://gercin.org/tariff-schedules/"
+    evidence_url: "https://gercin.org"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official GERC site, self-identifies with full legal name and 1998 constitution date. Distinct order-portal and schedule-portal URLs found and confirmed live."
   - code: KERC
     name: Karnataka Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["KA"]
     website: "https://kerc.karnataka.gov.in"
-    notes: "UNVERIFIED against source (carried over from prior registry version)."
+    order_portal_url: "https://kerc.karnataka.gov.in/96/tariff-order/en"
+    evidence_url: "https://kerc.karnataka.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed, page header/content is Karnataka state government electricity regulator branding, with an Orders section carrying tariff orders."
   - code: TNERC
     name: Tamil Nadu Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["TN"]
-    website: "https://www.tnerc.tn.gov.in"
-    notes: "UNVERIFIED. Domain may also appear as tnerc.gov.in; needs confirmation."
+    website: "https://www.tnerc.gov.in"
+    evidence_url: "https://www.tnerc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Corrected domain from tnerc.tn.gov.in (not the live domain) to tnerc.gov.in per web search corroboration (office address SIDCO Corporate Office Building, Guindy, Chennai; tnerc@nic.in). Direct WebFetch of tnerc.gov.in failed twice with a connection reset (ECONNRESET) rather than a clean success or a clean domain-not-found -- recorded as DEGRADED, not HEALTHY, since reachability could not be positively confirmed by direct fetch even though the domain is correct per search evidence. Needs a re-probe."
   - code: TSERC
     name: Telangana State Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["TS"]
-    website: "https://www.tserc.telangana.gov.in"
-    notes: "UNVERIFIED. Domain may also appear as tserc.gov.in; needs confirmation."
+    website: "https://tserc.gov.in"
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: BLOCKED
+    notes: "Prior registry value www.tserc.telangana.gov.in does not resolve (DNS NXDOMAIN). Web search suggests tserc.gov.in (and www.tserc.gov.in) as the correct domain, but BOTH also failed to resolve on direct WebFetch (DNS NXDOMAIN for both apex and www). No working domain confirmed as of 2026-07-31 -- recorded BLOCKED. Needs re-verification; do not treat tserc.gov.in as confirmed live."
   - code: APERC
     name: Andhra Pradesh Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["AP"]
-    website: "https://www.aperc.gov.in"
-    notes: "UNVERIFIED against source."
+    website: "https://aperc.gov.in"
+    order_portal_url: "https://aperc.gov.in/page/Tariff_Orders"
+    evidence_url: "https://aperc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: aperc.gov.in confirmed live with a dedicated Tariff Orders section (current-year and year-wise archive). The www.aperc.gov.in variant (originally seeded) returned a certificate-expired TLS error -- switched canonical website to the apex domain aperc.gov.in, which probed healthy. An alternate aperc.in domain also appeared in search results but was not independently probed."
   - code: DERC
     name: Delhi Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["DL"]
     website: "https://www.derc.gov.in"
-    notes: "UNVERIFIED against source (carried over; prior registry version and sources.yaml used a URL with a typo, tarriff-orders instead of tariff-orders -- see sources.yaml note)."
+    order_portal_url: "https://www.derc.gov.in/tariff-orders"
+    evidence_url: "https://www.derc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official DERC site with a Tariff Orders link (path /tarriff-orders -- note the site's own URL slug has the tariff/tarriff typo, this is the live path, not a mistake in this registry; see also sources.yaml note on the same typo)."
   - code: RERC
     name: Rajasthan Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["RJ"]
-    website: "https://www.rerc.rajasthan.gov.in"
-    notes: "UNVERIFIED against source."
+    website: "https://rerc.rajasthan.gov.in"
+    order_portal_url: "https://rerc.rajasthan.gov.in/rerc-user-files/tariff-orders"
+    evidence_url: "https://rerc.rajasthan.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official RERC site (Jaipur), dedicated tariff-orders path found live. Dropped 'www.' prefix from the previously-seeded URL, which did not resolve; apex domain resolved successfully."
   - code: UPERC
     name: Uttar Pradesh Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["UP"]
     website: "https://www.uperc.org"
-    notes: "UNVERIFIED against source."
+    evidence_url: "https://www.uperc.org"
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Live-probed 2026-07-31: domain resolves and returns content, but the fetched page rendered only the bare text 'UPERC.ORG' with no confirmable legal-name branding or navigation (likely a JS-rendered SPA shell not captured by static HTML fetch). Domain itself is plausible but identity/content could not be positively confirmed -- recorded DEGRADED pending a browser-rendered re-check."
   - code: HERC
     name: Haryana Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["HR"]
     website: "https://herc.gov.in"
-    notes: "UNVERIFIED against source."
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Domain confirmed correct via web search (herc.gov.in, with content pages like /content/131_2_Aboutthiswebsite.aspx indexed), but three separate direct WebFetch attempts (https and http, with and without trailing slash) all failed with 'too many redirects' (>10). Likely a redirect-loop or bot-detection issue on the live site rather than a wrong domain -- recorded DEGRADED, not BLOCKED, since search-indexed content strongly suggests the site is genuinely live for normal browsers."
   - code: MPERC
     name: Madhya Pradesh Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["MP"]
     website: "https://mperc.in"
-    notes: "UNVERIFIED against source."
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Domain confirmed correct via web search (mperc.in, actively indexed with /notices and tariff-order content). Direct WebFetch returned HTTP 403 Forbidden on two attempts -- consistent with bot/scraper blocking rather than the site being down. Recorded DEGRADED; a human browser visit would likely succeed where the automated fetch was blocked."
   - code: OERC
     name: Odisha Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["OD"]
     website: "https://www.orierc.org"
-    notes: "UNVERIFIED against source; exact current domain has low confidence, may have changed."
+    evidence_url: "https://www.orierc.org"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official OERC site with a Tariff Orders menu covering OHPC/OPGC/GRIDCO/OPTCL/SLDC/Distribution & Retail Supply sub-sections."
   - code: PSERC
     name: Punjab State Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["PB"]
-    website: "https://www.pserc.gov.in"
-    notes: "UNVERIFIED against source."
+    website: "https://pserc.gov.in"
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: BLOCKED
+    notes: "Web search confirms pserc.gov.in (with indexed content such as /pages/teldir.html) as the correct domain, replacing the previously-seeded www.pserc.gov.in which timed out. However direct WebFetch of both the www and apex forms timed out (ETIMEOUT) rather than succeeding -- recorded BLOCKED pending re-verification; do not treat as confirmed reachable."
   - code: WBERC
     name: West Bengal Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["WB"]
     website: "https://www.wberc.gov.in"
-    notes: "UNVERIFIED against source."
+    evidence_url: "https://www.wberc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official WBERC site (Bidhannagar, North 24 Parganas HQ), Orders > Tariff Related Order section found."
   - code: KSERC
     name: Kerala State Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["KL"]
-    website: "https://www.keralaserc.gov.in"
-    notes: "UNVERIFIED against source. Coded KSERC (not KERC) specifically to avoid collision with Karnataka Electricity Regulatory Commission's KERC code."
+    website: "https://www.erckerala.org"
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Coded KSERC (not KERC) specifically to avoid collision with Karnataka Electricity Regulatory Commission's KERC code. Previously-seeded domain keralaserc.gov.in does NOT resolve (DNS NXDOMAIN) and appears to have been an invented/incorrect guess, not a real KSERC domain -- corrected via web search to erckerala.org (corroborated by an /about?id=1 page reference). Direct WebFetch of erckerala.org returned only the bare text 'KSERC' with no confirmable legal-name branding (likely a JS-rendered SPA shell) -- recorded DEGRADED, content identity not yet positively confirmed by fetch, only by search corroboration."
   - code: CSERC
     name: Chhattisgarh State Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["CG"]
     website: "https://cserc.gov.in"
-    notes: "UNVERIFIED against source."
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Domain confirmed via web search (cserc.gov.in, indexed content including /Welcome/contact). Direct WebFetch of both https://cserc.gov.in and https://www.cserc.gov.in failed with a TLS certificate chain error ('unable to verify the first certificate') -- the site is reachable at the network level but has a misconfigured/incomplete certificate chain. Recorded DEGRADED, not BLOCKED."
   - code: BERC
     name: Bihar Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["BR"]
     website: "https://www.berc.co.in"
-    notes: "UNVERIFIED against source; exact domain low confidence."
+    evidence_url: "https://www.berc.co.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official BERC site, Orders menu found with distribution (SBPDCL/NBPDCL) tariff order listings including a current FY2026-27 order."
   - code: JSERC
     name: Jharkhand State Electricity Regulatory Commission
     type: SERC
     jurisdiction_codes: ["JH"]
     website: "https://jserc.org"
-    notes: "UNVERIFIED against source."
+    evidence_url: "https://jserc.org"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31: confirmed official JSERC site, Tariff navigation link found (tariff.aspx)."
+  - code: APSERC
+    name: Arunachal Pradesh State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["AR"]
+    website: "https://apserc.nic.in"
+    evidence_url: "https://apserc.nic.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass): confirmed live, contact apserc-arn@gov.in, active order postings (e.g. 'Order on Petition TP-10 of 2025 ... Department of Power, Government of Arunachal Pradesh'). Independently functioning single-state commission, no shared/delegated arrangement found. Coded APSERC (not AR-ERC or a collision-prone short form) to keep it visually distinct from Andhra Pradesh's APERC."
+  - code: AERC
+    name: Assam Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["AS"]
+    website: "https://aerc.assam.gov.in"
+    order_portal_url: "https://aerc.assam.gov.in/portlets/tariff-orders"
+    evidence_url: "https://aerc.assam.gov.in"
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Research pass 2026-07-31: identified via search results showing aerc.assam.gov.in hosting tariff-order content, linked from utility documents (e.g. APGCL). Not independently re-fetched with a direct WebFetch in this pass (search-corroborated only) -- recorded DEGRADED pending a direct live probe. A legacy aerc.nic.in / aerc.gov.in domain also surfaced; not verified as current."
+  - code: JERC-MN-MZ
+    name: Joint Electricity Regulatory Commission for Manipur and Mizoram
+    type: JERC
+    jurisdiction_codes: ["MN"]
+    website: "https://jerc.mizoram.gov.in"
+    order_portal_url: "https://jerc.mizoram.gov.in/page/tariff-orders"
+    evidence_url: "https://jerc.mizoram.gov.in/page/jerc-profile"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass): jerc.mizoram.gov.in/page/jerc-profile confirms constitution 'by the Central Government under Sub-section(5) of Section 83 of the Electricity Act, 2003' with one member each from Manipur and Mizoram. jurisdiction_codes deliberately lists ONLY ['MN'] here, not MZ -- see MZERC entry and notes below for why. UNRESOLVED: Mizoram appears to have split off its own state commission (MZERC) around 23 July 2024, but JERC's own site still describes itself in the present tense as covering both states, and a Manipur utility (MSPCL) filed an FY2024-25 tariff petition before 'Joint Electricity Regulatory Commission for Manipur & Mizoram (JERC)' AFTER the reported Mizoram split -- so JERC is confirmed still live and operative for Manipur, but its continuing formal jurisdiction over Mizoram specifically could not be confirmed or ruled out from primary sources in this pass. See licensee_review_queue / docs for this open item; do not treat MZ as dual-regulated without further verification."
+  - code: MSERC
+    name: Meghalaya State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["ML"]
+    website: "https://mserc.gov.in"
+    order_portal_url: "https://mserc.gov.in/tarifforders.html"
+    evidence_url: "https://mserc.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass): NIC-hosted site, footer identifies MSERC ownership, active tariff order postings for the FY2024-25 to FY2026-27 control period. Independently functioning, no delegation found. A legacy mseb.net.in domain also surfaced but was not verified as currently authoritative."
+  - code: MZERC
+    name: Mizoram Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["MZ"]
+    website: "https://mzerc.mizoram.gov.in"
+    evidence_url: "https://mzerc.mizoram.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass): confirmed live Government of Mizoram site titled 'Mizoram Electricity Regulatory Commission (MZERC)' with Tariff Orders, Notified Regulations and 2026-dated draft-regulation sections (e.g. draft Mizoram Electricity Grid Code Regulations 2026) -- strong evidence MZERC is the current operative regulator for Mizoram. UNRESOLVED: secondary sources describe MZERC becoming 'formally functional as a distinct entity since 23 July 2024', separating from JERC-MN-MZ (see that entry), but no primary gazette notification for the transition was found/fetched. Both jerc.mizoram.gov.in (JERC-MN-MZ) and mzerc.mizoram.gov.in are live Government-of-Mizoram-hosted sites with overlapping claims over Mizoram. Recorded MZERC (not JERC-MN-MZ) as the regulator of record for MZ given MZERC is actively issuing Mizoram-specific 2026 regulations, but this should be treated as PROVISIONAL and flagged for review -- see licensee_review_queue."
+  - code: NERC
+    name: Nagaland Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["NL"]
+    website: "http://www.nerc.org.in"
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: NOT_CHECKED
+    notes: "Research pass 2026-07-31: identified only via search-result snippets consistently citing nerc.org.in and describing it as 'established under Section 82 of the Electricity Act, 2003 as a One-Member Commission.' Direct WebFetch attempts failed with a connection error (socket hang up) -- could not confirm the site is currently live. Recorded NOT_CHECKED (probe attempted but inconclusive, not a confirmed reachability outcome either way) rather than guessing HEALTHY or BLOCKED. Needs a retry."
+  - code: TERC
+    name: Tripura Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["TR"]
+    website: "https://terc.tripura.gov.in"
+    order_portal_url: "https://terc.tripura.gov.in/other-order"
+    evidence_url: "https://terc.tripura.gov.in"
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Research pass 2026-07-31: search results show terc.tripura.gov.in hosting Tariff Orders for FY2020-21 through FY2024-25. Not independently re-fetched with a direct WebFetch in this pass (search-corroborated only) -- recorded DEGRADED pending a direct live probe. A legacy terc.nic.in domain also surfaced but terc.tripura.gov.in appears to be the current canonical site. Formation date (31 May 2004) is Wikipedia-sourced only, not confirmed against a primary TERC page."
+  - code: SSERC
+    name: Sikkim State Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["SK"]
+    website: null
+    evidence_url: null
+    last_verified: "2026-07-31"
+    source_health: BLOCKED
+    notes: "CRITICAL FINDING (research pass 2026-07-31): the commonly-cited SSERC domain www.sserc.in is DEAD/SQUATTED -- a direct WebFetch resolved it to an unrelated online-gambling ('Ice Fishing Game' slot) review site with no connection to electricity regulation. Do NOT use sserc.in anywhere. No replacement primary SSERC website was located in this research pass. Search snippets describe SSERC as constituted by gazette notification on 15 November 2003 but not functioning until April 2011, located at P.O. Deorali, Sikkim-737102 -- these facts are plausible but unverified against any live SSERC site. Sikkim's tariff orders currently appear to be published via the state Power Department's own site instead (see SK licensee note) rather than a distinct SSERC web presence. website left null deliberately rather than filled with a guessed/unverified URL."
+  - code: HPERC
+    name: Himachal Pradesh Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["HP"]
+    website: "https://hperc.org"
+    order_portal_url: "https://hperc.org"
+    evidence_url: "https://hperc.org"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): confirmed live. Established 30 Dec 2000 under the Electricity Regulatory Commission Act, 1998; began functioning 6 Jan 2001. HQ: Vidyut Aayog Bhawan, SDA Complex, Kasumpti, Shimla-171009. Tariff orders under the 'Orders' menu (Generation/Distribution/Transmission/SLDC sub-sections plus 'All Orders'/'Search Orders'), no single standalone tariff-portal URL."
+  - code: UERC
+    name: Uttarakhand Electricity Regulatory Commission
+    type: SERC
+    jurisdiction_codes: ["UK"]
+    website: "https://uerc.uk.gov.in"
+    evidence_url: "https://uerc.uk.gov.in"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): confirmed live; uerc.gov.in issues a 301 redirect to this domain. Constituted 1 Jan 2002 under the Electricity Regulatory Commission Act, 1998. HQ: Vidyut Niyamak Bhawan, near ISBT, P.O. Majra, Dehradun. Tariff orders listed under the Orders/Petitions menu and 'Other Links' sidebar, no single standalone tariff-portal URL."
+  - code: JERC-GOA-UT
+    name: Joint Electricity Regulatory Commission for the State of Goa and Union Territories
+    type: JERC
+    jurisdiction_codes: ["GA", "AN", "CH", "DN", "LD", "PY"]
+    website: "https://jercuts.gov.in"
+    evidence_url: "https://jercuts.gov.in/about-jerc/"
+    last_verified: "2026-07-31"
+    source_health: HEALTHY
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch of jercuts.gov.in, /about-jerc/, /order_category/goa/): originally constituted per a 2005 notification for Union Territories excluding Delhi; a 2008 notification added Goa. HQ: 3rd & 4th Floor, Plot No. 55-56, Udyog Vihar Phase IV, Sector 18, Gurugram, Haryana - 122015. jurisdiction_codes covers Goa (state) plus 5 UTs: Andaman & Nicobar Islands, Chandigarh, Dadra and Nagar Haveli and Daman and Diu (merged UT, coded DN -- JERC's own site UI still shows legacy separate DNH/Daman&Diu labels in places but this registry models it as the single current merged jurisdiction), Lakshadweep, Puducherry. Does NOT cover Ladakh or Jammu & Kashmir -- see JERC-JKL, a separate and distinctly named commission. Chandigarh's distribution licensee was privatized to CPDL/EEDL (RPSG Group) effective 1 Feb 2025 and DN&DD's distribution licensee is 51%-Torrent-Power-owned since April 2022 -- JERC-GOA-UT remains the tariff regulator for both despite licensee privatization; see licensees.yaml for the licensee-level detail."
+  - code: JERC-JKL
+    name: Joint Electricity Regulatory Commission for the Union Territories of Jammu and Kashmir and Ladakh
+    type: JERC
+    jurisdiction_codes: ["JK", "LA"]
+    website: "https://jercjkl.nic.in"
+    evidence_url: "https://jercjkl.jk.gov.in/regulations.html"
+    last_verified: "2026-07-31"
+    source_health: DEGRADED
+    notes: "Research pass 2026-07-31: confirmed via direct WebFetch of the mirror domain jercjkl.jk.gov.in/regulations.html ('Full Legal Name: Joint Electricity Regulatory Commission for Union Territories Jammu & Kashmir and Ladakh'), corroborated by JPDCL's own tariff-order PDF filename and multiple news sources (Daily Excelsior, Greater Kashmir, CSIS Engaging Indian States). The primary jercjkl.nic.in domain had an intermittent DNS resolution issue during the research pass (resolved successfully twice, failed once) -- recorded DEGRADED rather than HEALTHY pending a clean re-probe. Distinct from JERC-GOA-UT (verified independently by two separate research passes). Constituted via Central Government notification S.O. 1984(E) dated 18 June 2020 (medium confidence, sourced from secondary legal databases, not the gazette directly); initially adopted JERC-GOA-UT's regulations as a stopgap in 2021 before issuing its own MYT Tariff Regulations, 2023 (notified 10 Nov 2023). Legacy name 'JKSERC' still appears in stale documents -- not current."
