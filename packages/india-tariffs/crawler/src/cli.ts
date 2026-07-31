@@ -14,6 +14,7 @@ import { AutoAcquisitionProvider } from "./acquisition/autoProvider.js";
 import type { AcquisitionProvider } from "./acquisition/types.js";
 import { runExtraction } from "./extraction/extractionOrchestrator.js";
 import type { SourceDocumentRow } from "./extraction/extractionOrchestrator.js";
+import { runValidation } from "./validation/runValidation.js";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -36,8 +37,8 @@ const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
-  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract> " +
-  "[--registry <path>] [--source <source_id>] [--document <document_id>] [--production]";
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate> " +
+  "[--registry <path>] [--source <source_id>] [--document <document_id>] [--candidate <id>] [--production]";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -68,6 +69,10 @@ async function main(): Promise<void> {
   }
   if (command === "extract") {
     await runExtract(args);
+    return;
+  }
+  if (command === "validate") {
+    await runValidateCommand(args);
     return;
   }
 
@@ -294,6 +299,52 @@ async function runExtract(args: string[]): Promise<void> {
     if (result.candidateTariffIds.length > 0) {
       console.log(`[${documentId}] candidate_tariffs created: ${result.candidateTariffIds.join(", ")}`);
     }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Runs validation for either one candidate_tariffs row (--candidate) or
+ * every candidate produced from one document (--document) -- the latter is
+ * the common case right after an `extract` run, so the operator doesn't have
+ * to enumerate ids by hand.
+ */
+async function runValidateCommand(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const candidateArg = flagValue(args, "--candidate");
+  const documentArg = flagValue(args, "--document");
+  if (!candidateArg && !documentArg) {
+    console.error("validate requires --candidate <id> or --document <document_id>");
+    process.exitCode = 1;
+    return;
+  }
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  await db.verifyEnvironmentMarker();
+
+  try {
+    let candidateIds: number[];
+    if (candidateArg) {
+      candidateIds = [Number(candidateArg)];
+    } else {
+      const { rows } = await db.withClient((client) =>
+        client.query<{ id: string }>(`SELECT id FROM candidate_tariffs WHERE document_id = $1 ORDER BY id`, [documentArg]),
+      );
+      candidateIds = rows.map((r) => Number(r.id));
+    }
+
+    let reviewReadyCount = 0;
+    for (const candidateId of candidateIds) {
+      const result = await runValidation(db, candidateId);
+      const errorCount = result.findings.filter((f) => f.severity === "ERROR").length;
+      const warningCount = result.findings.filter((f) => f.severity === "WARNING").length;
+      console.log(
+        `[candidate ${candidateId}] reviewReady=${result.reviewReady} errors=${errorCount} warnings=${warningCount} info=${result.findings.length - errorCount - warningCount}`,
+      );
+      if (result.reviewReady) reviewReadyCount++;
+    }
+    console.log(`\n${reviewReadyCount}/${candidateIds.length} candidate(s) reached REVIEW_READY`);
   } finally {
     await db.close();
   }
