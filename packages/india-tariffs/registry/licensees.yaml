@@ -59,6 +59,7 @@ licensees:
     licensee_type: STATE_UTILITY
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of Gujarat Urja Vikas Nigam Limited (GUVNL)."
   - code: MGVCL
     name: Madhya Gujarat Vij Company Limited
@@ -67,6 +68,7 @@ licensees:
     licensee_type: STATE_UTILITY
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
   - code: DGVCL
     name: Dakshin Gujarat Vij Company Limited
@@ -75,6 +77,7 @@ licensees:
     licensee_type: STATE_UTILITY
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
   - code: PGVCL
     name: Paschim Gujarat Vij Company Limited
@@ -83,6 +86,7 @@ licensees:
     licensee_type: STATE_UTILITY
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
     notes: "UNVERIFIED. Subsidiary of GUVNL."
   - code: TORRENT-AHM
     name: Torrent Power Limited (Ahmedabad Distribution Circle)
@@ -92,6 +96,7 @@ licensees:
     status: ACTIVE
     coverage_status: NOT_STARTED
     shares_schedule_with: TORRENT-SUR
+    shared_tariff_group_id: TORRENT-GJ-CIRCLES
     notes: "UNVERIFIED. May share a common Torrent Power filed tariff schedule with the Surat circle -- verify before treating as identical."
   - code: TORRENT-SUR
     name: Torrent Power Limited (Surat Distribution Circle)
@@ -100,6 +105,7 @@ licensees:
     licensee_type: PRIVATE_DISCOM
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: TORRENT-GJ-CIRCLES
     notes: "UNVERIFIED."
 
   # --- Karnataka (KA), regulator KERC ---
@@ -206,6 +212,7 @@ licensees:
     licensee_type: PRIVATE_DISCOM
     status: ACTIVE
     coverage_status: NOT_STARTED
+    shared_tariff_group_id: BSES-DELHI
     notes: "UNVERIFIED. Serves South & West Delhi. BSES ownership/stake structure has periodically been subject to government/private disputes -- verify current ownership."
   - code: BYPL
     name: BSES Yamuna Power Limited
@@ -213,6 +220,7 @@ licensees:
     jurisdiction_code: DL
     licensee_type: PRIVATE_DISCOM
     status: ACTIVE
+    shared_tariff_group_id: BSES-DELHI
     coverage_status: NOT_STARTED
     shares_schedule_with: BRPL
     notes: "UNVERIFIED. Serves East & Central Delhi. May share a common BSES-group filed tariff schedule with BRPL -- verify before treating as identical."
@@ -761,6 +769,7 @@ licensees:
     confidence: HIGH
     coverage_status: NOT_STARTED
     website: "https://lakshadweep.gov.in/departments/electricity/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
     last_verified: "2026-07-31"
     evidence_url: "https://lakshadweep.gov.in/departments/electricity/"
     notes: "Research pass 2026-07-31, confirmed via direct WebFetch of lakshadweep.gov.in and public notices naming this department as the petitioner before 'JERC (for Goa and UTs)'. UT Administration department (function: generation/transmission/distribution across all islands), not corporatized."
@@ -779,6 +788,7 @@ licensees:
     confidence: HIGH
     coverage_status: NOT_STARTED
     website: "https://nec.andamannicobar.gov.in/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
     last_verified: "2026-07-31"
     evidence_url: "https://nec.andamannicobar.gov.in/"
     notes: "Research pass 2026-07-31, confirmed via direct WebFetch of nec.andamannicobar.gov.in: UT Administration government department. JERC-GOA-UT as regulator confirmed via search results directly quoting Andaman & Nicobar Administration petitions filed 'before the Joint Electricity Regulatory Commission (JERC) for the State of Goa and Union Territories' (Petition No. 119/2024). An alternate/older domain vidyut.andaman.gov.in also surfaced -- canonical domain not conclusively determined between the two."
@@ -831,6 +841,7 @@ licensees:
     confidence: MEDIUM
     coverage_status: NOT_STARTED
     website: "https://electricity.py.gov.in/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
     last_verified: "2026-07-31"
     evidence_url: null
     notes: "Research pass 2026-07-31: UT government department. JERC-GOA-UT confirmed as regulator via search results describing Puducherry's MYT Petition for FY2025-26-FY2029-30 filed 'under the JERC (Generation, Transmission and Distribution Multi Year Tariff) Regulations, 2024'. Department's own site (electricity.py.gov.in) identified via search-indexed tariff-order page titles/URLs but not directly re-fetched with WebFetch in this pass -- recorded PROVISIONAL pending a direct confirmation fetch."
