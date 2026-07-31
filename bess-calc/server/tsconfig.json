@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": [".", "../src/tariff", "../src/import", "../src/optimisation", "../src/engine", "../src/types"]
+  "include": [".", "../src/tariff", "../src/import", "../src/optimisation", "../src/engine", "../src/types", "../src/battery"]
 }

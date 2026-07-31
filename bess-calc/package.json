@@ -14,7 +14,12 @@
     "preview": "vite preview --host 0.0.0.0 --port 3000",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "prisma:generate": "prisma generate",
+    "db:migrate:staging": "node scripts/composeDatabaseUrl.mjs staging admin -- npx prisma migrate deploy",
+    "db:migrate:prod": "node scripts/composeDatabaseUrl.mjs prod admin -- npx prisma migrate deploy",
+    "db:status:staging": "node scripts/composeDatabaseUrl.mjs staging admin -- npx prisma migrate status",
+    "db:status:prod": "node scripts/composeDatabaseUrl.mjs prod admin -- npx prisma migrate status"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -24,7 +29,6 @@
     "lucide-react": "^0.475.0",
     "motion": "^12.4.2",
     "papaparse": "^5.5.4",
-    "prisma": "6.19.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.1",
@@ -43,6 +47,7 @@
     "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
+    "prisma": "6.19.3",
     "supertest": "^7.2.2",
     "tailwindcss": "^4.0.6",
     "tsup": "^8.5.1",
