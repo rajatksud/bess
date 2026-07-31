@@ -91,6 +91,17 @@ interface SharedTariffGroupYaml {
   notes?: string;
 }
 
+interface ReviewQueueEntryYaml {
+  review_id: string;
+  candidate_name: string;
+  jurisdiction_code?: string;
+  related_licensee_code?: string;
+  reason: string;
+  evidence_checked?: string;
+  suggested_next_step?: string;
+  status?: "OPEN" | "RESOLVED" | "DISMISSED";
+}
+
 export interface RegistryLoadResult {
   jurisdictions: number;
   regulators: number;
@@ -98,6 +109,7 @@ export interface RegistryLoadResult {
   licensees: number;
   sources: number;
   sharedTariffGroups: number;
+  reviewQueueEntries: number;
 }
 
 /**
@@ -117,6 +129,7 @@ export async function loadRegistryIntoDatabase(
     licensees: string;
     sources: string;
     sharedTariffGroups?: string;
+    reviewQueue?: string;
   },
 ): Promise<RegistryLoadResult> {
   await db.verifyEnvironmentMarker();
@@ -129,6 +142,10 @@ export async function loadRegistryIntoDatabase(
   const sharedTariffGroups = paths.sharedTariffGroups
     ? (load(readFileSync(paths.sharedTariffGroups, "utf8")) as { shared_tariff_groups: SharedTariffGroupYaml[] })
         .shared_tariff_groups
+    : [];
+  const reviewQueueEntries = paths.reviewQueue
+    ? (load(readFileSync(paths.reviewQueue, "utf8")) as { licensee_review_queue: ReviewQueueEntryYaml[] })
+        .licensee_review_queue
     : [];
 
   let regulatorJurisdictionLinks = 0;
@@ -377,6 +394,33 @@ export async function loadRegistryIntoDatabase(
         ]);
       }
     }
+
+    for (const rq of reviewQueueEntries) {
+      await client.query(
+        `INSERT INTO licensee_review_queue (
+           review_id, candidate_name, jurisdiction_code, reason, evidence_checked,
+           suggested_next_step, related_licensee_code, status
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (review_id) DO UPDATE SET
+           candidate_name = EXCLUDED.candidate_name,
+           jurisdiction_code = EXCLUDED.jurisdiction_code,
+           reason = EXCLUDED.reason,
+           evidence_checked = EXCLUDED.evidence_checked,
+           suggested_next_step = EXCLUDED.suggested_next_step,
+           related_licensee_code = EXCLUDED.related_licensee_code,
+           status = EXCLUDED.status`,
+        [
+          rq.review_id,
+          rq.candidate_name,
+          rq.jurisdiction_code ?? null,
+          rq.reason,
+          rq.evidence_checked ?? null,
+          rq.suggested_next_step ?? null,
+          rq.related_licensee_code ?? null,
+          rq.status ?? "OPEN",
+        ],
+      );
+    }
   });
 
   return {
@@ -385,6 +429,7 @@ export async function loadRegistryIntoDatabase(
     regulatorJurisdictionLinks,
     licensees: licensees.length,
     sources: sources.length,
+    reviewQueueEntries: reviewQueueEntries.length,
     sharedTariffGroups: sharedTariffGroups.length,
   };
 }
