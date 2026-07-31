@@ -1,3 +1,9 @@
 # Runtime archive: immutable but not meant to accumulate in normal Git history
 # (strategy doc section 7 — large source PDFs belong in object storage/release assets).
 .archive/
+
+# Build output. npm test/build always regenerates this from src/ and tests/ —
+# compiled .js/.js.map files must never be committed as if they were source.
+dist/
+tests/**/*.test.js
+tests/**/*.test.js.map
