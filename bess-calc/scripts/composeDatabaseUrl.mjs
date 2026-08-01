@@ -73,7 +73,12 @@ function resolveBin(name) {
 
 const [firstCommand, ...restArgs] = commandParts;
 const resolvedCommand = firstCommand === 'npx' ? resolveBin(restArgs[0]) : resolveBin(firstCommand);
-const resolvedArgs = firstCommand === 'npx' ? restArgs.slice(1) : restArgs;
+// __DATABASE_URL__ is a placeholder token, never the real secret, on the command line
+// this script is invoked with - it's substituted here, right before spawning, so the
+// real URL (with its embedded password) never appears in shell history or in any
+// command this script was actually called with.
+const resolvedArgs = (firstCommand === 'npx' ? restArgs.slice(1) : restArgs)
+  .map(arg => (arg === '__DATABASE_URL__' ? databaseUrl : arg));
 
 const child = spawn(resolvedCommand, resolvedArgs, {
   stdio: 'inherit',
