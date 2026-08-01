@@ -14,6 +14,7 @@
     "migrate:production": "npm run build && node dist/src/cli.js migrate --production",
     "registry:load": "npm run build && node dist/src/cli.js registry-load",
     "source-health": "npm run build && node dist/src/cli.js source-health",
+    "review-report": "npm run build && node dist/src/cli.js review-report",
     "test": "npm run build && node --test \"dist/tests/**/*.test.js\"",
     "test:integration": "npm run build && node --test \"dist/tests/integration/*.test.js\"",
     "lint": "tsc --noEmit"

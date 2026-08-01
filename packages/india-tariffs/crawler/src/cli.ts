@@ -16,6 +16,8 @@ import { runExtraction } from "./extraction/extractionOrchestrator.js";
 import type { SourceDocumentRow } from "./extraction/extractionOrchestrator.js";
 import { runValidation } from "./validation/runValidation.js";
 import { runSchedulerBatch } from "./scheduler.js";
+import { generateReviewReport } from "./review/reviewReport.js";
+import { writeFileSync } from "node:fs";
 
 // In local development, import.meta.dirname is
 // packages/india-tariffs/crawler/dist/src at runtime, three levels above
@@ -38,8 +40,9 @@ const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
-  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate|schedule-run> " +
-  "[--registry <path>] [--source <source_id>] [--document <document_id>] [--candidate <id>] [--production]";
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate|schedule-run|review-report> " +
+  "[--registry <path>] [--source <source_id>] [--document <document_id>] [--candidate <id>] " +
+  "[--out <path>] [--production]";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -78,6 +81,10 @@ async function main(): Promise<void> {
   }
   if (command === "schedule-run") {
     await runScheduleRun(args);
+    return;
+  }
+  if (command === "review-report") {
+    await runReviewReport(args);
     return;
   }
 
@@ -350,6 +357,37 @@ async function runValidateCommand(args: string[]): Promise<void> {
       if (result.reviewReady) reviewReadyCount++;
     }
     console.log(`\n${reviewReadyCount}/${candidateIds.length} candidate(s) reached REVIEW_READY`);
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Generates a human-readable Markdown report of extracted tariff candidates
+ * for external review, without requiring anyone to write SQL against the
+ * staging database directly. Prints to stdout by default so it can be piped
+ * (`| less`, `> report.md`), or written straight to a file with --out.
+ */
+async function runReviewReport(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const documentId = flagValue(args, "--document");
+  const candidateArg = flagValue(args, "--candidate");
+  const outPath = flagValue(args, "--out");
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  await db.verifyEnvironmentMarker();
+
+  try {
+    const report = await generateReviewReport(db, {
+      documentId,
+      candidateId: candidateArg ? Number(candidateArg) : undefined,
+    });
+    if (outPath) {
+      writeFileSync(outPath, report, "utf8");
+      console.log(`Review report written to ${outPath}`);
+    } else {
+      console.log(report);
+    }
   } finally {
     await db.close();
   }

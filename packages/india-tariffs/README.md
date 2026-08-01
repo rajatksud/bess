@@ -40,6 +40,30 @@ APP_ENV=staging node dist/src/cli.js registry-load
 APP_ENV=staging node dist/src/cli.js source-health
 ```
 
+## Reviewing extracted tariff candidates
+
+Extracted candidate tariffs, their charges, page-level citations and
+validation findings live across several normalized PostgreSQL tables
+(`candidate_tariffs`, `candidate_charge_components`, `field_citations`,
+`validation_results`) and are not practical to eyeball with ad hoc SQL.
+`review-report` renders them as a single human-readable Markdown file,
+grouped by candidate, with structural red flags (e.g. an ENERGY or DEMAND
+charge that has a rebate/surcharge but no base rate to apply it against,
+which is not billable — this exact pattern was found in a real KERC
+extraction) called out at the top of each affected candidate rather than
+left for the reader to notice:
+
+```bash
+APP_ENV=staging node dist/src/cli.js review-report --document <document_id> --out review.md
+# or, to inspect a single candidate:
+APP_ENV=staging node dist/src/cli.js review-report --candidate <id>
+```
+
+This is a stopgap for fast external inspection, not a review UI — a proper
+reviewer workflow (accepting/rejecting candidates, recording a
+`review_decisions` row) still needs to be built before any candidate can
+reach `approved_tariffs`.
+
 ## Status
 
 Wave 0/3 (Foundation / National coverage) — in progress. PostgreSQL
