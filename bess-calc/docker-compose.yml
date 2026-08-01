@@ -17,6 +17,18 @@ services:
     environment:
       PORT: "8080"
       NODE_ENV: production
+      # DATABASE_URL is required for the persistence-backed routes
+      # (/api/v1/projects, /scenarios, /datasets, /simulations) - the
+      # pre-existing stateless routes (simulation/run, tariff/calculate,
+      # optimisation/run) do not need it and keep working without it.
+      # Staging and prod Postgres are pre-provisioned, external
+      # infrastructure (see docs/database/MIGRATION_GUIDE.md) - this compose
+      # file intentionally does NOT bundle its own Postgres service, to
+      # avoid ever accidentally standing up a second, divergent database.
+      # Supply the real connection string via a .env file (git-ignored) or
+      # your deployment platform's secret store, e.g.:
+      #   DATABASE_URL: postgresql://<app_user>:<password>@<host>:<port>/bess
+      DATABASE_URL: ${DATABASE_URL:-}
     ports:
       - "${HOST_PORT:-8080}:8080"
     healthcheck:

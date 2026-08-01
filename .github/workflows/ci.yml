@@ -29,6 +29,27 @@ jobs:
   test:
     name: Test, typecheck, build
     runs-on: ubuntu-latest
+    # Ephemeral, disposable Postgres for this CI run only - wiped when the job ends,
+    # never staging/prod. Runs the persistence tests (server/__tests__/projects.test.ts
+    # etc.) for real; those tests self-skip if DATABASE_URL isn't set, but CI always
+    # sets it, so the full 228-test suite (not just the 208 DB-independent ones) runs
+    # on every PR/push.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bess_ci
+          POSTGRES_PASSWORD: bess_ci
+          POSTGRES_DB: bess_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://bess_ci:bess_ci@localhost:5432/bess_ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +67,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Run tests
         run: npm test
