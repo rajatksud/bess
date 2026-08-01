@@ -4,3 +4,4 @@ export { renderRowErrorsCsv } from './errorReport';
 export { parseTimestamp, detectDstAnomaly } from './timestampUtils';
 export { detectCadence, detectMissingIntervals } from './cadence';
 export { neutraliseForSpreadsheet } from './rowValidation';
+export { toEngineIntervals } from './toEngineIntervals';

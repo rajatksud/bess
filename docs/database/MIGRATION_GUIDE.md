@@ -6,10 +6,10 @@ Both staging and prod PostgreSQL databases are **pre-provisioned
 infrastructure**, not created by this project — a database named `bess`
 (owned by role `bess_admin`) already exists on both hosts.
 
-| Environment | Host | How it's reached | Local port (via existing SSH tunnel) |
-|---|---|---|---|
-| Staging | `prjx1` (standalone Postgres) | Direct | `localhost:5433` |
-| Prod | `prjx6` (Patroni HA cluster) | Via HAProxy primary endpoint (port 5000) | `localhost:15433` |
+| Environment | Host                          | How it's reached                          | Local port (via existing SSH tunnel) |
+| ----------- | ------------------------------ | ------------------------------------------ | ------------------------------------- |
+| Staging     | `prjx1` (standalone Postgres)  | Direct                                      | `localhost:5433`                      |
+| Prod        | `prjx6` (Patroni HA cluster)   | Via HAProxy primary endpoint (port 5000)    | `localhost:15433`                     |
 
 **Never connect directly to a Patroni cluster node.** Always go through the
 HAProxy port — the cluster can fail over to a different node at any time,
@@ -47,6 +47,16 @@ node scripts/composeDatabaseUrl.mjs <staging|prod> <admin|app> -- <command...>
   server reads `DATABASE_URL` directly from its own environment (see
   `.env.example`); this script's `app` mode is only for local manual
   testing against the same least-privilege credential the app uses.
+
+## Provisioning the application role
+
+Migrations run as `*_ADMIN_USER`; the running application connects as
+`*_USER` (least privilege — no schema-altering rights). If the `*_USER`
+role doesn't exist yet on an environment, create it and grant it
+CRUD-only access via `sql/grant_bess_user_privileges.sql` in this
+directory (run as the admin role, e.g.
+`sudo -u postgres psql -d bess -f sql/grant_bess_user_privileges.sql`
+after `CREATE ROLE bess_user LOGIN PASSWORD '<from .env>';`).
 
 ## Running a migration
 
