@@ -10,6 +10,12 @@ RUN npm ci
 FROM deps AS build
 WORKDIR /app
 COPY . .
+# Generates node_modules/.prisma/client (including the Linux query engine binary,
+# since this stage runs on the linux/alpine base regardless of host platform) - the
+# @prisma/client package itself is only a thin loader around this generated output,
+# so `npm ci` alone (in either stage) is not sufficient; `prisma generate` must run
+# explicitly, and its output must be copied into the runtime stage below.
+RUN npx prisma generate
 # APP_VERSION baked in from package.json at build time so the running server's
 # /api/v1/version endpoint reflects the real release version even after bundling
 # (see server/lib/version.ts - bundling collapses the file's relative path back to
@@ -29,6 +35,11 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server-dist ./server-dist
+# node_modules/.prisma/client (generated Linux query engine + client code) is not
+# reproduced by this stage's own `npm ci --omit=dev` - `prisma` (the generator CLI)
+# is a devDependency, omitted here by design. Copy the already-generated output from
+# the build stage instead of running `prisma generate` again in the runtime stage.
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 ARG GIT_COMMIT_SHA=unknown
 ARG APP_VERSION=0.0.0-unknown
