@@ -27,6 +27,7 @@ design and roadmap material, not implemented backend functionality.
   starting point, not a substitute for reading the code.
 - Do not modify unrelated documentation or roadmap phases.
 - Never change production data or credentials.
+- Before making a non-trivial change, read .agent/context/agent-instructions.md
 
 ## Commands
 

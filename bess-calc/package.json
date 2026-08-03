@@ -19,7 +19,9 @@
     "db:migrate:staging": "node scripts/composeDatabaseUrl.mjs staging admin -- npx prisma migrate deploy",
     "db:migrate:prod": "node scripts/composeDatabaseUrl.mjs prod admin -- npx prisma migrate deploy",
     "db:status:staging": "node scripts/composeDatabaseUrl.mjs staging admin -- npx prisma migrate status",
-    "db:status:prod": "node scripts/composeDatabaseUrl.mjs prod admin -- npx prisma migrate status"
+    "db:status:prod": "node scripts/composeDatabaseUrl.mjs prod admin -- npx prisma migrate status",
+    "architecture:generate": "node scripts/architecture-generate.mjs",
+    "architecture:check": "node scripts/check-dependencies.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -47,6 +49,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.4.20",
+    "dependency-cruiser": "^18.1.1",
+    "madge": "^8.0.0",
     "postcss": "^8.5.1",
     "prisma": "6.19.3",
     "supertest": "^7.2.2",

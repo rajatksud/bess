@@ -1,0 +1,396 @@
+{
+  "server/__tests__/datasets.test.ts": [
+    "server/__tests__/persistenceTestSetup.ts",
+    "server/app.ts"
+  ],
+  "server/__tests__/health.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/importValidate.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/optimisation.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/persistenceTestSetup.ts": [],
+  "server/__tests__/projects.test.ts": [
+    "server/__tests__/persistenceTestSetup.ts",
+    "server/app.ts"
+  ],
+  "server/__tests__/scenarios.test.ts": [
+    "server/__tests__/persistenceTestSetup.ts",
+    "server/app.ts"
+  ],
+  "server/__tests__/simulation.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/simulations.test.ts": [
+    "server/__tests__/persistenceTestSetup.ts",
+    "server/app.ts",
+    "server/lib/version.ts"
+  ],
+  "server/__tests__/staticFallback.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/tariff.test.ts": [
+    "server/app.ts"
+  ],
+  "server/__tests__/validation.test.ts": [
+    "server/app.ts"
+  ],
+  "server/app.ts": [
+    "server/lib/prisma.ts",
+    "server/middleware/correlationId.ts",
+    "server/middleware/errorHandler.ts",
+    "server/middleware/requestLogger.ts",
+    "server/routes/datasets.ts",
+    "server/routes/health.ts",
+    "server/routes/importValidate.ts",
+    "server/routes/optimisation.ts",
+    "server/routes/projects.ts",
+    "server/routes/scenarios.ts",
+    "server/routes/simulation.ts",
+    "server/routes/simulations.ts",
+    "server/routes/tariff.ts"
+  ],
+  "server/index.ts": [
+    "server/app.ts",
+    "server/lib/logger.ts"
+  ],
+  "server/lib/errors.ts": [],
+  "server/lib/logger.ts": [],
+  "server/lib/prisma.ts": [],
+  "server/lib/version.ts": [],
+  "server/middleware/correlationId.ts": [],
+  "server/middleware/errorHandler.ts": [
+    "server/lib/errors.ts",
+    "server/lib/logger.ts"
+  ],
+  "server/middleware/requestLogger.ts": [
+    "server/lib/logger.ts"
+  ],
+  "server/routes/datasets.ts": [
+    "server/lib/errors.ts",
+    "src/import/index.ts"
+  ],
+  "server/routes/health.ts": [
+    "server/lib/version.ts"
+  ],
+  "server/routes/importValidate.ts": [
+    "src/import/index.ts"
+  ],
+  "server/routes/optimisation.ts": [
+    "src/optimisation/index.ts",
+    "src/optimisation/types.ts"
+  ],
+  "server/routes/projects.ts": [
+    "server/lib/errors.ts"
+  ],
+  "server/routes/scenarios.ts": [
+    "server/lib/errors.ts"
+  ],
+  "server/routes/simulation.ts": [
+    "src/engine/dispatchEngine.ts",
+    "src/engine/financialEngine.ts",
+    "src/engine/validationEngine.ts",
+    "src/types/bess.ts"
+  ],
+  "server/routes/simulations.ts": [
+    "server/lib/errors.ts",
+    "server/lib/version.ts",
+    "src/engine/dispatchEngine.ts",
+    "src/engine/financialEngine.ts",
+    "src/engine/validationEngine.ts",
+    "src/import/index.ts",
+    "src/types/bess.ts"
+  ],
+  "server/routes/tariff.ts": [
+    "src/tariff/index.ts"
+  ],
+  "src/App.tsx": [
+    "src/components/ExportReportModal.tsx",
+    "src/components/Header.tsx",
+    "src/components/IntervalSimulation.tsx",
+    "src/components/LegacyComparisonModal.tsx",
+    "src/components/QuickEstimateWizard.tsx",
+    "src/components/ResultsDashboard.tsx",
+    "src/components/ScenarioSensitivity.tsx",
+    "src/engine/dispatchEngine.ts",
+    "src/engine/financialEngine.ts",
+    "src/engine/presetProfiles.ts",
+    "src/engine/validationEngine.ts",
+    "src/types/bess.ts"
+  ],
+  "src/battery/__tests__/batteryModel.test.ts": [
+    "src/battery/__tests__/fixtures.ts",
+    "src/battery/batteryModel.ts"
+  ],
+  "src/battery/__tests__/cycleCounting.test.ts": [
+    "src/battery/cycleCounting.ts"
+  ],
+  "src/battery/__tests__/degradationModel.test.ts": [
+    "src/battery/__tests__/fixtures.ts",
+    "src/battery/degradationModel.ts"
+  ],
+  "src/battery/__tests__/fixtures.ts": [
+    "src/battery/batteryModel.ts"
+  ],
+  "src/battery/batteryLibrary.ts": [
+    "src/battery/batteryModel.ts"
+  ],
+  "src/battery/batteryModel.ts": [],
+  "src/battery/cycleCounting.ts": [],
+  "src/battery/degradationModel.ts": [
+    "src/battery/batteryModel.ts",
+    "src/battery/cycleCounting.ts"
+  ],
+  "src/battery/index.ts": [
+    "src/battery/batteryLibrary.ts",
+    "src/battery/batteryModel.ts",
+    "src/battery/cycleCounting.ts",
+    "src/battery/degradationModel.ts"
+  ],
+  "src/components/ExportReportModal.tsx": [
+    "src/types/bess.ts"
+  ],
+  "src/components/Header.tsx": [
+    "src/types/bess.ts"
+  ],
+  "src/components/IntervalSimulation.tsx": [
+    "src/engine/presetProfiles.ts",
+    "src/types/bess.ts"
+  ],
+  "src/components/LegacyComparisonModal.tsx": [
+    "src/engine/legacyEngine.ts",
+    "src/types/bess.ts"
+  ],
+  "src/components/QuickEstimateWizard.tsx": [
+    "src/types/bess.ts"
+  ],
+  "src/components/ResultsDashboard.tsx": [
+    "src/types/bess.ts"
+  ],
+  "src/components/ScenarioSensitivity.tsx": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/__tests__/dispatchEngine.demand.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts"
+  ],
+  "src/engine/__tests__/dispatchEngine.netLoadBilling.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts"
+  ],
+  "src/engine/__tests__/dispatchEngine.noDoubleCounting.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts"
+  ],
+  "src/engine/__tests__/dispatchEngine.soc.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts"
+  ],
+  "src/engine/__tests__/dispatchEngine.targetPeak.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts"
+  ],
+  "src/engine/__tests__/financialEngine.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/financialEngine.ts",
+    "src/types/bess.ts"
+  ],
+  "src/engine/__tests__/fixtures.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/__tests__/scenarios.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts",
+    "src/engine/financialEngine.ts",
+    "src/engine/validationEngine.ts"
+  ],
+  "src/engine/__tests__/smoke.test.ts": [],
+  "src/engine/__tests__/validationEngine.test.ts": [
+    "src/engine/__tests__/fixtures.ts",
+    "src/engine/dispatchEngine.ts",
+    "src/engine/financialEngine.ts",
+    "src/engine/validationEngine.ts"
+  ],
+  "src/engine/dispatchEngine.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/financialEngine.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/legacyEngine.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/presetProfiles.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/engine/validationEngine.ts": [
+    "src/types/bess.ts"
+  ],
+  "src/import/__tests__/csvImporter.test.ts": [
+    "src/import/csvImporter.ts"
+  ],
+  "src/import/__tests__/errorReport.test.ts": [
+    "src/import/errorReport.ts",
+    "src/import/rowValidation.ts"
+  ],
+  "src/import/cadence.ts": [
+    "src/import/types.ts"
+  ],
+  "src/import/csvImporter.ts": [
+    "src/import/cadence.ts",
+    "src/import/rowValidation.ts",
+    "src/import/timestampUtils.ts",
+    "src/import/types.ts"
+  ],
+  "src/import/errorReport.ts": [
+    "src/import/rowValidation.ts",
+    "src/import/types.ts"
+  ],
+  "src/import/index.ts": [
+    "src/import/cadence.ts",
+    "src/import/csvImporter.ts",
+    "src/import/errorReport.ts",
+    "src/import/rowValidation.ts",
+    "src/import/timestampUtils.ts",
+    "src/import/toEngineIntervals.ts",
+    "src/import/types.ts"
+  ],
+  "src/import/rowValidation.ts": [
+    "src/import/types.ts"
+  ],
+  "src/import/timestampUtils.ts": [],
+  "src/import/toEngineIntervals.ts": [
+    "src/import/types.ts",
+    "src/types/bess.ts"
+  ],
+  "src/import/types.ts": [],
+  "src/index.css": [],
+  "src/main.tsx": [
+    "src/App.tsx",
+    "src/index.css"
+  ],
+  "src/optimisation/__tests__/fixtures.ts": [
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/__tests__/lpModel.test.ts": [
+    "src/optimisation/__tests__/fixtures.ts",
+    "src/optimisation/optimisedDispatch.ts"
+  ],
+  "src/optimisation/__tests__/optimisedDispatch.test.ts": [
+    "src/optimisation/__tests__/fixtures.ts",
+    "src/optimisation/comparison.ts",
+    "src/optimisation/heuristicDispatch.ts",
+    "src/optimisation/optimisedDispatch.ts"
+  ],
+  "src/optimisation/comparison.ts": [
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/heuristicDispatch.ts": [
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/index.ts": [
+    "src/optimisation/comparison.ts",
+    "src/optimisation/heuristicDispatch.ts",
+    "src/optimisation/lpModel.ts",
+    "src/optimisation/optimisedDispatch.ts",
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/lpModel.ts": [
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/optimisedDispatch.ts": [
+    "src/optimisation/heuristicDispatch.ts",
+    "src/optimisation/lpModel.ts",
+    "src/optimisation/types.ts"
+  ],
+  "src/optimisation/types.ts": [],
+  "src/tariff/__tests__/billingDemand.test.ts": [
+    "src/tariff/__tests__/fixtures.ts",
+    "src/tariff/billingDemand.ts",
+    "src/tariff/validation.ts"
+  ],
+  "src/tariff/__tests__/demandCharges.test.ts": [
+    "src/tariff/__tests__/fixtures.ts",
+    "src/tariff/demandCharges.ts",
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/__tests__/energyCharges.test.ts": [
+    "src/tariff/__tests__/fixtures.ts",
+    "src/tariff/energyCharges.ts",
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/__tests__/exportRules.test.ts": [
+    "src/tariff/exportRules.ts",
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/__tests__/fixtures.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/__tests__/tariffEngine.test.ts": [
+    "src/tariff/__tests__/fixtures.ts",
+    "src/tariff/dispatchAdapter.ts",
+    "src/tariff/fixtures/sampleTariffs.ts",
+    "src/tariff/tariffEngine.ts",
+    "src/types/bess.ts"
+  ],
+  "src/tariff/__tests__/taxesAndDuties.test.ts": [
+    "src/tariff/taxesAndDuties.ts",
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/__tests__/validation.test.ts": [
+    "src/tariff/__tests__/fixtures.ts",
+    "src/tariff/validation.ts"
+  ],
+  "src/tariff/billingDemand.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/demandCharges.ts": [
+    "src/tariff/billingDemand.ts",
+    "src/tariff/energyCharges.ts",
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/dispatchAdapter.ts": [
+    "src/tariff/types.ts",
+    "src/types/bess.ts"
+  ],
+  "src/tariff/energyCharges.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/exportRules.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/fixtures/sampleTariffs.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/index.ts": [
+    "src/tariff/billingDemand.ts",
+    "src/tariff/demandCharges.ts",
+    "src/tariff/dispatchAdapter.ts",
+    "src/tariff/energyCharges.ts",
+    "src/tariff/exportRules.ts",
+    "src/tariff/tariffEngine.ts",
+    "src/tariff/taxesAndDuties.ts",
+    "src/tariff/types.ts",
+    "src/tariff/validation.ts"
+  ],
+  "src/tariff/tariffEngine.ts": [
+    "src/tariff/billingDemand.ts",
+    "src/tariff/demandCharges.ts",
+    "src/tariff/energyCharges.ts",
+    "src/tariff/exportRules.ts",
+    "src/tariff/taxesAndDuties.ts",
+    "src/tariff/types.ts",
+    "src/tariff/validation.ts"
+  ],
+  "src/tariff/taxesAndDuties.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/tariff/types.ts": [],
+  "src/tariff/validation.ts": [
+    "src/tariff/types.ts"
+  ],
+  "src/types/bess.ts": []
+}
