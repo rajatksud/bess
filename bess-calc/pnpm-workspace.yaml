@@ -5,3 +5,6 @@ allowBuilds:
   '@prisma/engines': true
   esbuild: true
   prisma: true
+
+minimumReleaseAgeExclude:
+  - dependency-cruiser@18.1.1
