@@ -31,6 +31,11 @@ export function calculateFinancialMetrics(
 
   const cashFlowArrayForIrr: number[] = [-initialCapex];
 
+  // Accumulators for the discounted LCOS: discounted lifetime cost divided by
+  // discounted lifetime energy discharged (both discounted at discountRatePct).
+  let discountedLifetimeCost = initialCapex;
+  let discountedLifetimeDischargeKwh = 0;
+
   for (let year = 1; year <= projectYears; year++) {
     // Capacity degradation multiplier
     const effectiveCapacityPct = Math.max(0.5, 1.0 - degRate * (year - 1));
@@ -98,6 +103,10 @@ export function calculateFinancialMetrics(
 
     cashFlowArrayForIrr.push(netCashFlowY);
 
+    const discountFactorY = Math.pow(1 + discountRate, year);
+    discountedLifetimeCost += (omCostY + replacementCapex) / discountFactorY;
+    discountedLifetimeDischargeKwh += (technical.energyDischargedKwh * effectiveCapacityPct) / discountFactorY;
+
     annualCashFlows.push({
       year,
       effectiveCapacityPct: Math.round(effectiveCapacityPct * 100),
@@ -119,11 +128,16 @@ export function calculateFinancialMetrics(
   // Calculate Internal Rate of Return (IRR) via bisection method
   const irrPct = calculateIrr(cashFlowArrayForIrr);
 
-  // Levelized Cost of Storage (LCOS)
-  const totalLifetimeDischargedKwh = technical.energyDischargedKwh * projectYears * 0.9;
-  const lcoePerKwh = totalLifetimeDischargedKwh > 0 
-    ? (initialCapex + (savings.omCost * projectYears)) / totalLifetimeDischargedKwh 
+  // Levelized Cost of Storage (LCOS): discounted lifetime cost / discounted
+  // lifetime energy discharged. See FinancialResult.lcoePerKwh doc comment for
+  // the full definition and why this replaces the previous undocumented
+  // "* 0.9" flat derate that also excluded charging/auxiliary cost.
+  const lcoePerKwh = discountedLifetimeDischargeKwh > 0
+    ? discountedLifetimeCost / discountedLifetimeDischargeKwh
     : 0;
+
+  // Simple lifetime ROI (not annualised, not IRR - see FinancialResult.roiPct doc comment).
+  const roiPct = initialCapex > 0 ? (cumulativeCashFlow / initialCapex) * 100 : 0;
 
   return {
     initialInvestment: initialCapex,
@@ -135,6 +149,7 @@ export function calculateFinancialMetrics(
     irrPct,
     tenYearCumulativeCashFlow: cumulativeCashFlow,
     lcoePerKwh,
+    roiPct,
     annualCashFlows
   };
 }

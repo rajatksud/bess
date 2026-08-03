@@ -200,7 +200,25 @@ export interface FinancialResult {
   npv: number;
   irrPct: number | null;
   tenYearCumulativeCashFlow: number;
-  lcoePerKwh: number; // Levelized Cost of Storage
+  /**
+   * Levelized Cost of Storage (currency per kWh discharged), computed as
+   * (discounted lifetime cost) / (discounted lifetime energy discharged), both
+   * discounted at financial.discountRatePct. Lifetime cost includes CapEx,
+   * every year's full O&M (including charging/auxiliary energy cost and
+   * degradation cost, matching the same omCostY used in the cash flow build)
+   * and any scheduled replacement CapEx. Energy discharged is degradation-adjusted
+   * per year using the same effectiveCapacityPct as the cash flow projection.
+   * This is a standard discounted-LCOS definition, not a simple undiscounted
+   * average - do not compare it against a non-discounted "cost per kWh" figure.
+   */
+  lcoePerKwh: number;
+  /**
+   * Simple lifetime ROI: total undiscounted net cash flow generated over the
+   * project life, as a percentage of the initial CapEx. This is NOT
+   * annualised and NOT the same as IRR - it answers "how many times over does
+   * the project return the initial investment", not "what rate of return".
+   */
+  roiPct: number;
   annualCashFlows: AnnualCashFlow[];
 }
 
