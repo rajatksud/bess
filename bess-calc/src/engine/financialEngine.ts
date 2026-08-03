@@ -7,11 +7,62 @@ import {
   BessSystemInput
 } from '../types/bess';
 
+/**
+ * One physically-simulated project year: the output of re-running the dispatch engine at
+ * that year's actual state of health (see src/engine/multiYearSimulation.ts).
+ */
+export interface DegradedYearInput {
+  year: number;
+  savings: SavingsBreakdown;
+  /** Annual discharge throughput ACTUALLY achieved at this year's capacity. Already degraded. */
+  energyDischargedKwh: number;
+  sohPctStartOfYear: number;
+}
+
+export interface FinancialEngineOptions {
+  /**
+   * Per-year physically-simulated results, year 1..N.
+   *
+   * TRAP 2 (LCOS double counting), resolved explicitly. The legacy path multiplies a
+   * FIXED technical.energyDischargedKwh by effectiveCapacityPct to model later years'
+   * reduced output. If dispatch has ALSO been re-run at each year's degraded capacity,
+   * that same physical effect is already baked into these figures, and applying
+   * effectiveCapacityPct on top would derate it twice — inflating LCOS and deflating
+   * savings by roughly the square of the degradation.
+   *
+   * The two paths are therefore mutually exclusive by construction:
+   *   - degradedYears ABSENT  -> today's flat-scalar path, completely unchanged.
+   *   - degradedYears PRESENT -> effectiveCapacityPct is pinned to 1.0 for savings, and
+   *                              the LCOS denominator uses these per-year figures RAW.
+   *                              Escalation (tariff/diesel/O&M) still applies, because
+   *                              that is a price effect, not a capacity effect.
+   */
+  degradedYears?: DegradedYearInput[];
+}
+
+/**
+ * Model-validity floor on the capacity multiplier.
+ *
+ * TRAP 1 (SOH-0 vs. the 0.5 floor), resolved explicitly. estimateDegradation floors SOH
+ * at 0; a 0 would zero every savings stream and produce a nonsense NPV. The pre-existing
+ * financial engine already floored the flat-linear multiplier at 0.5. That floor is kept,
+ * unified across BOTH paths, and named for what it actually is: a statement that the
+ * linear-fade projection is outside its range of validity below 50% capacity, NOT a
+ * physical claim that a battery cannot fall below 50%.
+ *
+ * A run that hits the floor is not silently rescued: the SOH forecast separately reports
+ * endOfLifeYear (see src/battery/sohForecast.ts) and the engineering report surfaces it,
+ * so a reader sees "this asset reached end of life in year N" rather than a smooth curve
+ * that quietly stopped moving.
+ */
+export const MIN_MODEL_VALID_CAPACITY_FACTOR = 0.5;
+
 export function calculateFinancialMetrics(
   savings: SavingsBreakdown,
   technical: TechnicalResult,
   financial: FinancialInput,
-  system: BessSystemInput
+  system: BessSystemInput,
+  options: FinancialEngineOptions = {}
 ): FinancialResult {
   const projectYears = system.projectLifeYears || 10;
   const initialCapex = financial.initialCapex;
@@ -36,24 +87,39 @@ export function calculateFinancialMetrics(
   let discountedLifetimeCost = initialCapex;
   let discountedLifetimeDischargeKwh = 0;
 
+  const degradedYears = options.degradedYears;
+  // When per-year simulated results are supplied, degradation is already embodied in
+  // them, so the capacity multiplier must be neutral (see FinancialEngineOptions).
+  const usePhysicallySimulatedYears = degradedYears !== undefined && degradedYears.length > 0;
+
   for (let year = 1; year <= projectYears; year++) {
-    // Capacity degradation multiplier
-    const effectiveCapacityPct = Math.max(0.5, 1.0 - degRate * (year - 1));
+    // Year-specific savings: either the physically simulated ones, or the flat first-year
+    // set that the legacy path scales by a capacity multiplier.
+    const simulatedYear = usePhysicallySimulatedYears
+      ? degradedYears!.find(entry => entry.year === year) ?? degradedYears![degradedYears!.length - 1]
+      : undefined;
+    const yearSavings = simulatedYear ? simulatedYear.savings : savings;
+
+    // Capacity degradation multiplier. Pinned to 1.0 on the simulated path so the same
+    // physical effect is never applied twice.
+    const effectiveCapacityPct = usePhysicallySimulatedYears
+      ? 1.0
+      : Math.max(MIN_MODEL_VALID_CAPACITY_FACTOR, 1.0 - degRate * (year - 1));
 
     // Escalated savings components
-    const demandSavingsY = savings.demandChargeSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
-    const dieselSavingsY = savings.dieselFuelSaving * Math.pow(1 + dieselEsc, year - 1) * effectiveCapacityPct;
-    const dgMaintSavingsY = savings.dgMaintenanceSaving * Math.pow(1 + omEsc, year - 1);
-    const solarSavingsY = savings.solarSelfConsumptionSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
-    const arbitrageSavingsY = savings.energyArbitrageSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
+    const demandSavingsY = yearSavings.demandChargeSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
+    const dieselSavingsY = yearSavings.dieselFuelSaving * Math.pow(1 + dieselEsc, year - 1) * effectiveCapacityPct;
+    const dgMaintSavingsY = yearSavings.dgMaintenanceSaving * Math.pow(1 + omEsc, year - 1);
+    const solarSavingsY = yearSavings.solarSelfConsumptionSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
+    const arbitrageSavingsY = yearSavings.energyArbitrageSaving * Math.pow(1 + tariffEsc, year - 1) * effectiveCapacityPct;
 
     const grossSavingY = demandSavingsY + dieselSavingsY + dgMaintSavingsY + solarSavingsY + arbitrageSavingsY;
 
     // Escalated costs
-    const chargingCostY = savings.chargingEnergyCost * Math.pow(1 + tariffEsc, year - 1);
-    const auxCostY = savings.auxiliaryEnergyCost * Math.pow(1 + tariffEsc, year - 1);
-    const degradationCostY = savings.degradationCost * effectiveCapacityPct;
-    const omCostY = (savings.omCost + degradationCostY + auxCostY + chargingCostY) * Math.pow(1 + omEsc, year - 1);
+    const chargingCostY = yearSavings.chargingEnergyCost * Math.pow(1 + tariffEsc, year - 1);
+    const auxCostY = yearSavings.auxiliaryEnergyCost * Math.pow(1 + tariffEsc, year - 1);
+    const degradationCostY = yearSavings.degradationCost * effectiveCapacityPct;
+    const omCostY = (yearSavings.omCost + degradationCostY + auxCostY + chargingCostY) * Math.pow(1 + omEsc, year - 1);
 
     // Replacement CaPex in scheduled year
     let replacementCapex = 0;
@@ -105,11 +171,21 @@ export function calculateFinancialMetrics(
 
     const discountFactorY = Math.pow(1 + discountRate, year);
     discountedLifetimeCost += (omCostY + replacementCapex) / discountFactorY;
-    discountedLifetimeDischargeKwh += (technical.energyDischargedKwh * effectiveCapacityPct) / discountFactorY;
+    // LCOS denominator. On the simulated path the per-year figure is used RAW — it is
+    // already the throughput achieved at that year's degraded capacity, so
+    // effectiveCapacityPct (pinned to 1.0 above) must not derate it a second time.
+    const yearDischargeKwh = simulatedYear
+      ? simulatedYear.energyDischargedKwh
+      : technical.energyDischargedKwh * effectiveCapacityPct;
+    discountedLifetimeDischargeKwh += yearDischargeKwh / discountFactorY;
 
     annualCashFlows.push({
       year,
-      effectiveCapacityPct: Math.round(effectiveCapacityPct * 100),
+      // On the simulated path this column reports the actual modelled state of health
+      // rather than a hardcoded 100, so a reader can still see the capacity trajectory.
+      effectiveCapacityPct: simulatedYear
+        ? Math.round(simulatedYear.sohPctStartOfYear)
+        : Math.round(effectiveCapacityPct * 100),
       grossSaving: grossSavingY,
       omCost: omCostY,
       replacementCapex,
@@ -139,10 +215,18 @@ export function calculateFinancialMetrics(
   // Simple lifetime ROI (not annualised, not IRR - see FinancialResult.roiPct doc comment).
   const roiPct = initialCapex > 0 ? (cumulativeCashFlow / initialCapex) * 100 : 0;
 
+  // Report year 1's own figures. On the simulated path the caller passes year 1's savings
+  // as `savings` anyway (year 1 runs at 100% SOH), but reading it from the year-1 entry
+  // when present removes the need for the caller to keep those two in step.
+  const firstSimulatedYear = usePhysicallySimulatedYears
+    ? degradedYears!.find(entry => entry.year === 1)
+    : undefined;
+  const firstYearSavings = firstSimulatedYear ? firstSimulatedYear.savings : savings;
+
   return {
     initialInvestment: initialCapex,
-    firstYearGrossSaving: savings.grossSaving,
-    firstYearNetSaving: savings.netOperatingSaving,
+    firstYearGrossSaving: firstYearSavings.grossSaving,
+    firstYearNetSaving: firstYearSavings.netOperatingSaving,
     simplePaybackYears,
     discountedPaybackYears,
     npv,

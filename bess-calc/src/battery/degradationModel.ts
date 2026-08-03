@@ -3,12 +3,19 @@
 // single SOH estimate; each is a standard simplified engineering formula, not a
 // fitted/validated model for any specific cell chemistry.
 import { BatteryModelConfig } from './batteryModel';
-import { HalfCycle, equivalentFullCycles } from './cycleCounting';
+import { HalfCycle, equivalentFullCycles, cycleLifeConsumption } from './cycleCounting';
 
 export interface DegradationInputs {
   config: BatteryModelConfig;
   /** Half-cycles observed over the period being assessed (see cycleCounting.ts). */
   halfCycles: HalfCycle[];
+  /**
+   * How many times the supplied `halfCycles` set repeats over the assessed period.
+   * Lets a representative-day SOC trace stand in for a whole year (repetitions = 365)
+   * without materialising 365 copies of the array. Defaults to 1 (the half-cycles ARE
+   * the whole period), which is the pre-existing behaviour.
+   */
+  halfCycleRepetitions?: number;
   /** Total charge+discharge throughput over the period, in kWh. */
   throughputKwh: number;
   /** Elapsed time being assessed, in years (fractional allowed, e.g. 0.25 for a quarter). */
@@ -33,7 +40,16 @@ export interface DegradationResult {
   calendarAgeingPct: number;
   totalAgeingPct: number;
   sohPct: number;
+  /**
+   * DoD-weighted equivalent full cycles consumed over the assessed period, derived from
+   * the SOC trace. NOTE the deliberate naming collision with
+   * TechnicalResult.equivalentFullCycles, which is a DIFFERENT quantity (annual
+   * throughput ÷ nameplate energy — a utilisation ratio, not an ageing measure). This
+   * one is canonical for ageing; see docs/architecture/BATTERY_MODEL_ARCHITECTURE.md.
+   */
   equivalentFullCycles: number;
+  /** True when a manufacturer DoD-vs-cycle-life curve drove cycle ageing instead of the flat maxCycles approximation. */
+  usedDodCycleLifeCurve: boolean;
 }
 
 const REFERENCE_C_RATE = 0.5;
@@ -67,16 +83,26 @@ function calendarAgeingFactor(averageTemperatureC: number): number {
  */
 export function estimateDegradation(inputs: DegradationInputs): DegradationResult {
   const { config, halfCycles, throughputKwh, elapsedYears } = inputs;
+  const repetitions = inputs.halfCycleRepetitions ?? 1;
   const averageCRate = inputs.averageCRate ?? REFERENCE_C_RATE;
-  const averageTemperatureC = inputs.averageTemperatureC ?? REFERENCE_TEMPERATURE_C;
+  const averageTemperatureC = inputs.averageTemperatureC ?? config.averageAmbientTemperatureC ?? REFERENCE_TEMPERATURE_C;
 
   if (elapsedYears < 0) throw new Error('elapsedYears must be non-negative');
   if (throughputKwh < 0) throw new Error('throughputKwh must be non-negative');
   if (averageCRate <= 0) throw new Error('averageCRate must be positive');
+  if (repetitions < 0) throw new Error('halfCycleRepetitions must be non-negative');
 
-  const cycles = equivalentFullCycles(halfCycles);
+  const cycles = equivalentFullCycles(halfCycles) * repetitions;
   const cRateStressFactor = Math.pow(averageCRate / REFERENCE_C_RATE, C_RATE_AGEING_EXPONENT);
-  const cycleAgeingPct = (cycles / config.maxCycles) * 100 * cRateStressFactor;
+
+  // Cycle ageing: honour a manufacturer DoD-vs-cycle-life curve when one is supplied,
+  // otherwise fall back to the DoD-linear equivalent-full-cycle approximation against a
+  // single maxCycles rating. Both express "fraction of rated cycle life consumed".
+  const usedDodCycleLifeCurve = config.dodCycleLifeCurve !== undefined && config.dodCycleLifeCurve.length > 0;
+  const cycleLifeFraction = usedDodCycleLifeCurve
+    ? cycleLifeConsumption(halfCycles, config.dodCycleLifeCurve!) * repetitions
+    : cycles / config.maxCycles;
+  const cycleAgeingPct = cycleLifeFraction * 100 * cRateStressFactor;
 
   const calendarFactor = calendarAgeingFactor(averageTemperatureC);
   const calendarAgeingPct = (elapsedYears / config.calendarLifeYears) * 100 * calendarFactor;
@@ -95,6 +121,7 @@ export function estimateDegradation(inputs: DegradationInputs): DegradationResul
     calendarAgeingPct,
     totalAgeingPct,
     sohPct,
-    equivalentFullCycles: cycles
+    equivalentFullCycles: cycles,
+    usedDodCycleLifeCurve
   };
 }

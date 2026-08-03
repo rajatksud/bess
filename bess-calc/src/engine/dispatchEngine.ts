@@ -81,6 +81,9 @@ export function runIntervalDispatch(
   //
   // The `undefined` branch returns system.ratedEnergyKwh itself (not a multiplication by
   // 1.0), so a run without SOH is structurally identical to the pre-SOH engine.
+  if (options.batterySohPct !== undefined && (options.batterySohPct < 0 || options.batterySohPct > 100)) {
+    throw new Error('batterySohPct must be in [0, 100]');
+  }
   const healthAdjustedEnergyKwh = options.batterySohPct === undefined
     ? system.ratedEnergyKwh
     : system.ratedEnergyKwh * (options.batterySohPct / 100);
@@ -300,7 +303,9 @@ export function runIntervalDispatch(
     }
 
     const nextStoredKwh = Math.min(maxStoredKwh, Math.max(minStoredKwh, currentStoredKwh + netEnergyKwhChange));
-    currentSocPct = (nextStoredKwh / healthAdjustedEnergyKwh) * 100;
+    // A fully consumed battery (0% SOH) has no capacity for SOC to be a percentage of.
+    // Report 0% rather than propagating 0/0 = NaN through every downstream figure.
+    currentSocPct = healthAdjustedEnergyKwh > 0 ? (nextStoredKwh / healthAdjustedEnergyKwh) * 100 : 0;
 
     const batteryDischargeKw = bessPowerKw > 0 ? bessPowerKw : 0;
     const batteryChargeKw = bessPowerKw < 0 ? Math.abs(bessPowerKw) : 0;

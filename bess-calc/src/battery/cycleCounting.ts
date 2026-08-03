@@ -8,6 +8,8 @@
 // oscillations within a larger swing (true rainflow would separate them out), which
 // is a conservative simplification for degradation estimation purposes - it will
 // slightly undercount low-DoD nested cycling, not overcount ageing.
+import { DodCycleLifePoint } from './batteryModel';
+
 export interface HalfCycle {
   fromSocPct: number;
   toSocPct: number;
@@ -69,4 +71,51 @@ export function equivalentFullCycles(halfCycles: HalfCycle[], referenceDodPct = 
   if (referenceDodPct <= 0) throw new Error('referenceDodPct must be positive');
   const totalDodWeightedHalfCycles = halfCycles.reduce((sum, hc) => sum + hc.depthOfDischargePct / referenceDodPct, 0);
   return totalDodWeightedHalfCycles / 2;
+}
+
+/**
+ * Rated cycle life at an arbitrary depth of discharge, linearly interpolated from a
+ * manufacturer DoD-vs-cycle-life curve. Depths outside the curve's range are clamped to
+ * the nearest endpoint rather than extrapolated — extrapolating a cycle-life curve past
+ * its measured range is exactly the kind of invented precision this codebase avoids.
+ */
+export function cycleLifeAtDod(curve: DodCycleLifePoint[], depthOfDischargePct: number): number {
+  if (curve.length === 0) throw new Error('cycleLifeAtDod requires a non-empty curve');
+  const sorted = [...curve].sort((a, b) => a.depthOfDischargePct - b.depthOfDischargePct);
+
+  if (depthOfDischargePct <= sorted[0].depthOfDischargePct) return sorted[0].cycles;
+  const last = sorted[sorted.length - 1];
+  if (depthOfDischargePct >= last.depthOfDischargePct) return last.cycles;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const upper = sorted[i];
+    const lower = sorted[i - 1];
+    if (depthOfDischargePct <= upper.depthOfDischargePct) {
+      const span = upper.depthOfDischargePct - lower.depthOfDischargePct;
+      if (span === 0) return lower.cycles;
+      const t = (depthOfDischargePct - lower.depthOfDischargePct) / span;
+      return lower.cycles + t * (upper.cycles - lower.cycles);
+    }
+  }
+  return last.cycles;
+}
+
+/**
+ * Fraction of the battery's rated cycle life consumed by the supplied half-cycles,
+ * using a manufacturer DoD-vs-cycle-life curve. Each half-cycle at depth D consumes
+ * 0.5 / cycleLifeAtDod(D) of the total life budget (two half-cycles at the same depth
+ * make one full cycle).
+ *
+ * This differs from equivalentFullCycles/maxCycles in the way that matters: the
+ * DoD-linear equivalent-cycle model assumes life consumption scales linearly with depth,
+ * whereas real cells deliver disproportionately more shallow cycles. Given a curve, this
+ * function honours it; without one, callers fall back to the linear approximation.
+ *
+ * Returns a fraction in [0, ∞) — 1.0 means the entire rated cycle life is consumed.
+ */
+export function cycleLifeConsumption(halfCycles: HalfCycle[], curve: DodCycleLifePoint[]): number {
+  return halfCycles.reduce((sum, hc) => {
+    if (hc.depthOfDischargePct <= 0) return sum;
+    return sum + 0.5 / cycleLifeAtDod(curve, hc.depthOfDischargePct);
+  }, 0);
 }
