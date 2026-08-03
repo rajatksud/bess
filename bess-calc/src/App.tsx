@@ -7,7 +7,8 @@ import {
   FinancialInput, 
   CurrencySymbol, 
   DispatchPriorityType,
-  SimulationResult 
+  SimulationResult,
+  ValidationWarning
 } from './types/bess';
 import { Header } from './components/Header';
 import { QuickEstimateWizard } from './components/QuickEstimateWizard';
@@ -16,6 +17,7 @@ import { ResultsDashboard } from './components/ResultsDashboard';
 import { ScenarioSensitivity } from './components/ScenarioSensitivity';
 import { LegacyComparisonModal } from './components/LegacyComparisonModal';
 import { ExportReportModal } from './components/ExportReportModal';
+import { ProjectWorkspace } from './components/ProjectWorkspace';
 import { PRESET_PROFILES, ProfilePreset } from './engine/presetProfiles';
 import { validateBessConfig, validateSimulationResult } from './engine/validationEngine';
 import { runIntervalDispatch } from './engine/dispatchEngine';
@@ -102,7 +104,7 @@ export function App() {
   const [solar, setSolar] = useState<SolarInput>(INITIAL_SOLAR);
   const [financial, setFinancial] = useState<FinancialInput>(INITIAL_FINANCIAL);
 
-  const [activeTab, setActiveTab] = useState<'quick' | 'interval' | 'comparison' | 'scenario'>('quick');
+  const [activeTab, setActiveTab] = useState<'quick' | 'interval' | 'comparison' | 'scenario' | 'project'>('quick');
   const [selectedPreset, setSelectedPreset] = useState<ProfilePreset>(PRESET_PROFILES[0]);
   const [intervalResolution, setIntervalResolution] = useState<number>(15);
   const [dispatchPriorities, setDispatchPriorities] = useState<DispatchPriorityType[]>([
@@ -184,7 +186,7 @@ export function App() {
     const rawIntervals = selectedPreset.generateIntervals(intervalResolution, adjustedTariff, solar);
 
     // 3. Run Single-Balance Dispatch Engine
-    const { simulatedIntervals, savings, technical } = runIntervalDispatch(
+    const { simulatedIntervals, savings, technical, assumptions: dispatchAssumptions } = runIntervalDispatch(
       rawIntervals,
       adjustedSystem,
       adjustedTariff,
@@ -194,6 +196,15 @@ export function App() {
       dispatchPriorities,
       intervalResolution
     );
+
+    const reactivePowerWarnings: ValidationWarning[] = dispatchAssumptions.map((message, i) => ({
+      id: `dispatch-assumption-${i}`,
+      level: 'info',
+      category: 'physical',
+      code: 'REACTIVE_POWER_ASSUMPTION',
+      message,
+      recommendation: 'Supply measured per-interval kVA or power factor for engineering-grade kVA billing figures.'
+    }));
 
     // 4. Run Financial Cash Flow Engine
     const financialMetrics = calculateFinancialMetrics(
@@ -228,7 +239,7 @@ export function App() {
       savings,
       technical,
       financial: financialMetrics,
-      warnings: [...configWarnings, ...simulationWarnings],
+      warnings: [...configWarnings, ...simulationWarnings, ...reactivePowerWarnings],
       intervals: simulatedIntervals
     };
   }, [system, tariff, diesel, solar, financial, selectedPreset, intervalResolution, dispatchPriorities, activeTab, sensitivityMults]);
@@ -308,6 +319,19 @@ export function App() {
               currency={currency}
             />
           </div>
+        )}
+
+        {/* Tab: Persistence-backed project workflow (create project, import dataset, save scenario, run simulation via the API) */}
+        {activeTab === 'project' && (
+          <ProjectWorkspace
+            currency={currency}
+            system={system}
+            tariff={tariff}
+            diesel={diesel}
+            solar={solar}
+            financial={financial}
+            dispatchPriorities={dispatchPriorities}
+          />
         )}
 
         {/* Tab 4: Sales Pitch Audit Comparison */}

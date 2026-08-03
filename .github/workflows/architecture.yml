@@ -1,0 +1,73 @@
+name: Repository Architecture
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bess-calc/src/**'
+      - 'bess-calc/server/**'
+      - 'bess-calc/.dependency-cruiser.cjs'
+      - 'bess-calc/scripts/architecture-generate.mjs'
+      - 'bess-calc/scripts/check-dependencies.mjs'
+      - '.github/workflows/architecture.yml'
+  push:
+    branches:
+      - 'feature/**'
+      - 'dev/**'
+    paths:
+      - 'bess-calc/src/**'
+      - 'bess-calc/server/**'
+      - 'bess-calc/.dependency-cruiser.cjs'
+      - 'bess-calc/scripts/architecture-generate.mjs'
+      - 'bess-calc/scripts/check-dependencies.mjs'
+      - '.github/workflows/architecture.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: architecture-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: bess-calc
+
+jobs:
+  architecture:
+    name: Dependency checks and architecture generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read Node version
+        id: node-version
+        run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-version.outputs.version }}
+          cache: pnpm
+          cache-dependency-path: bess-calc/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fails only on error-severity dependency-cruiser rules (currently: engine
+      # modules must not import express/@prisma/client). Circular-dependency
+      # detection is warn-severity and reported but non-blocking - see
+      # .dependency-cruiser.cjs and .agent/architecture/dependency-map.md.
+      - name: Check dependency rules
+        run: pnpm run architecture:check
+
+      # Confirms the generator runs cleanly (tool + config correctness), not
+      # that its output matches what's committed - regenerated files are not
+      # diffed against the repo, so this never fails on stale timestamps or
+      # incidental output drift.
+      - name: Validate architecture generation runs
+        run: pnpm run architecture:generate

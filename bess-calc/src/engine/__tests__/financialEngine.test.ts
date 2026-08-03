@@ -124,6 +124,39 @@ describe('financial engine', () => {
     expect(result.annualCashFlows[1].replacementCapex).toBe(0);
   });
 
+  it('LCOS reflects discounted lifetime cost over discounted lifetime discharge, not a flat undiscounted derate', () => {
+    const financial = makeFinancial({ initialCapex: 1_000_000, discountRatePct: 10, annualOmEscalationPct: 0 });
+    const savings = makeSavings({ omCost: 100_000 });
+    const technical = makeTechnical({ energyDischargedKwh: 50_000 });
+    const system = makeSystem({ projectLifeYears: 5, annualDegradationPct: 0 });
+
+    const result = calculateFinancialMetrics(savings, technical, financial, system);
+
+    // Undiscounted lifetime cost would be 1,000,000 + 5*100,000 = 1,500,000 over
+    // 5*50,000 = 250,000 kWh, i.e. 6.0/kWh. Discounting cost and energy at the same
+    // 10% rate pulls the ratio toward the flat rate but not exactly onto it (energy
+    // and cost don't discount identically since cost includes the undiscounted CapEx
+    // at year 0) - so it should land close to, but not exactly at, the naive value.
+    expect(result.lcoePerKwh).toBeGreaterThan(0);
+    expect(Number.isFinite(result.lcoePerKwh)).toBe(true);
+    expect(result.lcoePerKwh).not.toBeCloseTo(6.0, 1);
+  });
+
+  it('ROI is the total lifetime net cash flow as a percentage of CapEx, distinct from IRR', () => {
+    const financial = makeFinancial({
+      initialCapex: 100_000, tariffEscalationPct: 0, dieselEscalationPct: 0, annualOmEscalationPct: 0,
+      taxRatePct: 0, residualValuePct: 0
+    });
+    const savings = makeSavings({ demandChargeSaving: 50_000, grossSaving: 50_000, netOperatingSaving: 50_000 });
+    const system = makeSystem({ annualDegradationPct: 0, projectLifeYears: 4 });
+
+    const result = calculateFinancialMetrics(savings, makeTechnical(), financial, system);
+
+    // 4 years * 50,000 net cash flow - 100,000 CapEx = 100,000 cumulative, i.e. 100% ROI.
+    expect(result.roiPct).toBeCloseTo(100, 0);
+    expect(result.roiPct).not.toBe(result.irrPct);
+  });
+
   it('IRR is null (not a wild extrapolated value) for a firmly negative-return project', () => {
     const financial = makeFinancial({ initialCapex: 100_000_000, taxRatePct: 0, residualValuePct: 0 });
     const savings = makeSavings({ demandChargeSaving: 100, grossSaving: 100, netOperatingSaving: 100 });

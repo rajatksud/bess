@@ -53,6 +53,8 @@ FINANCIAL METRICS:
 - Discounted Payback: ${financial.discountedPaybackYears || 'N/A'} Years
 - 10-Year NPV: ${formatMoney(financial.npv)}
 - Project IRR: ${financial.irrPct || 'N/A'}%
+- Lifetime ROI: ${financial.roiPct.toFixed(0)}% (total net cash flow vs CapEx, not annualised)
+- Levelized Cost of Storage: ${currency}${financial.lcoePerKwh.toFixed(2)}/kWh (discounted lifetime cost / discounted lifetime discharge)
 
 ANNUAL SAVINGS WATERFALL:
 - Demand Charge Reduction: ${formatMoney(savings.demandChargeSaving)}
@@ -127,6 +129,14 @@ Data Integrity: Passed
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Project IRR</span>
               <span className="text-yellow-400 font-bold">{financial.irrPct}%</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase">Lifetime ROI</span>
+              <span className="text-emerald-400 font-bold">{financial.roiPct.toFixed(0)}%</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase">LCOS</span>
+              <span className="text-cyan-400 font-bold">{currency}{financial.lcoePerKwh.toFixed(2)}/kWh</span>
             </div>
           </div>
 

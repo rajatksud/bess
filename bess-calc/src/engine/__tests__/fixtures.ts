@@ -112,6 +112,14 @@ export function makeInterval(overrides: Partial<IntervalRecord> = {}): IntervalR
     gridExportKw: 0,
     solarCurtailedKw: 0,
     bessAction: 'Idle',
+    grossSiteLoadKw: 0,
+    solarGenerationKw: 0,
+    solarGenerationServingLoadKw: 0,
+    preBessGridImportKw: 0,
+    postBessGridImportKw: 0,
+    batteryChargeKw: 0,
+    batteryDischargeKw: 0,
+    gridBatteryChargeKw: 0,
     ...overrides
   };
 }
