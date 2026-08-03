@@ -10,6 +10,30 @@ import {
   DispatchPriorityType,
   ReactivePowerBasis
 } from '../types/bess';
+import { DispatchAttribution, emptyAttribution, aggregateSavings } from './savingsAggregator';
+
+/**
+ * Optional, additive dispatch settings. Introduced as an options object rather than a
+ * ninth positional parameter because three call sites already pass eight positional
+ * arguments (src/App.tsx, server/routes/simulation.ts, server/routes/simulations.ts).
+ *
+ * Every field is optional and every omitted field takes a branch that reproduces the
+ * pre-existing behaviour EXACTLY - not "multiplied by 1.0", but literally the same
+ * expression - so a call with no options is byte-identical to a call from before this
+ * type existed.
+ */
+export interface DispatchOptions {
+  /**
+   * Battery state of health for this run, as a percentage of nameplate energy
+   * (e.g. 87.4 after several years of ageing). When supplied, it derates the PHYSICAL
+   * energy the battery can store, which is what SOC percentages are measured against -
+   * so it constrains real dispatch, not just the reported capacity figure.
+   *
+   * Omit for a beginning-of-life (100% SOH) run. See src/battery/sohForecast.ts for the
+   * sohPct -> usable kWh convention and how it composes with usableDodPct.
+   */
+  batterySohPct?: number;
+}
 
 /**
  * Resolves the kW -> kVA billing basis per the deterministic reactive-power policy
@@ -37,19 +61,35 @@ export function runIntervalDispatch(
   solar: SolarInput,
   financial: FinancialInput,
   priorities: DispatchPriorityType[] = ['backup_reserve', 'peak_shaving', 'solar_self_consumption', 'diesel_displacement', 'tou_arbitrage'],
-  intervalMinutes = 15
+  intervalMinutes = 15,
+  options: DispatchOptions = {}
 ): {
   simulatedIntervals: IntervalRecord[];
   savings: SavingsBreakdown;
   technical: TechnicalResult;
+  attribution: DispatchAttribution;
   reactivePowerBasis: ReactivePowerBasis;
   assumptions: string[];
 } {
   const dtHours = intervalMinutes / 60;
   const etaCharge = system.chargeEfficiencyPct / 100;
   const etaDischarge = system.dischargeEfficiencyPct / 100;
-  const effectiveCapacityKwh = system.ratedEnergyKwh * (system.usableDodPct / 100);
-  
+
+  // State of health derates the PHYSICAL storable energy. Everything downstream that
+  // reads a SOC percentage is measuring against this number, so this single substitution
+  // is what makes SOH constrain real dispatch rather than only the reported capacity.
+  //
+  // The `undefined` branch returns system.ratedEnergyKwh itself (not a multiplication by
+  // 1.0), so a run without SOH is structurally identical to the pre-SOH engine.
+  const healthAdjustedEnergyKwh = options.batterySohPct === undefined
+    ? system.ratedEnergyKwh
+    : system.ratedEnergyKwh * (options.batterySohPct / 100);
+
+  // Reported deliverable capacity: usable depth-of-discharge applied on top of the
+  // health-adjusted physical capacity. SOH and usableDodPct are orthogonal and each
+  // applied exactly once - see docs/architecture/BATTERY_MODEL_ARCHITECTURE.md.
+  const effectiveCapacityKwh = healthAdjustedEnergyKwh * (system.usableDodPct / 100);
+
   let currentSocPct = system.initialSocPct;
   const minUsableSocPct = Math.max(system.minSocPct, system.minSocPct + system.reserveSocPct);
   const maxUsableSocPct = system.maxSocPct;
@@ -71,6 +111,11 @@ export function runIntervalDispatch(
   // because they intentionally mix energy from every avoided-cost category.
   let totalArbitrageDischargedKwh = 0;
   let totalArbitrageChargedKwh = 0;
+  // Peak-shaving discharge is monetised through the billed-peak delta, not per kWh, so
+  // this accumulator feeds no formula. It exists so the Rule 2 balance
+  // (dg + peakShaving + arbitrage === totalDischarged) is checkable on this path too -
+  // see savingsAggregator.attributionViolations.
+  let totalPeakShavingDischargedKwh = 0;
 
   // Reactive-power (kW -> kVA) billing basis, resolved once for the whole profile per
   // the deterministic policy: measured kVA > measured PF > configured site PF >
@@ -160,10 +205,12 @@ export function runIntervalDispatch(
     let bessAction = 'Idle';
     let solarCurtailedKw = 0;
 
-    // Remaining capacity in battery for this interval
-    const currentStoredKwh = (currentSocPct / 100) * system.ratedEnergyKwh;
-    const minStoredKwh = (minUsableSocPct / 100) * system.ratedEnergyKwh;
-    const maxStoredKwh = (maxUsableSocPct / 100) * system.ratedEnergyKwh;
+    // Remaining capacity in battery for this interval, measured against the
+    // health-adjusted physical capacity (see healthAdjustedEnergyKwh above). THIS is the
+    // real energy bound on dispatch.
+    const currentStoredKwh = (currentSocPct / 100) * healthAdjustedEnergyKwh;
+    const minStoredKwh = (minUsableSocPct / 100) * healthAdjustedEnergyKwh;
+    const maxStoredKwh = (maxUsableSocPct / 100) * healthAdjustedEnergyKwh;
 
     const availableDischargeKwh = Math.max(0, currentStoredKwh - minStoredKwh);
     const maxDischargeKwPossible = Math.min(system.ratedPowerKw, availableDischargeKwh / dtHours);
@@ -194,6 +241,7 @@ export function runIntervalDispatch(
         if (dischargeKw > 0) {
           bessPowerKw = dischargeKw;
           bessAction = 'Peak Shaving';
+          totalPeakShavingDischargedKwh += dischargeKw * dtHours;
         }
       }
 
@@ -252,7 +300,7 @@ export function runIntervalDispatch(
     }
 
     const nextStoredKwh = Math.min(maxStoredKwh, Math.max(minStoredKwh, currentStoredKwh + netEnergyKwhChange));
-    currentSocPct = (nextStoredKwh / system.ratedEnergyKwh) * 100;
+    currentSocPct = (nextStoredKwh / healthAdjustedEnergyKwh) * 100;
 
     const batteryDischargeKw = bessPowerKw > 0 ? bessPowerKw : 0;
     const batteryChargeKw = bessPowerKw < 0 ? Math.abs(bessPowerKw) : 0;
@@ -323,126 +371,43 @@ export function runIntervalDispatch(
       postBessGridImportKva: pf ? postBessGridImportKw / pf : undefined
     });
   });
+  const attribution: DispatchAttribution = {
+    ...emptyAttribution(),
+    dgDisplacedKwh: totalDgDisplacedKwh,
+    peakShavingKwh: totalPeakShavingDischargedKwh,
+    arbitrageDischargeKwh: totalArbitrageDischargedKwh,
+    solarStoredKwh: totalSolarStoredKwh,
+    gridChargedKwh: totalGridChargedKwh,
+    arbitrageChargedKwh: totalArbitrageChargedKwh,
+    totalChargedKwh,
+    totalDischargedKwh,
+    unservedBackupKwh: totalUnservedBackupKwh,
+    curtailedSolarKwh: totalCurtailedSolarKwh
+  };
 
-  // Find Peak After BESS - billing-relevant peak is the METER-SIDE grid import
-  // (postBessGridImportKw/Kva), not raw post-battery load, since demand charges are
-  // levied on what the grid meter actually sees.
-  let peakAfterKw = 0;
-  let peakAfterKva = 0;
-  simulatedIntervals.forEach(inv => {
-    if (inv.postBessGridImportKw > peakAfterKw) peakAfterKw = inv.postBessGridImportKw;
-    if (pf && (inv.postBessGridImportKva ?? 0) > peakAfterKva) peakAfterKva = inv.postBessGridImportKva ?? 0;
-  });
-
-  // Calculate annual multiplier (e.g. 365 days if 24-hr profile is simulated)
-  const daysInYear = 365;
-  
-  // 1. Demand Charge Saving
-  const billedKvaBefore = Math.min(tariff.contractDemandKva, peakBeforeKva);
-  const billedKvaAfter = Math.min(tariff.contractDemandKva, Math.max(peakAfterKva, tariff.contractDemandKva * (tariff.minimumBillingDemandPct / 100)));
-  const kvaReduced = Math.max(0, billedKvaBefore - billedKvaAfter);
-  const annualDemandSaving = kvaReduced * tariff.demandChargePerKvaMonth * 12;
-
-  // 2. Diesel Displacement Saving
-  const annualDgEnergyDisplacedKwh = totalDgDisplacedKwh * daysInYear;
-  const fuelFactorLPerKwh = diesel.specificFuelConsumptionLitrePerKwh || 0.28;
-  const annualLitresSaved = annualDgEnergyDisplacedKwh * fuelFactorLPerKwh;
-  const annualDieselFuelSaving = annualLitresSaved * diesel.dieselPricePerLitre;
-  
-  // DG maintenance saving (approx. run hours reduced)
-  const avgOutageLoad = diesel.avgOutageLoadKw || 120;
-  const avoidedDgRunHours = annualDgEnergyDisplacedKwh / Math.max(10, avgOutageLoad);
-  const annualDgMaintenanceSaving = avoidedDgRunHours * (diesel.maintenanceCostPerRunHour || 150);
-
-  // 3. Solar Self-Consumption Saving
-  const annualSolarStoredKwh = totalSolarStoredKwh * daysInYear;
-  const avoidedImportTariff = tariff.energyChargePerKwh;
-  const exportCredit = solar.exportCreditPerKwh || 3.0;
-  const netSolarBenefitPerKwh = Math.max(0, avoidedImportTariff - exportCredit);
-  const annualSolarSelfConsumptionSaving = annualSolarStoredKwh * netSolarBenefitPerKwh;
-
-  // 4. Energy Arbitrage Saving
-  //
-  // Rule 2 (no double counting): this MUST be computed only from energy the dispatch
-  // loop actually tagged 'TOU Arbitrage Discharge' / 'TOU Off-Peak Charge'
-  // (totalArbitrageDischargedKwh / totalArbitrageChargedKwh). Using the aggregate
-  // totalDischargedKwh here would re-monetize kWh already credited to demand-charge
-  // reduction (peak shaving) and diesel-fuel saving (backup/DG displacement) above,
-  // because those categories share the same physical battery and are mutually
-  // exclusive per interval, but totalDischargedKwh sums across ALL of them.
-  const annualDischargedKwh = totalDischargedKwh * daysInYear;
-  const annualChargedKwh = totalChargedKwh * daysInYear;
-  const annualArbitrageDischargedKwh = totalArbitrageDischargedKwh * daysInYear;
-  const annualArbitrageChargedKwh = totalArbitrageChargedKwh * daysInYear;
-  // Net arbitrage value = (peak-rate energy discharged x peak rate) - (off-peak energy
-  // charged x off-peak rate), consistent with CALCULATION_ENGINE_DESIGN.md section on
-  // Arbitrage and the coding spec's net-arbitrage-value formula. Falls back to the
-  // standard energy charge if no TOU periods are configured for this interval set.
-  const peakRate = tariff.enableTou
-    ? Math.max(tariff.energyChargePerKwh, ...tariff.touPeriods.map(p => p.importRatePerKwh))
-    : tariff.energyChargePerKwh;
-  const offPeakRate = tariff.enableTou && tariff.touPeriods.length > 0
-    ? Math.min(...tariff.touPeriods.map(p => p.importRatePerKwh))
-    : tariff.energyChargePerKwh;
-  // This is the GROSS arbitrage saving (avoided peak-rate import only). The cost of
-  // the off-peak grid energy used to charge is deducted once, below, via
-  // annualChargingCost - it must not also be netted out here or it would be
-  // subtracted from net savings twice.
-  const annualEnergyArbitrageSaving = Math.max(0, annualArbitrageDischargedKwh * peakRate);
-
-  // Costs
-  // All grid (non-solar) charging in this simulation currently originates from the
-  // TOU off-peak-charge branch, so annualGridChargedKwh === annualArbitrageChargedKwh.
-  // Priced at the actual off-peak tariff rather than an approximated 0.8x factor.
-  const annualGridChargedKwh = totalGridChargedKwh * daysInYear;
-  const annualChargingCost = annualGridChargedKwh * offPeakRate;
-
-  const annualAuxiliaryKwh = system.auxiliaryLoadKw * 24 * daysInYear;
-  const annualAuxiliaryCost = annualAuxiliaryKwh * tariff.energyChargePerKwh;
-
-  const totalAnnualThroughputKwh = annualDischargedKwh;
-  const degradationCostPerKwh = financial.variableOmPerKwhThroughput || 0.15;
-  const annualDegradationCost = totalAnnualThroughputKwh * degradationCostPerKwh;
-
-  const annualOmCost = financial.fixedAnnualOm;
-
-  const grossSaving = annualDemandSaving + annualDieselFuelSaving + annualDgMaintenanceSaving + annualSolarSelfConsumptionSaving + annualEnergyArbitrageSaving;
-  const netOperatingSaving = grossSaving - annualChargingCost - annualAuxiliaryCost - annualDegradationCost - annualOmCost;
-
-  const equivalentFullCycles = annualDischargedKwh / Math.max(1, system.ratedEnergyKwh);
+  const { savings, technical } = aggregateSavings(
+    {
+      simulatedIntervals,
+      attribution,
+      peakBeforeKw,
+      peakBeforeKva,
+      powerFactor: pf,
+      minimumSocPct: minUsableSocPct,
+      maximumSocPct: maxUsableSocPct,
+      deliverableCapacityKwh: effectiveCapacityKwh
+    },
+    system,
+    tariff,
+    diesel,
+    solar,
+    financial
+  );
 
   return {
     simulatedIntervals,
-    savings: {
-      demandChargeSaving: annualDemandSaving,
-      dieselFuelSaving: annualDieselFuelSaving,
-      dgMaintenanceSaving: annualDgMaintenanceSaving,
-      solarSelfConsumptionSaving: annualSolarSelfConsumptionSaving,
-      energyArbitrageSaving: annualEnergyArbitrageSaving,
-      exportRevenueChange: 0,
-      chargingEnergyCost: annualChargingCost,
-      auxiliaryEnergyCost: annualAuxiliaryCost,
-      degradationCost: annualDegradationCost,
-      omCost: annualOmCost,
-      grossSaving,
-      netOperatingSaving
-    },
-    technical: {
-      peakBeforeKw,
-      peakAfterKw,
-      peakBeforeKva,
-      peakAfterKva,
-      energyChargedKwh: annualChargedKwh,
-      energyDischargedKwh: annualDischargedKwh,
-      solarEnergyStoredKwh: annualSolarStoredKwh,
-      dgEnergyDisplacedKwh: annualDgEnergyDisplacedKwh,
-      equivalentFullCycles,
-      minimumSocPct: minUsableSocPct,
-      maximumSocPct: maxUsableSocPct,
-      unservedBackupEnergyKwh: totalUnservedBackupKwh * daysInYear,
-      curtailedSolarKwh: totalCurtailedSolarKwh * daysInYear,
-      deliverableCapacityKwh: effectiveCapacityKwh
-    },
+    savings,
+    technical,
+    attribution,
     reactivePowerBasis,
     assumptions
   };
