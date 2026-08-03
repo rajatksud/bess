@@ -15,6 +15,8 @@ import type { AcquisitionProvider } from "./acquisition/types.js";
 import { runExtraction } from "./extraction/extractionOrchestrator.js";
 import type { SourceDocumentRow } from "./extraction/extractionOrchestrator.js";
 import { runValidation } from "./validation/runValidation.js";
+import { runSemanticDiff } from "./semanticDiff/runSemanticDiff.js";
+import { compileRelease } from "./release/compileRelease.js";
 import { runSchedulerBatch } from "./scheduler.js";
 import { generateReviewReport } from "./review/reviewReport.js";
 import { writeFileSync } from "node:fs";
@@ -40,9 +42,9 @@ const DEFAULT_ARCHIVE_DIR = ARCHIVE_DIR;
 const DEFAULT_REGISTRY_DIR = resolve(PACKAGE_ROOT, "registry");
 
 const USAGE =
-  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate|schedule-run|review-report> " +
+  "Usage: cli.js <crawl|verify|migrate|registry-load|source-health|extract|validate|schedule-run|review-report|release> " +
   "[--registry <path>] [--source <source_id>] [--document <document_id>] [--candidate <id>] " +
-  "[--out <path>] [--production]";
+  "[--out <path>] [--production] [--version <release_version>]";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -85,6 +87,10 @@ async function main(): Promise<void> {
   }
   if (command === "review-report") {
     await runReviewReport(args);
+    return;
+  }
+  if (command === "release") {
+    await runRelease(args);
     return;
   }
 
@@ -317,10 +323,14 @@ async function runExtract(args: string[]): Promise<void> {
 }
 
 /**
- * Runs validation for either one candidate_tariffs row (--candidate) or
- * every candidate produced from one document (--document) -- the latter is
- * the common case right after an `extract` run, so the operator doesn't have
- * to enumerate ids by hand.
+ * Runs semantic diff (against the latest approved baseline for the same
+ * jurisdiction/licensee/category, if any) followed by validation for either
+ * one candidate_tariffs row (--candidate) or every candidate produced from
+ * one document (--document) -- the latter is the common case right after an
+ * `extract` run, so the operator doesn't have to enumerate ids by hand.
+ * Semantic diff always runs before validation because validateEffectiveDate's
+ * corrigendum check reads semantic_change_sets to decide whether a later
+ * corrigendum has been reconciled yet.
  */
 async function runValidateCommand(args: string[]): Promise<void> {
   const target = targetFromEnv();
@@ -348,6 +358,14 @@ async function runValidateCommand(args: string[]): Promise<void> {
 
     let reviewReadyCount = 0;
     for (const candidateId of candidateIds) {
+      const diffResult = await runSemanticDiff(db, candidateId);
+      const highImpactCount = diffResult.changes.filter((c) => c.commercialImpact === "HIGH").length;
+      console.log(
+        `[candidate ${candidateId}] semantic diff: ${diffResult.changes.length} change(s) against ` +
+          `${diffResult.baselineTariffId ? `baseline candidate ${diffResult.baselineTariffId}` : "no prior baseline"}` +
+          (highImpactCount > 0 ? ` (${highImpactCount} HIGH impact)` : ""),
+      );
+
       const result = await runValidation(db, candidateId);
       const errorCount = result.findings.filter((f) => f.severity === "ERROR").length;
       const warningCount = result.findings.filter((f) => f.severity === "WARNING").length;
@@ -357,6 +375,48 @@ async function runValidateCommand(args: string[]): Promise<void> {
       if (result.reviewReady) reviewReadyCount++;
     }
     console.log(`\n${reviewReadyCount}/${candidateIds.length} candidate(s) reached REVIEW_READY`);
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Compiles every currently-effective approved tariff into one immutable,
+ * versioned release (strategy doc section 7/10) and writes the manifest
+ * (and, unless --manifest-only is set, the full tariff bodies) to --out or
+ * stdout. --version is required: choosing a release-numbering scheme is a
+ * product decision (see compileRelease.ts's doc comment), not something
+ * this command should default silently.
+ */
+async function runRelease(args: string[]): Promise<void> {
+  const target = targetFromEnv();
+  const version = flagValue(args, "--version");
+  if (!version) {
+    console.error("release requires --version <release_version>, e.g. --version 2026.07.0");
+    process.exitCode = 1;
+    return;
+  }
+  const outPath = flagValue(args, "--out");
+  const manifestOnly = args.includes("--manifest-only");
+
+  const db = new CrawlerDatabase(loadDatabaseConfig(target));
+  try {
+    await db.verifyEnvironmentMarker();
+    const release = await compileRelease(db, version);
+
+    console.log(`Compiled release ${release.manifest.version} (schema ${release.manifest.schemaVersion})`);
+    console.log(`  tariffs: ${release.manifest.tariffCount}`);
+    console.log(`  jurisdictions: ${release.manifest.jurisdictionsCovered.join(", ") || "(none)"}`);
+    console.log(`  sha256: ${release.manifest.sha256}`);
+    console.log(`  superseded release: ${release.manifest.supersededRelease ?? "(none, first release)"}`);
+
+    const output = JSON.stringify(manifestOnly ? release.manifest : release, null, 2);
+    if (outPath) {
+      writeFileSync(outPath, output + "\n", "utf8");
+      console.log(`Wrote ${manifestOnly ? "manifest" : "release"} to ${outPath}`);
+    } else {
+      console.log(output);
+    }
   } finally {
     await db.close();
   }

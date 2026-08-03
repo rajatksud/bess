@@ -44,10 +44,18 @@ The image:
   archive and manifest (`CRAWLER_ARCHIVE_DIR=/app/data/.archive`, set by the
   image);
 - has no default long-running process — it is invoked per-command
-  (`migrate`, `registry-load`, `crawl`, `source-health`, `verify`); the
+  (`migrate`, `registry-load`, `crawl`, `source-health`, `verify`, `extract`,
+  `validate`, `schedule-run`, `review-report`, `release`); the
   scheduler/long-running process (if run as a persistent service rather than
   one-shot cron-style invocations) should wrap these commands, not replace
   them.
+- `release --version <x>` is the one command that reads the human-review
+  tables (`approved_tariffs`) — see `src/release/compileRelease.ts`'s doc
+  comment and `tests/noAutoApproval.test.ts`'s `ALLOWED_APPROVAL_READER_FILES`
+  for why that is the single, deliberate, mechanically-enforced exception to
+  this codebase's approval-boundary guardrail. It never runs automatically;
+  an operator invokes it explicitly once a batch of candidates has actually
+  been reviewed and approved.
 
 ## Pre-change inspection on prjxn2
 
