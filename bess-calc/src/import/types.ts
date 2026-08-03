@@ -86,6 +86,14 @@ export interface ImportSummary {
   startTimestamp?: string;
   endTimestamp?: string;
   engineeringGrade: boolean;
+  /** Peak load across accepted rows, in kW. Undefined when there are no accepted rows. */
+  peakLoadKw?: number;
+  /** Total load energy across accepted rows (sum(loadKw) * intervalDurationMinutes/60), in kWh. Undefined when interval duration could not be detected or there are no accepted rows. */
+  totalLoadEnergyKwh?: number;
+  /** Total solar generation energy across accepted rows, in kWh. Undefined under the same conditions as totalLoadEnergyKwh, or when no row supplied a solarKw value. */
+  totalSolarEnergyKwh?: number;
+  /** totalSolarEnergyKwh as a percentage of totalLoadEnergyKwh. Undefined when either input is undefined or totalLoadEnergyKwh is zero. */
+  solarContributionPct?: number;
 }
 
 export interface ImportResult {
