@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-08-03",
+  "src": [
+    {
+      "module": "src/battery",
+      "fileCount": 5,
+      "files": [
+        "batteryLibrary.ts",
+        "batteryModel.ts",
+        "cycleCounting.ts",
+        "degradationModel.ts",
+        "index.ts"
+      ]
+    },
+    {
+      "module": "src/components",
+      "fileCount": 7,
+      "files": [
+        "ExportReportModal.tsx",
+        "Header.tsx",
+        "IntervalSimulation.tsx",
+        "LegacyComparisonModal.tsx",
+        "QuickEstimateWizard.tsx",
+        "ResultsDashboard.tsx",
+        "ScenarioSensitivity.tsx"
+      ]
+    },
+    {
+      "module": "src/engine",
+      "fileCount": 5,
+      "files": [
+        "dispatchEngine.ts",
+        "financialEngine.ts",
+        "legacyEngine.ts",
+        "presetProfiles.ts",
+        "validationEngine.ts"
+      ]
+    },
+    {
+      "module": "src/import",
+      "fileCount": 8,
+      "files": [
+        "cadence.ts",
+        "csvImporter.ts",
+        "errorReport.ts",
+        "index.ts",
+        "rowValidation.ts",
+        "timestampUtils.ts",
+        "toEngineIntervals.ts",
+        "types.ts"
+      ]
+    },
+    {
+      "module": "src/optimisation",
+      "fileCount": 6,
+      "files": [
+        "comparison.ts",
+        "heuristicDispatch.ts",
+        "index.ts",
+        "lpModel.ts",
+        "optimisedDispatch.ts",
+        "types.ts"
+      ]
+    },
+    {
+      "module": "src/tariff",
+      "fileCount": 10,
+      "files": [
+        "billingDemand.ts",
+        "demandCharges.ts",
+        "dispatchAdapter.ts",
+        "energyCharges.ts",
+        "exportRules.ts",
+        "index.ts",
+        "tariffEngine.ts",
+        "taxesAndDuties.ts",
+        "types.ts",
+        "validation.ts"
+      ]
+    },
+    {
+      "module": "src/types",
+      "fileCount": 1,
+      "files": [
+        "bess.ts"
+      ]
+    }
+  ],
+  "server": [
+    {
+      "module": "server/lib",
+      "fileCount": 4,
+      "files": [
+        "errors.ts",
+        "logger.ts",
+        "prisma.ts",
+        "version.ts"
+      ]
+    },
+    {
+      "module": "server/middleware",
+      "fileCount": 3,
+      "files": [
+        "correlationId.ts",
+        "errorHandler.ts",
+        "requestLogger.ts"
+      ]
+    },
+    {
+      "module": "server/routes",
+      "fileCount": 9,
+      "files": [
+        "datasets.ts",
+        "health.ts",
+        "importValidate.ts",
+        "optimisation.ts",
+        "projects.ts",
+        "scenarios.ts",
+        "simulation.ts",
+        "simulations.ts",
+        "tariff.ts"
+      ]
+    }
+  ]
+}

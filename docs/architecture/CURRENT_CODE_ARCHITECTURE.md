@@ -58,22 +58,31 @@ runs) — see `CALCULATION_ENGINE_DESIGN.md`.
 
 ## Major modules
 
-| Module | Responsibility | Depends on |
+| Module | Responsibility | Depends on (verified via `.agent/graph/import-graph.json`) |
 |---|---|---|
-| `src/engine/dispatchEngine.ts` | Per-interval battery dispatch simulation (priority-ordered: backup_reserve, peak_shaving, solar_self_consumption, diesel_displacement, tou_arbitrage) | `src/battery/`, `src/tariff/` |
-| `src/engine/financialEngine.ts` | NPV/IRR/LCOS/payback from a dispatch result | `src/battery/degradationModel.ts` |
-| `src/engine/validationEngine.ts` | Static config validation + post-simulation physical/commercial sanity checks | `src/types/bess.ts` |
-| `src/engine/legacyEngine.ts` | Intentionally-flawed sales-pitch arithmetic, kept as a documented counter-example for the Comparison tab | — |
-| `src/engine/presetProfiles.ts` | Synthetic load/solar interval generators for the three built-in scenarios | `src/tariff/` |
-| `src/battery/` | Battery capacity/degradation/cycle-counting model | — |
-| `src/tariff/tariffEngine.ts` | Energy + demand charges, taxes/duties, export rules, billing-demand rules | `src/tariff/types.ts` |
-| `src/optimisation/lpModel.ts` | LP-based optimal dispatch via `javascript-lp-solver` | `src/optimisation/types.ts` |
-| `src/optimisation/heuristicDispatch.ts` | Rule-based dispatch alternative to the LP solver | — |
-| `src/optimisation/comparison.ts` | Compares heuristic vs. LP dispatch outcomes | `lpModel.ts`, `heuristicDispatch.ts` |
-| `src/import/csvImporter.ts` | CSV parsing (Papaparse) → validated interval rows | `rowValidation.ts`, `timestampUtils.ts`, `cadence.ts` |
-| `src/import/toEngineIntervals.ts` | Converts imported rows into the engine's interval input shape | `src/import/types.ts` |
-| `server/routes/*.ts` | HTTP boundary — see API map in `.agent/architecture/execution-flows.md` | engine modules + `server/lib/prisma.ts` |
-| `server/lib/prisma.ts` | Lazily-constructed shared `PrismaClient`; routes accept an injected client for tests | `prisma/schema.prisma` |
+| `src/engine/dispatchEngine.ts` | Per-interval battery dispatch simulation (priority-ordered: backup_reserve, peak_shaving, solar_self_consumption, diesel_displacement, tou_arbitrage) | `src/types/bess.ts` only — battery/tariff/optimisation math is inlined here, not imported from those sibling modules |
+| `src/engine/financialEngine.ts` | NPV/IRR/LCOS/payback from a dispatch result | `src/types/bess.ts` only |
+| `src/engine/validationEngine.ts` | Static config validation + post-simulation physical/commercial sanity checks | `src/types/bess.ts` only |
+| `src/engine/legacyEngine.ts` | Intentionally-flawed sales-pitch arithmetic, kept as a documented counter-example for the Comparison tab | `src/types/bess.ts` only |
+| `src/engine/presetProfiles.ts` | Synthetic load/solar interval generators for the three built-in scenarios | `src/types/bess.ts` only |
+| `src/battery/` | Battery capacity/degradation/cycle-counting model | Internal only (`batteryModel.ts` has zero imports; not currently imported by `src/engine/`) |
+| `src/tariff/tariffEngine.ts` | Energy + demand charges, taxes/duties, export rules, billing-demand rules | `src/tariff/types.ts` and sibling `src/tariff/*.ts` files only |
+| `src/optimisation/lpModel.ts` | LP-based optimal dispatch via `javascript-lp-solver` | `src/optimisation/types.ts` only |
+| `src/optimisation/heuristicDispatch.ts` | Rule-based dispatch alternative to the LP solver | `src/optimisation/types.ts` only |
+| `src/optimisation/comparison.ts` | Compares heuristic vs. LP dispatch outcomes | `src/optimisation/types.ts` (not `lpModel.ts`/`heuristicDispatch.ts` directly — `optimisedDispatch.ts` is the module that imports both) |
+| `src/import/csvImporter.ts` | CSV parsing (Papaparse) → validated interval rows | `rowValidation.ts`, `timestampUtils.ts`, `cadence.ts`, `types.ts` |
+| `src/import/toEngineIntervals.ts` | Converts imported rows into the engine's interval input shape | `src/import/types.ts`, `src/types/bess.ts` |
+| `server/routes/*.ts` | HTTP boundary — see API map in `.agent/architecture/execution-flows.md` | `simulation.ts`/`simulations.ts` import `src/engine/*` + `src/types/bess.ts` directly; `tariff.ts` imports `src/tariff/index.ts`; `optimisation.ts` imports `src/optimisation/*`; `datasets.ts`/`importValidate.ts` import `src/import/index.ts`; persistence routes additionally use `server/lib/prisma.ts` |
+| `server/lib/prisma.ts` | Lazily-constructed shared `PrismaClient`; routes accept an injected client for tests | `prisma/schema.prisma` (via `@prisma/client`) |
+
+**Note on `src/battery/`**: despite being documented conceptually as part of
+the dispatch/degradation model, the import graph shows `src/engine/dispatchEngine.ts`
+and `src/engine/financialEngine.ts` do not currently import anything from
+`src/battery/` — degradation logic referenced in `IMPLEMENTATION_STATUS.md`
+("degradation-derated cash flows") is exercised through `src/battery/`'s own
+tests, not through a live import from the engine layer at the time of this
+snapshot. Verify with `.agent/graph/import-graph.json` before assuming a
+call path between these modules.
 
 ## Data flow
 
