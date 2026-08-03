@@ -1,0 +1,39 @@
+services:
+  bess-calculator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-unknown}
+        APP_VERSION: ${APP_VERSION:-0.0.0-unknown}
+    image: bess-calculator:${IMAGE_TAG:-local}
+    container_name: bess-calculator
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    environment:
+      PORT: "8080"
+      NODE_ENV: production
+      # DATABASE_URL is required for the persistence-backed routes
+      # (/api/v1/projects, /scenarios, /datasets, /simulations) - the
+      # pre-existing stateless routes (simulation/run, tariff/calculate,
+      # optimisation/run) do not need it and keep working without it.
+      # Staging and prod Postgres are pre-provisioned, external
+      # infrastructure (see docs/database/MIGRATION_GUIDE.md) - this compose
+      # file intentionally does NOT bundle its own Postgres service, to
+      # avoid ever accidentally standing up a second, divergent database.
+      # Supply the real connection string via a .env file (git-ignored) or
+      # your deployment platform's secret store, e.g.:
+      #   DATABASE_URL: postgresql://<app_user>:<password>@<host>:<port>/bess
+      DATABASE_URL: ${DATABASE_URL:-}
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

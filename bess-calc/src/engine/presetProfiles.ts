@@ -92,7 +92,15 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           gridImportKw: gridAvailable ? Math.max(0, baseKw - solarKw) : 0,
           gridExportKw: gridAvailable ? Math.max(0, solarKw - baseKw) : 0,
           solarCurtailedKw: 0,
-          bessAction: 'Idle'
+          bessAction: 'Idle',
+          grossSiteLoadKw: baseKw,
+          solarGenerationKw: solarKw,
+          solarGenerationServingLoadKw: Math.min(solarKw, baseKw),
+          preBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          postBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          batteryChargeKw: 0,
+          batteryDischargeKw: 0,
+          gridBatteryChargeKw: 0
         });
       }
 
@@ -162,7 +170,15 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           gridImportKw: Math.max(0, baseKw - solarKw),
           gridExportKw: Math.max(0, solarKw - baseKw),
           solarCurtailedKw: 0,
-          bessAction: 'Idle'
+          bessAction: 'Idle',
+          grossSiteLoadKw: baseKw,
+          solarGenerationKw: solarKw,
+          solarGenerationServingLoadKw: Math.min(solarKw, baseKw),
+          preBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          postBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          batteryChargeKw: 0,
+          batteryDischargeKw: 0,
+          gridBatteryChargeKw: 0
         });
       }
 
@@ -216,7 +232,15 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           gridImportKw: Math.max(0, baseKw - solarKw),
           gridExportKw: Math.max(0, solarKw - baseKw),
           solarCurtailedKw: 0,
-          bessAction: 'Idle'
+          bessAction: 'Idle',
+          grossSiteLoadKw: baseKw,
+          solarGenerationKw: solarKw,
+          solarGenerationServingLoadKw: Math.min(solarKw, baseKw),
+          preBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          postBessGridImportKw: Math.max(0, baseKw - Math.min(solarKw, baseKw)),
+          batteryChargeKw: 0,
+          batteryDischargeKw: 0,
+          gridBatteryChargeKw: 0
         });
       }
 

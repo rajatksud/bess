@@ -1,0 +1,149 @@
+// BESS Calculator persistence layer — v1 schema.
+//
+// Design principle (see docs/database/DATABASE_DESIGN.md): large nested engine
+// outputs (SimulationResult's savings/technical/financial/intervals, tariff
+// definitions, battery/solar/generator configs) are stored as JSON. Only what
+// needs to be queried, joined, or indexed directly is a real column. This is a
+// deliberate v1 trade-off, not an oversight — full normalization of these
+// deeply nested, evolving engine types would require a schema migration every
+// time the calculation engine's output shape changes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id           String   @id @default(uuid())
+  name         String
+  customerName String?
+  location     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  scenarios        Scenario[]
+  intervalDatasets IntervalDataset[]
+
+  @@map("projects")
+}
+
+model Scenario {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String
+
+  // Reference to the dataset this scenario simulates against, if any (quick-mode
+  // scenarios may have no interval dataset).
+  intervalDatasetId String?
+
+  // Nested engine input shapes (BessSystemInput, TariffInput, SolarInput,
+  // DieselInput, FinancialInput, DispatchPriorityType[]) stored as JSON — see
+  // src/types/bess.ts for the authoritative TypeScript shapes.
+  batteryConfig   Json
+  tariffConfig    Json
+  solarConfig     Json
+  generatorConfig Json
+  financialConfig Json
+  dispatchPriorities Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  intervalDataset IntervalDataset? @relation(fields: [intervalDatasetId], references: [id])
+  simulationRuns  SimulationRun[]
+
+  @@index([projectId])
+  @@map("scenarios")
+}
+
+model IntervalDataset {
+  id               String   @id @default(uuid())
+  projectId        String
+  sourceFile       String?
+  timezone         String
+  intervalMinutes  Int
+  startTime        DateTime
+  endTime          DateTime
+  // ImportSummary (rowCount, acceptedRows, warningCount, engineeringGrade, etc.)
+  metadata         Json
+
+  createdAt DateTime @default(now())
+
+  project  Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  records  IntervalRecord[]
+  scenarios Scenario[]
+
+  @@index([projectId])
+  @@map("interval_datasets")
+}
+
+model IntervalRecord {
+  id          String   @id @default(uuid())
+  datasetId   String
+  timestamp   DateTime
+  loadKw      Float
+  loadKva     Float?
+  solarKw     Float?
+  dgKw        Float?
+  powerFactor Float?
+
+  dataset IntervalDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, timestamp])
+  @@map("interval_records")
+}
+
+model SimulationRun {
+  id           String   @id @default(uuid())
+  scenarioId   String
+  engineVersion String
+  // Full snapshot of every input the engine actually consumed for this run
+  // (system/tariff/diesel/solar/financial/dispatchPriorities/intervalMinutes/mode) —
+  // reproducibility depends on this being a complete, immutable copy, not a
+  // reference back to the (mutable) Scenario row.
+  inputSnapshot Json
+  status        String   @default("pending") // pending | running | completed | failed
+  errorMessage  String?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  scenario Scenario         @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  result   SimulationResult?
+
+  @@index([scenarioId])
+  @@index([status])
+  @@map("simulation_runs")
+}
+
+model SimulationResult {
+  id               String @id @default(uuid())
+  simulationRunId  String @unique
+
+  peakReductionKw  Float
+  energySavings    Float
+  demandSavings    Float
+  arbitrageSavings Float
+  totalSavings     Float
+
+  irr Float?
+  npv Float
+
+  // Full SavingsBreakdown / TechnicalResult / FinancialResult / ValidationWarning[]
+  // objects, plus the simulated interval trace — see src/types/bess.ts.
+  savingsBreakdown Json
+  technicalResult  Json
+  financialResult  Json
+  warnings         Json
+
+  createdAt DateTime @default(now())
+
+  run SimulationRun @relation(fields: [simulationRunId], references: [id], onDelete: Cascade)
+
+  @@map("simulation_results")
+}
