@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app';
+import { CALCULATION_ENGINE_VERSION } from '../lib/version';
 
 function makeInterval(overrides: Record<string, unknown> = {}) {
   return {
@@ -79,5 +80,64 @@ describe('POST /api/v1/simulation/run', () => {
     expect(res.body.result.technical).toBeDefined();
     expect(res.body.result.financial).toBeDefined();
     expect(res.body.result.confidenceGrade).toBeDefined();
+  });
+});
+
+describe('POST /api/v1/simulation/run — includeReport', () => {
+  const app = createApp();
+  const peakyIntervals = Array.from({ length: 8 }, (_, i) =>
+    makeInterval({ intervalIndex: i, timeLabel: `0${Math.floor(i / 4)}:${(i % 4) * 15}`, loadKw: i === 5 ? 400 : 120 })
+  );
+
+  const body = {
+    system, tariff, diesel, solar, financial,
+    intervals: peakyIntervals,
+    dispatchPriorities: ['peak_shaving'],
+    intervalMinutes: 15,
+    mode: 'interval' as const
+  };
+
+  it('omits the report by default, leaving the existing response shape unchanged', async () => {
+    const res = await request(app).post('/api/v1/simulation/run').send(body);
+    expect(res.status).toBe(200);
+    expect(res.body.result.report).toBeUndefined();
+    expect(res.body.result.technical).toBeDefined();
+  });
+
+  it('returns a full structured engineering report when asked', async () => {
+    const res = await request(app).post('/api/v1/simulation/run').send({ ...body, includeReport: true });
+
+    expect(res.status).toBe(200);
+    const report = res.body.result.report;
+    expect(report).toBeDefined();
+    expect(report.executiveSummary.sizingBasis).toBe('user_specified');
+    expect(report.executiveSummary.configuredPowerKw).toBe(system.ratedPowerKw);
+    expect(report.technicalDesign.batteryUtilisation.intervalCount).toBe(peakyIntervals.length);
+    expect(report.technicalDesign.loadProfile.annualisationBasis).toContain('repeated 365 times');
+    expect(report.financialAnalysis.opex.totalAnnualOpex).toBeGreaterThan(0);
+    expect(report.calculationEngineVersion).toBe(CALCULATION_ENGINE_VERSION);
+  });
+
+  it('includes the multi-year SOH forecast in the report', async () => {
+    const res = await request(app).post('/api/v1/simulation/run').send({ ...body, includeReport: true });
+
+    const forecast = res.body.result.report.sohForecast;
+    expect(forecast).not.toBeNull();
+    expect(forecast.years).toHaveLength(system.projectLifeYears);
+    expect(forecast.years[0].sohPct).toBeLessThanOrEqual(100);
+    expect(forecast.convention).toContain('State of health derates physical battery capacity');
+  });
+
+  it('rejects a non-boolean includeReport rather than coercing it', async () => {
+    const res = await request(app).post('/api/v1/simulation/run').send({ ...body, includeReport: 'yes' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns the report inside the standard { result, correlationId } envelope', async () => {
+    const res = await request(app).post('/api/v1/simulation/run').send({ ...body, includeReport: true });
+    expect(res.body).toHaveProperty('result');
+    expect(res.body).toHaveProperty('correlationId');
+    expect(typeof res.body.correlationId).toBe('string');
   });
 });
