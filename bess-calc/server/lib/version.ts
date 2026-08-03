@@ -33,5 +33,7 @@ function readPackageVersion(): string {
 }
 
 export const APP_VERSION = readPackageVersion();
-export const CALCULATION_ENGINE_VERSION = '1.0.0';
+// Re-exported from the shared engine module so the server, the frontend and the report
+// model can never report three different engine versions for the same calculation.
+export { CALCULATION_ENGINE_VERSION } from '../../src/engine/version';
 export const GIT_COMMIT_SHA = process.env.GIT_COMMIT_SHA ?? 'unknown';

@@ -1,7 +1,8 @@
 import React from 'react';
 import { DispatchPriorityType, TariffInput } from '../types/bess';
+import { SohForecast } from '../battery';
 import { PRESET_PROFILES, ProfilePreset } from '../engine/presetProfiles';
-import { Layers, ArrowUpDown, Clock, CheckCircle2, Factory, Building2, Sun } from 'lucide-react';
+import { Layers, ArrowUpDown, Clock, CheckCircle2, Factory, Building2, Sun, BatteryWarning } from 'lucide-react';
 
 interface IntervalSimulationProps {
   selectedPresetId: string;
@@ -11,6 +12,10 @@ interface IntervalSimulationProps {
   intervalResolution: number;
   onIntervalResolutionChange: (mins: number) => void;
   tariff: TariffInput;
+  /** Opt-in Level 2 degradation model: re-runs dispatch once per project year at that year's real state of health. */
+  useEngineeringDegradationModel: boolean;
+  onUseEngineeringDegradationModelChange: (enabled: boolean) => void;
+  sohForecast: SohForecast;
 }
 
 const PRIORITY_LABELS: Record<DispatchPriorityType, { title: string; desc: string }> = {
@@ -43,8 +48,12 @@ export const IntervalSimulationConfig: React.FC<IntervalSimulationProps> = ({
   onReorderPriorities,
   intervalResolution,
   onIntervalResolutionChange,
-  tariff
+  tariff,
+  useEngineeringDegradationModel,
+  onUseEngineeringDegradationModelChange,
+  sohForecast
 }) => {
+  const finalYear = sohForecast.years[sohForecast.years.length - 1];
   const handleMovePriority = (index: number, direction: 'up' | 'down') => {
     const newArr = [...priorities];
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
@@ -87,6 +96,54 @@ export const IntervalSimulationConfig: React.FC<IntervalSimulationProps> = ({
               {mins} min ({ (24 * 60) / mins } pts/day)
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Level 2 engineering degradation model - opt-in, off by default */}
+      <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-2">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useEngineeringDegradationModel}
+            onChange={e => onUseEngineeringDegradationModelChange(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 accent-emerald-500"
+          />
+          <span className="space-y-1">
+            <span className="flex items-center gap-2 text-xs font-semibold text-white uppercase tracking-wider">
+              <BatteryWarning className="w-3.5 h-3.5 text-amber-400" />
+              Level 2 engineering degradation model
+            </span>
+            <span className="block text-xs text-slate-400">
+              Re-runs dispatch once per project year at that year&rsquo;s actual state of health, instead of
+              scaling year 1&rsquo;s savings by a flat {' '}
+              <span className="font-mono text-slate-300">annualDegradationPct</span>. A smaller battery shaves a
+              different peak, so the two answers legitimately differ. Off by default; the SOH forecast below is
+              computed either way.
+            </span>
+          </span>
+        </label>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800 text-xs">
+          <div>
+            <span className="block text-[10px] uppercase text-slate-500">SOH at year {finalYear?.year ?? '-'}</span>
+            <span className="font-mono text-white">{finalYear ? `${finalYear.sohPct.toFixed(1)}%` : 'n/a'}</span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase text-slate-500">Usable energy then</span>
+            <span className="font-mono text-white">{finalYear ? `${finalYear.usableEnergyKwh.toFixed(0)} kWh` : 'n/a'}</span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase text-slate-500">End of life ({sohForecast.endOfLifeSohPct}%)</span>
+            <span className={`font-mono ${sohForecast.endOfLifeYear === null ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {sohForecast.endOfLifeYear === null ? 'beyond horizon' : `year ${sohForecast.endOfLifeYear}`}
+            </span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase text-slate-500">Cycles to date</span>
+            <span className="font-mono text-white">
+              {finalYear ? finalYear.cumulativeEquivalentFullCycles.toFixed(0) : 'n/a'}
+            </span>
+          </div>
         </div>
       </div>
 

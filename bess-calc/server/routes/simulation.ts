@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { runIntervalDispatch } from '../../src/engine/dispatchEngine';
+import { runMultiYearSimulation } from '../../src/engine/multiYearSimulation';
 import { calculateFinancialMetrics } from '../../src/engine/financialEngine';
 import { validateBessConfig, validateSimulationResult } from '../../src/engine/validationEngine';
+import { buildEngineeringReport, EngineeringReport } from '../../src/report';
 import {
   BessSystemInput,
   TariffInput,
@@ -10,7 +12,8 @@ import {
   SolarInput,
   FinancialInput,
   IntervalRecord,
-  DispatchPriorityType
+  DispatchPriorityType,
+  SimulationResult
 } from '../../src/types/bess';
 
 export const simulationRouter = Router();
@@ -56,7 +59,13 @@ const simulationRequestSchema = z.object({
   intervals: z.array(intervalRecordSchema).min(1).max(200_000),
   dispatchPriorities: z.array(z.enum(['backup_reserve', 'peak_shaving', 'diesel_displacement', 'solar_self_consumption', 'tou_arbitrage'])),
   intervalMinutes: z.number().positive(),
-  mode: z.enum(['quick', 'interval', 'legacy'])
+  mode: z.enum(['quick', 'interval', 'legacy']),
+  /**
+   * When true, additionally returns the structured EngineeringReport (src/report) with a
+   * multi-year state-of-health forecast. Off by default so the existing response shape is
+   * unchanged for every current caller.
+   */
+  includeReport: z.boolean().optional()
 });
 
 simulationRouter.post('/simulation/run', (req, res, next) => {
@@ -82,6 +91,32 @@ simulationRouter.post('/simulation/run', (req, res, next) => {
       simulatedIntervals, system, diesel, solar, savings, technical, financialResult, body.intervalMinutes
     );
 
+    const warnings = [...configWarnings, ...simulationWarnings];
+
+    let report: EngineeringReport | undefined;
+    if (body.includeReport) {
+      const multiYear = runMultiYearSimulation({
+        intervals, system, tariff, diesel, solar, financial,
+        priorities, intervalMinutes: body.intervalMinutes
+      });
+      const simulationResult: SimulationResult = {
+        mode: body.mode,
+        confidenceGrade,
+        confidenceGradeReason: gradeReason,
+        system, tariff, diesel, solar,
+        financialInput: financial,
+        dispatchPriorities: priorities,
+        savings, technical,
+        financial: financialResult,
+        warnings,
+        intervals: simulatedIntervals
+      };
+      report = buildEngineeringReport(simulationResult, {
+        intervalMinutes: body.intervalMinutes,
+        sohForecast: multiYear.sohForecast
+      });
+    }
+
     res.status(200).json({
       result: {
         mode: body.mode,
@@ -90,9 +125,10 @@ simulationRouter.post('/simulation/run', (req, res, next) => {
         savings,
         technical,
         financial: financialResult,
-        warnings: [...configWarnings, ...simulationWarnings],
+        warnings,
         assumptions,
-        intervals: simulatedIntervals
+        intervals: simulatedIntervals,
+        ...(report ? { report } : {})
       },
       correlationId: req.correlationId
     });

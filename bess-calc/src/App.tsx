@@ -21,7 +21,8 @@ import { ProjectWorkspace } from './components/ProjectWorkspace';
 import { PRESET_PROFILES, ProfilePreset } from './engine/presetProfiles';
 import { validateBessConfig, validateSimulationResult } from './engine/validationEngine';
 import { runIntervalDispatch } from './engine/dispatchEngine';
-import { calculateFinancialMetrics } from './engine/financialEngine';
+import { calculateFinancialMetrics, DegradedYearInput } from './engine/financialEngine';
+import { runMultiYearSimulation } from './engine/multiYearSimulation';
 
 // Default Reference Configuration (125 kW / 261 kWh LiFePO4 BESS)
 const INITIAL_SYSTEM: BessSystemInput = {
@@ -117,6 +118,12 @@ export function App() {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  // Opt-in Level 2 engineering degradation model. OFF by default so the headline
+  // numbers stay on the commercial flat-fade path every existing result was produced
+  // with; turning it on re-runs dispatch once per project year at that year's real
+  // state of health and feeds those results to the financial engine.
+  const [useEngineeringDegradationModel, setUseEngineeringDegradationModel] = useState(false);
+
   // Sensitivity Multipliers
   const [sensitivityMults, setSensitivityMults] = useState({
     dieselPriceMult: 1.0,
@@ -149,7 +156,7 @@ export function App() {
   };
 
   // Run calculation simulation
-  const simulationResult = useMemo<SimulationResult>(() => {
+  const simulation = useMemo(() => {
     // Apply sensitivity multipliers
     const adjustedSystem: BessSystemInput = {
       ...system,
@@ -206,15 +213,40 @@ export function App() {
       recommendation: 'Supply measured per-interval kVA or power factor for engineering-grade kVA billing figures.'
     }));
 
-    // 4. Run Financial Cash Flow Engine
+    // 4. Multi-year state-of-health projection. Always computed (it is 10 dispatch runs
+    //    over a single day's intervals - microseconds) because the engineering report
+    //    surfaces the SOH forecast regardless of which financial path is selected.
+    const multiYear = runMultiYearSimulation({
+      intervals: rawIntervals,
+      system: adjustedSystem,
+      tariff: adjustedTariff,
+      diesel: adjustedDiesel,
+      solar,
+      financial: adjustedFinancial,
+      priorities: dispatchPriorities,
+      intervalMinutes: intervalResolution
+    });
+
+    // 5. Run Financial Cash Flow Engine. The degradedYears path is opt-in; when it is
+    //    off, this is byte-identical to the pre-SOH call.
+    const degradedYears: DegradedYearInput[] | undefined = useEngineeringDegradationModel
+      ? multiYear.years.map(year => ({
+          year: year.year,
+          savings: year.savings,
+          energyDischargedKwh: year.technical.energyDischargedKwh,
+          sohPctStartOfYear: year.sohPctStartOfYear
+        }))
+      : undefined;
+
     const financialMetrics = calculateFinancialMetrics(
       savings,
       technical,
       adjustedFinancial,
-      adjustedSystem
+      adjustedSystem,
+      degradedYears ? { degradedYears } : {}
     );
 
-    // 5. Validate simulation output (requires results from steps 3-4)
+    // 6. Validate simulation output (requires results from steps 3-5)
     const simulationWarnings = validateSimulationResult(
       simulatedIntervals,
       adjustedSystem,
@@ -227,22 +259,27 @@ export function App() {
     );
 
     return {
-      mode,
-      confidenceGrade,
-      confidenceGradeReason: gradeReason,
-      system: adjustedSystem,
-      tariff: adjustedTariff,
-      diesel: adjustedDiesel,
-      solar,
-      financialInput: adjustedFinancial,
-      dispatchPriorities,
-      savings,
-      technical,
-      financial: financialMetrics,
-      warnings: [...configWarnings, ...simulationWarnings, ...reactivePowerWarnings],
-      intervals: simulatedIntervals
+      result: {
+        mode,
+        confidenceGrade,
+        confidenceGradeReason: gradeReason,
+        system: adjustedSystem,
+        tariff: adjustedTariff,
+        diesel: adjustedDiesel,
+        solar,
+        financialInput: adjustedFinancial,
+        dispatchPriorities,
+        savings,
+        technical,
+        financial: financialMetrics,
+        warnings: [...configWarnings, ...simulationWarnings, ...reactivePowerWarnings],
+        intervals: simulatedIntervals
+      } satisfies SimulationResult,
+      sohForecast: multiYear.sohForecast
     };
-  }, [system, tariff, diesel, solar, financial, selectedPreset, intervalResolution, dispatchPriorities, activeTab, sensitivityMults]);
+  }, [system, tariff, diesel, solar, financial, selectedPreset, intervalResolution, dispatchPriorities, activeTab, sensitivityMults, useEngineeringDegradationModel]);
+
+  const simulationResult: SimulationResult = simulation.result;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
@@ -296,6 +333,9 @@ export function App() {
               intervalResolution={intervalResolution}
               onIntervalResolutionChange={setIntervalResolution}
               tariff={tariff}
+              useEngineeringDegradationModel={useEngineeringDegradationModel}
+              onUseEngineeringDegradationModelChange={setUseEngineeringDegradationModel}
+              sohForecast={simulation.sohForecast}
             />
 
             <ResultsDashboard
@@ -365,6 +405,8 @@ export function App() {
         onClose={() => setIsExportModalOpen(false)}
         result={simulationResult}
         currency={currency}
+        intervalMinutes={intervalResolution}
+        sohForecast={simulation.sohForecast}
       />
 
     </div>
