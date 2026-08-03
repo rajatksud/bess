@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { ApiError } from '../lib/errors';
+import { runScenarioSimulation } from '../services/runScenarioSimulation';
+import { compareScenarios, fingerprintDataset, ScenarioComparisonEntry } from '../../src/scenario';
 
 // Config payloads (BessSystemInput/TariffInput/SolarInput/DieselInput/FinancialInput,
 // see src/types/bess.ts) are validated in depth by validateBessConfig/the engine
@@ -17,6 +19,10 @@ const createScenarioSchema = z.object({
   generatorConfig: z.record(z.string(), z.unknown()),
   financialConfig: z.record(z.string(), z.unknown()),
   dispatchPriorities: z.array(z.enum(['backup_reserve', 'peak_shaving', 'diesel_displacement', 'solar_self_consumption', 'tou_arbitrage']))
+});
+
+const compareScenariosSchema = z.object({
+  scenarioIds: z.array(z.string().uuid()).min(2)
 });
 
 /** Persistence-backed scenario CRUD, nested under a project. Takes an injected PrismaClient so tests can point it at a test database. */
@@ -54,6 +60,44 @@ export function createScenariosRouter(prisma: PrismaClient): Router {
       });
 
       res.status(201).json({ result: scenario, correlationId: req.correlationId });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Comparison is registered BEFORE /scenarios/:id so that "compare" is never captured
+  // as an id by the parameterised route.
+  router.post('/scenarios/compare', async (req, res, next) => {
+    try {
+      const body = compareScenariosSchema.parse(req.body);
+
+      const uniqueIds = new Set(body.scenarioIds);
+      if (uniqueIds.size !== body.scenarioIds.length) {
+        throw new ApiError(422, 'DUPLICATE_SCENARIO', 'The same scenario id was supplied more than once; a scenario cannot be compared against itself');
+      }
+
+      // Sequential rather than concurrent: each run writes a SimulationRun row, and the
+      // engine is CPU-bound anyway, so parallelism buys nothing but interleaved failures.
+      const entries: ScenarioComparisonEntry[] = [];
+      for (const scenarioId of body.scenarioIds) {
+        const outcome = await runScenarioSimulation(prisma, scenarioId, { includeSohForecast: true });
+        entries.push({
+          scenarioId: outcome.scenarioId,
+          scenarioName: outcome.scenarioName,
+          system: outcome.system,
+          tariff: outcome.tariff,
+          financialInput: outcome.financialInput,
+          savings: outcome.savings,
+          technical: outcome.technical,
+          financial: outcome.financial,
+          sohForecast: outcome.sohForecast,
+          confidenceGrade: outcome.confidenceGrade,
+          warningCount: outcome.warnings.length,
+          dataset: fingerprintDataset(outcome.simulatedIntervals, outcome.intervalMinutes, outcome.intervalDatasetId)
+        });
+      }
+
+      res.status(200).json({ result: compareScenarios(entries), correlationId: req.correlationId });
     } catch (err) {
       next(err);
     }

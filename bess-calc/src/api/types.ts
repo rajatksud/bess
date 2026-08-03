@@ -16,6 +16,7 @@ import {
   ValidationWarning
 } from '../types/bess';
 import { ImportSummary, ImportWarning, RowError } from '../import/types';
+import { ScenarioComparisonResult as DomainScenarioComparisonResult } from '../scenario';
 
 export interface Project {
   id: string;
@@ -83,3 +84,17 @@ export interface SimulationResultRecord {
   warnings: ValidationWarning[];
   createdAt: string;
 }
+
+/**
+ * Response body of POST /api/v1/scenarios/compare. Structurally identical to the domain
+ * type in src/scenario — re-exported here (rather than redefined) so the wire contract
+ * and the engine's own type can never silently diverge. Dates are ISO strings on both
+ * sides, so no serialisation transform is needed.
+ */
+export type ScenarioComparisonResult = DomainScenarioComparisonResult;
+export type {
+  ScenarioMetrics,
+  ScenarioSohSummary,
+  ComparabilityAssessment,
+  ScenarioRanking
+} from '../scenario';
