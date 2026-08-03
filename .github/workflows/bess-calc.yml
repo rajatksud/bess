@@ -1,0 +1,30 @@
+name: BESS calculator checks
+
+on:
+  push:
+    branches: [main, dev/bess-calc]
+    paths:
+      - "bess-calc/**"
+      - ".github/workflows/bess-calc.yml"
+  pull_request:
+    paths:
+      - "bess-calc/**"
+      - ".github/workflows/bess-calc.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bess-calc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bess-calc/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
