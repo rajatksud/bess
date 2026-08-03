@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SimulationResult, CurrencySymbol } from '../types/bess';
+import { buildSensitivityMatrix } from '../report';
 import { Sliders, Sparkles, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 
 interface ScenarioSensitivityProps {
@@ -64,17 +65,18 @@ export const ScenarioSensitivity: React.FC<ScenarioSensitivityProps> = ({
     return `${currency}${Math.round(val)}`;
   };
 
-  // Compute Conservative & Optimistic Scenarios
-  const baseNetSaving = baseResult.savings.netOperatingSaving;
+  // Conservative/Base/Optimistic scenarios: each is a real re-run of the financial engine
+  // (calculateFinancialMetrics) with perturbed CapEx/tariff-escalation/degradation inputs
+  // against the same dispatch output - not a flat multiplier applied to the final saving
+  // number. See src/report/sensitivityAnalysis.ts for the full rationale and scenario
+  // definitions.
+  const sensitivityMatrix = useMemo(() => buildSensitivityMatrix(baseResult), [baseResult]);
+  const conservativeScenario = sensitivityMatrix.find(s => s.label === 'conservative')!;
+  const optimisticScenario = sensitivityMatrix.find(s => s.label === 'optimistic')!;
+
   const baseCapex = baseResult.financialInput.initialCapex;
-
-  const conservativeSaving = baseNetSaving * 0.75;
-  const conservativeCapex = baseCapex * 1.15;
-  const conservativePayback = (conservativeCapex / conservativeSaving).toFixed(1);
-
-  const optimisticSaving = baseNetSaving * 1.25;
-  const optimisticCapex = baseCapex * 0.90;
-  const optimisticPayback = (optimisticCapex / optimisticSaving).toFixed(1);
+  const conservativeCapex = baseCapex * conservativeScenario.capexMultiplier;
+  const optimisticCapex = baseCapex * optimisticScenario.capexMultiplier;
 
   return (
     <div className="space-y-6">
@@ -99,10 +101,10 @@ export const ScenarioSensitivity: React.FC<ScenarioSensitivityProps> = ({
             </div>
             <div className="space-y-1.5 font-mono">
               <div className="flex justify-between text-slate-400"><span>CapEx (+15%):</span> <span className="text-white">{formatMoney(conservativeCapex)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Net Saving (-25%):</span> <span className="text-white">{formatMoney(conservativeSaving)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-rose-400 font-bold">{conservativePayback} Years</span></div>
+              <div className="flex justify-between text-slate-400"><span>NPV:</span> <span className="text-white">{formatMoney(conservativeScenario.npv)}</span></div>
+              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-rose-400 font-bold">{conservativeScenario.simplePaybackYears ?? 'N/A'} Years</span></div>
             </div>
-            <p className="text-[10px] text-slate-400">Assumes lower outage frequency, higher degradation, and tariff inflation cap.</p>
+            <p className="text-[10px] text-slate-400">Re-runs the financial engine at +15% CapEx, faster degradation, and reduced tariff escalation.</p>
           </div>
 
           {/* Base Case Scenario */}
@@ -113,8 +115,8 @@ export const ScenarioSensitivity: React.FC<ScenarioSensitivityProps> = ({
             </div>
             <div className="space-y-1.5 font-mono">
               <div className="flex justify-between text-slate-400"><span>CapEx:</span> <span className="text-white">{formatMoney(baseCapex)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Net Saving:</span> <span className="text-emerald-400 font-bold">{formatMoney(baseNetSaving)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-emerald-400 font-bold">{baseResult.financial.simplePaybackYears || 'N/A'} Years</span></div>
+              <div className="flex justify-between text-slate-400"><span>NPV:</span> <span className="text-emerald-400 font-bold">{formatMoney(baseResult.financial.npv)}</span></div>
+              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-emerald-400 font-bold">{baseResult.financial.simplePaybackYears ?? 'N/A'} Years</span></div>
             </div>
             <p className="text-[10px] text-slate-400">Single-energy-balance dispatch with verified parameters.</p>
           </div>
@@ -127,10 +129,10 @@ export const ScenarioSensitivity: React.FC<ScenarioSensitivityProps> = ({
             </div>
             <div className="space-y-1.5 font-mono">
               <div className="flex justify-between text-slate-400"><span>CapEx (-10%):</span> <span className="text-white">{formatMoney(optimisticCapex)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Net Saving (+25%):</span> <span className="text-white">{formatMoney(optimisticSaving)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-cyan-400 font-bold">{optimisticPayback} Years</span></div>
+              <div className="flex justify-between text-slate-400"><span>NPV:</span> <span className="text-white">{formatMoney(optimisticScenario.npv)}</span></div>
+              <div className="flex justify-between text-slate-400"><span>Payback:</span> <span className="text-cyan-400 font-bold">{optimisticScenario.simplePaybackYears ?? 'N/A'} Years</span></div>
             </div>
-            <p className="text-[10px] text-slate-400">Assumes higher diesel price inflation and peak demand tariff surcharges.</p>
+            <p className="text-[10px] text-slate-400">Re-runs the financial engine at -10% CapEx, slower degradation, and increased tariff escalation.</p>
           </div>
 
         </div>
