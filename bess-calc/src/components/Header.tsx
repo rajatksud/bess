@@ -1,12 +1,12 @@
 import React from 'react';
 import { CurrencySymbol } from '../types/bess';
-import { Zap, Calculator, BarChart3, ShieldAlert, FileText, Sparkles } from 'lucide-react';
+import { Zap, Calculator, BarChart3, ShieldAlert, FileText, Sparkles, FolderKanban } from 'lucide-react';
 
 interface HeaderProps {
   currency: CurrencySymbol;
   onCurrencyChange: (c: CurrencySymbol) => void;
-  activeTab: 'quick' | 'interval' | 'comparison' | 'scenario';
-  onTabChange: (tab: 'quick' | 'interval' | 'comparison' | 'scenario') => void;
+  activeTab: 'quick' | 'interval' | 'comparison' | 'scenario' | 'project';
+  onTabChange: (tab: 'quick' | 'interval' | 'comparison' | 'scenario' | 'project') => void;
   onOpenExportModal: () => void;
   confidenceGrade: 'A' | 'B' | 'C' | 'D';
 }
@@ -76,6 +76,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Scenarios & Sensitivity</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('project')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'project'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span>Projects</span>
             </button>
 
             <button

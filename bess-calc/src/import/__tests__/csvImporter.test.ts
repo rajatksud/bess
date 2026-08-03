@@ -35,6 +35,25 @@ describe('valid interval data', () => {
     expect(result.summary.acceptedRows).toBe(24);
     expect(result.summary.intervalDurationMinutes).toBe(60);
   });
+
+  it('computes peak load, total energy and solar contribution from accepted rows', () => {
+    // 10 rows of loadKw 100..109 at 15-min cadence, flat solarKw=10.
+    const csv = makeFlatCsv(10, '2024-06-15T00:00:00Z', 15);
+    const result = importIntervalCsv(csv, { tariffTimezone: 'UTC' });
+
+    expect(result.summary.peakLoadKw).toBe(109);
+    expect(result.summary.totalLoadEnergyKwh).toBeCloseTo(1045 * 0.25, 5);
+    expect(result.summary.totalSolarEnergyKwh).toBeCloseTo(10 * 10 * 0.25, 5);
+    expect(result.summary.solarContributionPct).toBeCloseTo(9.6, 1);
+  });
+
+  it('leaves energy/peak summary fields undefined when there are no accepted rows', () => {
+    const result = importIntervalCsv('timestamp,load_kw\n', { tariffTimezone: 'UTC' });
+    expect(result.summary.acceptedRows).toBe(0);
+    expect(result.summary.peakLoadKw).toBeUndefined();
+    expect(result.summary.totalLoadEnergyKwh).toBeUndefined();
+    expect(result.summary.solarContributionPct).toBeUndefined();
+  });
 });
 
 describe('CSV format edge cases', () => {

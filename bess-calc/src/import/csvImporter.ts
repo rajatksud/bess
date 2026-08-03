@@ -179,6 +179,21 @@ export function importIntervalCsv(csvText: string, optionsOverride: Partial<Impo
     warnings.push({ code: 'ERROR_LIST_TRUNCATED', message: `${rowErrors.length} row issues found; only the first ${options.limits.maxValidationErrorsReturned} are returned.` });
   }
 
+  const intervalHours = cadenceResult.intervalDurationMinutes ? cadenceResult.intervalDurationMinutes / 60 : undefined;
+  const peakLoadKw = finalRecords.length > 0
+    ? Math.max(...finalRecords.map(r => r.loadKw))
+    : undefined;
+  const totalLoadEnergyKwh = intervalHours !== undefined && finalRecords.length > 0
+    ? finalRecords.reduce((sum, r) => sum + r.loadKw, 0) * intervalHours
+    : undefined;
+  const hasSolarData = finalRecords.some(r => r.solarKw !== undefined);
+  const totalSolarEnergyKwh = intervalHours !== undefined && hasSolarData
+    ? finalRecords.reduce((sum, r) => sum + (r.solarKw ?? 0), 0) * intervalHours
+    : undefined;
+  const solarContributionPct = totalSolarEnergyKwh !== undefined && totalLoadEnergyKwh
+    ? Math.round((totalSolarEnergyKwh / totalLoadEnergyKwh) * 1000) / 10
+    : undefined;
+
   const summary: ImportSummary = {
     rowCount: parsed.data.length,
     acceptedRows: finalRecords.length,
@@ -190,7 +205,11 @@ export function importIntervalCsv(csvText: string, optionsOverride: Partial<Impo
     intervalDurationMinutes: cadenceResult.intervalDurationMinutes,
     startTimestamp: finalRecords[0]?.timestamp,
     endTimestamp: finalRecords[finalRecords.length - 1]?.timestamp,
-    engineeringGrade: cadenceResult.isRegular && !cadenceRejected && errorCount === 0
+    engineeringGrade: cadenceResult.isRegular && !cadenceRejected && errorCount === 0,
+    peakLoadKw,
+    totalLoadEnergyKwh,
+    totalSolarEnergyKwh,
+    solarContributionPct
   };
 
   return { summary, records: finalRecords, rowErrors: truncatedRowErrors, warnings };

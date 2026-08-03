@@ -1,0 +1,265 @@
+strict digraph "dependency-cruiser output"{
+    rankdir="LR" splines="true" overlap="false" nodesep="0.16" ranksep="0.18" fontname="Helvetica-bold" fontsize="9" style="rounded,bold,filled" fillcolor="#ffffff" compound="true"
+    node [shape="box" style="rounded, filled" height="0.2" color="black" fillcolor="#ffffcc" fontcolor="black" fontname="Helvetica" fontsize="9"]
+    edge [arrowhead="normal" arrowsize="0.6" penwidth="2.0" color="#00000033" fontname="Helvetica" fontsize="9"]
+
+    "crypto" [label=<crypto> tooltip="crypto" URL="https://nodejs.org/api/crypto.html" color="grey" fontcolor="grey"]
+    "fs" [label=<fs> tooltip="fs" URL="https://nodejs.org/api/fs.html" color="grey" fontcolor="grey"]
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/@prisma" [label=<@prisma> tooltip="@prisma" URL="https://www.npmjs.com/package/" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/express" [label=<express> tooltip="express" URL="https://www.npmjs.com/package/express" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/javascript-lp-solver" [label=<javascript-lp-solver> tooltip="javascript-lp-solver" URL="https://www.npmjs.com/package/javascript-lp-solver" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/lucide-react" [label=<lucide-react> tooltip="lucide-react" URL="https://www.npmjs.com/package/lucide-react" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/papaparse" [label=<papaparse> tooltip="papaparse" URL="https://www.npmjs.com/package/papaparse" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/react" [label=<react> tooltip="react" URL="https://www.npmjs.com/package/react" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/react-dom" [label=<react-dom> tooltip="react-dom" URL="https://www.npmjs.com/package/react-dom" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/recharts" [label=<recharts> tooltip="recharts" URL="https://www.npmjs.com/package/recharts" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/zod" [label=<zod> tooltip="zod" URL="https://www.npmjs.com/package/zod" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    "path" [label=<path> tooltip="path" URL="https://nodejs.org/api/path.html" color="grey" fontcolor="grey"]
+    subgraph "cluster_server" {label="server" "server/app.ts" [label=<app.ts> tooltip="app.ts" URL="server/app.ts" fillcolor="#ddfeff"] }
+    "server/app.ts" -> "server/lib/prisma.ts"
+    "server/app.ts" -> "server/middleware/correlationId.ts"
+    "server/app.ts" -> "server/middleware/errorHandler.ts"
+    "server/app.ts" -> "server/middleware/requestLogger.ts"
+    "server/app.ts" -> "server/routes/datasets.ts"
+    "server/app.ts" -> "server/routes/health.ts"
+    "server/app.ts" -> "server/routes/importValidate.ts"
+    "server/app.ts" -> "server/routes/optimisation.ts"
+    "server/app.ts" -> "server/routes/projects.ts"
+    "server/app.ts" -> "server/routes/scenarios.ts"
+    "server/app.ts" -> "server/routes/simulation.ts"
+    "server/app.ts" -> "server/routes/simulations.ts"
+    "server/app.ts" -> "server/routes/tariff.ts"
+    "server/app.ts" -> "node_modules/@prisma" [penwidth="1.0" arrowhead="onormal"]
+    "server/app.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/app.ts" -> "path" [style="dashed" penwidth="1.0"]
+    "server/app.ts" -> "url" [style="dashed" penwidth="1.0"]
+    subgraph "cluster_server" {label="server" "server/index.ts" [label=<index.ts> tooltip="index.ts" URL="server/index.ts" fillcolor="#ddfeff"] }
+    "server/index.ts" -> "server/app.ts"
+    "server/index.ts" -> "server/lib/logger.ts"
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/lib" {label="lib" "server/lib/errors.ts" [label=<errors.ts> tooltip="errors.ts" URL="server/lib/errors.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/lib" {label="lib" "server/lib/logger.ts" [label=<logger.ts> tooltip="logger.ts" URL="server/lib/logger.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/lib" {label="lib" "server/lib/prisma.ts" [label=<prisma.ts> tooltip="prisma.ts" URL="server/lib/prisma.ts" fillcolor="#ddfeff"] } }
+    "server/lib/prisma.ts" -> "node_modules/@prisma" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/lib" {label="lib" "server/lib/version.ts" [label=<version.ts> tooltip="version.ts" URL="server/lib/version.ts" fillcolor="#ddfeff"] } }
+    "server/lib/version.ts" -> "fs" [style="dashed" penwidth="1.0"]
+    "server/lib/version.ts" -> "path" [style="dashed" penwidth="1.0"]
+    "server/lib/version.ts" -> "url" [style="dashed" penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/middleware" {label="middleware" "server/middleware/correlationId.ts" [label=<correlationId.ts> tooltip="correlationId.ts" URL="server/middleware/correlationId.ts" fillcolor="#ddfeff"] } }
+    "server/middleware/correlationId.ts" -> "crypto" [style="dashed" penwidth="1.0"]
+    "server/middleware/correlationId.ts" -> "node_modules/express" [penwidth="1.0" arrowhead="onormal"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/middleware" {label="middleware" "server/middleware/errorHandler.ts" [label=<errorHandler.ts> tooltip="errorHandler.ts" URL="server/middleware/errorHandler.ts" fillcolor="#ddfeff"] } }
+    "server/middleware/errorHandler.ts" -> "server/lib/errors.ts"
+    "server/middleware/errorHandler.ts" -> "server/lib/logger.ts"
+    "server/middleware/errorHandler.ts" -> "node_modules/express" [penwidth="1.0" arrowhead="onormal"]
+    "server/middleware/errorHandler.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/middleware" {label="middleware" "server/middleware/requestLogger.ts" [label=<requestLogger.ts> tooltip="requestLogger.ts" URL="server/middleware/requestLogger.ts" fillcolor="#ddfeff"] } }
+    "server/middleware/requestLogger.ts" -> "server/lib/logger.ts"
+    "server/middleware/requestLogger.ts" -> "node_modules/express" [penwidth="1.0" arrowhead="onormal"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/datasets.ts" [label=<datasets.ts> tooltip="datasets.ts" URL="server/routes/datasets.ts" fillcolor="#ddfeff"] } }
+    "server/routes/datasets.ts" -> "src/import/index.ts"
+    "server/routes/datasets.ts" -> "server/lib/errors.ts"
+    "server/routes/datasets.ts" -> "node_modules/@prisma" [penwidth="1.0"]
+    "server/routes/datasets.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/datasets.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/health.ts" [label=<health.ts> tooltip="health.ts" URL="server/routes/health.ts" fillcolor="#ddfeff"] } }
+    "server/routes/health.ts" -> "server/lib/version.ts"
+    "server/routes/health.ts" -> "node_modules/express" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/importValidate.ts" [label=<importValidate.ts> tooltip="importValidate.ts" URL="server/routes/importValidate.ts" fillcolor="#ddfeff"] } }
+    "server/routes/importValidate.ts" -> "src/import/index.ts"
+    "server/routes/importValidate.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/importValidate.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/optimisation.ts" [label=<optimisation.ts> tooltip="optimisation.ts" URL="server/routes/optimisation.ts" fillcolor="#ddfeff"] } }
+    "server/routes/optimisation.ts" -> "src/optimisation/index.ts"
+    "server/routes/optimisation.ts" -> "src/optimisation/types.ts"
+    "server/routes/optimisation.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/optimisation.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/projects.ts" [label=<projects.ts> tooltip="projects.ts" URL="server/routes/projects.ts" fillcolor="#ddfeff"] } }
+    "server/routes/projects.ts" -> "server/lib/errors.ts"
+    "server/routes/projects.ts" -> "node_modules/@prisma" [penwidth="1.0" arrowhead="onormal"]
+    "server/routes/projects.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/projects.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/scenarios.ts" [label=<scenarios.ts> tooltip="scenarios.ts" URL="server/routes/scenarios.ts" fillcolor="#ddfeff"] } }
+    "server/routes/scenarios.ts" -> "server/lib/errors.ts"
+    "server/routes/scenarios.ts" -> "node_modules/@prisma" [penwidth="1.0"]
+    "server/routes/scenarios.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/scenarios.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/simulation.ts" [label=<simulation.ts> tooltip="simulation.ts" URL="server/routes/simulation.ts" fillcolor="#ddfeff"] } }
+    "server/routes/simulation.ts" -> "src/engine/dispatchEngine.ts"
+    "server/routes/simulation.ts" -> "src/engine/financialEngine.ts"
+    "server/routes/simulation.ts" -> "src/engine/validationEngine.ts"
+    "server/routes/simulation.ts" -> "src/types/bess.ts"
+    "server/routes/simulation.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/simulation.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/simulations.ts" [label=<simulations.ts> tooltip="simulations.ts" URL="server/routes/simulations.ts" fillcolor="#ddfeff"] } }
+    "server/routes/simulations.ts" -> "src/engine/dispatchEngine.ts"
+    "server/routes/simulations.ts" -> "src/engine/financialEngine.ts"
+    "server/routes/simulations.ts" -> "src/engine/validationEngine.ts"
+    "server/routes/simulations.ts" -> "src/import/index.ts"
+    "server/routes/simulations.ts" -> "src/types/bess.ts"
+    "server/routes/simulations.ts" -> "server/lib/errors.ts"
+    "server/routes/simulations.ts" -> "server/lib/version.ts"
+    "server/routes/simulations.ts" -> "node_modules/@prisma" [penwidth="1.0"]
+    "server/routes/simulations.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/simulations.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_server" {label="server" subgraph "cluster_server/routes" {label="routes" "server/routes/tariff.ts" [label=<tariff.ts> tooltip="tariff.ts" URL="server/routes/tariff.ts" fillcolor="#ddfeff"] } }
+    "server/routes/tariff.ts" -> "src/tariff/index.ts"
+    "server/routes/tariff.ts" -> "node_modules/express" [penwidth="1.0"]
+    "server/routes/tariff.ts" -> "node_modules/zod" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" "src/App.tsx" [label=<App.tsx> tooltip="App.tsx" URL="src/App.tsx" fillcolor="#bbfeff"] }
+    "src/App.tsx" -> "src/components/ExportReportModal.tsx"
+    "src/App.tsx" -> "src/components/Header.tsx"
+    "src/App.tsx" -> "src/components/IntervalSimulation.tsx"
+    "src/App.tsx" -> "src/components/LegacyComparisonModal.tsx"
+    "src/App.tsx" -> "src/components/QuickEstimateWizard.tsx"
+    "src/App.tsx" -> "src/components/ResultsDashboard.tsx"
+    "src/App.tsx" -> "src/components/ScenarioSensitivity.tsx"
+    "src/App.tsx" -> "src/engine/dispatchEngine.ts"
+    "src/App.tsx" -> "src/engine/financialEngine.ts"
+    "src/App.tsx" -> "src/engine/presetProfiles.ts"
+    "src/App.tsx" -> "src/engine/validationEngine.ts"
+    "src/App.tsx" -> "src/types/bess.ts"
+    "src/App.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/battery" {label="battery" "src/battery/batteryLibrary.ts" [label=<batteryLibrary.ts> tooltip="batteryLibrary.ts" URL="src/battery/batteryLibrary.ts" fillcolor="#ddfeff"] } }
+    "src/battery/batteryLibrary.ts" -> "src/battery/batteryModel.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/battery" {label="battery" "src/battery/batteryModel.ts" [label=<batteryModel.ts> tooltip="batteryModel.ts" URL="src/battery/batteryModel.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/battery" {label="battery" "src/battery/cycleCounting.ts" [label=<cycleCounting.ts> tooltip="cycleCounting.ts" URL="src/battery/cycleCounting.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/battery" {label="battery" "src/battery/degradationModel.ts" [label=<degradationModel.ts> tooltip="degradationModel.ts" URL="src/battery/degradationModel.ts" fillcolor="#ddfeff"] } }
+    "src/battery/degradationModel.ts" -> "src/battery/batteryModel.ts"
+    "src/battery/degradationModel.ts" -> "src/battery/cycleCounting.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/battery" {label="battery" "src/battery/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/battery/index.ts" fillcolor="#ddfeff"] } }
+    "src/battery/index.ts" -> "src/battery/batteryLibrary.ts" [arrowhead="inv"]
+    "src/battery/index.ts" -> "src/battery/batteryModel.ts" [arrowhead="inv"]
+    "src/battery/index.ts" -> "src/battery/cycleCounting.ts" [arrowhead="inv"]
+    "src/battery/index.ts" -> "src/battery/degradationModel.ts" [arrowhead="inv"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/ExportReportModal.tsx" [label=<ExportReportModal.tsx> tooltip="ExportReportModal.tsx" URL="src/components/ExportReportModal.tsx" fillcolor="#bbfeff"] } }
+    "src/components/ExportReportModal.tsx" -> "src/types/bess.ts"
+    "src/components/ExportReportModal.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/ExportReportModal.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/Header.tsx" [label=<Header.tsx> tooltip="Header.tsx" URL="src/components/Header.tsx" fillcolor="#bbfeff"] } }
+    "src/components/Header.tsx" -> "src/types/bess.ts"
+    "src/components/Header.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/Header.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/IntervalSimulation.tsx" [label=<IntervalSimulation.tsx> tooltip="IntervalSimulation.tsx" URL="src/components/IntervalSimulation.tsx" fillcolor="#bbfeff"] } }
+    "src/components/IntervalSimulation.tsx" -> "src/engine/presetProfiles.ts"
+    "src/components/IntervalSimulation.tsx" -> "src/types/bess.ts"
+    "src/components/IntervalSimulation.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/IntervalSimulation.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/LegacyComparisonModal.tsx" [label=<LegacyComparisonModal.tsx> tooltip="LegacyComparisonModal.tsx" URL="src/components/LegacyComparisonModal.tsx" fillcolor="#bbfeff"] } }
+    "src/components/LegacyComparisonModal.tsx" -> "src/engine/legacyEngine.ts"
+    "src/components/LegacyComparisonModal.tsx" -> "src/types/bess.ts"
+    "src/components/LegacyComparisonModal.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/LegacyComparisonModal.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/QuickEstimateWizard.tsx" [label=<QuickEstimateWizard.tsx> tooltip="QuickEstimateWizard.tsx" URL="src/components/QuickEstimateWizard.tsx" fillcolor="#bbfeff"] } }
+    "src/components/QuickEstimateWizard.tsx" -> "src/types/bess.ts"
+    "src/components/QuickEstimateWizard.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/QuickEstimateWizard.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/ResultsDashboard.tsx" [label=<ResultsDashboard.tsx> tooltip="ResultsDashboard.tsx" URL="src/components/ResultsDashboard.tsx" fillcolor="#bbfeff"] } }
+    "src/components/ResultsDashboard.tsx" -> "src/types/bess.ts"
+    "src/components/ResultsDashboard.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/ResultsDashboard.tsx" -> "node_modules/react" [penwidth="1.0"]
+    "src/components/ResultsDashboard.tsx" -> "node_modules/recharts" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/ScenarioSensitivity.tsx" [label=<ScenarioSensitivity.tsx> tooltip="ScenarioSensitivity.tsx" URL="src/components/ScenarioSensitivity.tsx" fillcolor="#bbfeff"] } }
+    "src/components/ScenarioSensitivity.tsx" -> "src/types/bess.ts"
+    "src/components/ScenarioSensitivity.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    "src/components/ScenarioSensitivity.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/engine" {label="engine" "src/engine/dispatchEngine.ts" [label=<dispatchEngine.ts> tooltip="dispatchEngine.ts" URL="src/engine/dispatchEngine.ts" fillcolor="#ddfeff"] } }
+    "src/engine/dispatchEngine.ts" -> "src/types/bess.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/engine" {label="engine" "src/engine/financialEngine.ts" [label=<financialEngine.ts> tooltip="financialEngine.ts" URL="src/engine/financialEngine.ts" fillcolor="#ddfeff"] } }
+    "src/engine/financialEngine.ts" -> "src/types/bess.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/engine" {label="engine" "src/engine/legacyEngine.ts" [label=<legacyEngine.ts> tooltip="legacyEngine.ts" URL="src/engine/legacyEngine.ts" fillcolor="#ddfeff"] } }
+    "src/engine/legacyEngine.ts" -> "src/types/bess.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/engine" {label="engine" "src/engine/presetProfiles.ts" [label=<presetProfiles.ts> tooltip="presetProfiles.ts" URL="src/engine/presetProfiles.ts" fillcolor="#ddfeff"] } }
+    "src/engine/presetProfiles.ts" -> "src/types/bess.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/engine" {label="engine" "src/engine/validationEngine.ts" [label=<validationEngine.ts> tooltip="validationEngine.ts" URL="src/engine/validationEngine.ts" fillcolor="#ddfeff"] } }
+    "src/engine/validationEngine.ts" -> "src/types/bess.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/cadence.ts" [label=<cadence.ts> tooltip="cadence.ts" URL="src/import/cadence.ts" fillcolor="#ddfeff"] } }
+    "src/import/cadence.ts" -> "src/import/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/csvImporter.ts" [label=<csvImporter.ts> tooltip="csvImporter.ts" URL="src/import/csvImporter.ts" fillcolor="#ddfeff"] } }
+    "src/import/csvImporter.ts" -> "src/import/cadence.ts"
+    "src/import/csvImporter.ts" -> "src/import/rowValidation.ts"
+    "src/import/csvImporter.ts" -> "src/import/timestampUtils.ts"
+    "src/import/csvImporter.ts" -> "src/import/types.ts"
+    "src/import/csvImporter.ts" -> "node_modules/papaparse" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/errorReport.ts" [label=<errorReport.ts> tooltip="errorReport.ts" URL="src/import/errorReport.ts" fillcolor="#ddfeff"] } }
+    "src/import/errorReport.ts" -> "src/import/rowValidation.ts"
+    "src/import/errorReport.ts" -> "src/import/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/import/index.ts" fillcolor="#ddfeff"] } }
+    "src/import/index.ts" -> "src/import/cadence.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/csvImporter.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/errorReport.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/rowValidation.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/timestampUtils.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/toEngineIntervals.ts" [arrowhead="inv"]
+    "src/import/index.ts" -> "src/import/types.ts" [arrowhead="inv"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/rowValidation.ts" [label=<rowValidation.ts> tooltip="rowValidation.ts" URL="src/import/rowValidation.ts" fillcolor="#ddfeff"] } }
+    "src/import/rowValidation.ts" -> "src/import/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/timestampUtils.ts" [label=<timestampUtils.ts> tooltip="timestampUtils.ts" URL="src/import/timestampUtils.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/toEngineIntervals.ts" [label=<toEngineIntervals.ts> tooltip="toEngineIntervals.ts" URL="src/import/toEngineIntervals.ts" fillcolor="#ddfeff"] } }
+    "src/import/toEngineIntervals.ts" -> "src/types/bess.ts"
+    "src/import/toEngineIntervals.ts" -> "src/import/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/import" {label="import" "src/import/types.ts" [label=<types.ts> tooltip="types.ts" URL="src/import/types.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" "src/index.css" [label=<index.css> tooltip="index.css" URL="src/index.css" ] }
+    subgraph "cluster_src" {label="src" "src/main.tsx" [label=<main.tsx> tooltip="main.tsx" URL="src/main.tsx" fillcolor="#bbfeff"] }
+    "src/main.tsx" -> "src/App.tsx"
+    "src/main.tsx" -> "src/index.css"
+    "src/main.tsx" -> "node_modules/react" [penwidth="1.0"]
+    "src/main.tsx" -> "node_modules/react-dom" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/comparison.ts" [label=<comparison.ts> tooltip="comparison.ts" URL="src/optimisation/comparison.ts" fillcolor="#ddfeff"] } }
+    "src/optimisation/comparison.ts" -> "src/optimisation/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/heuristicDispatch.ts" [label=<heuristicDispatch.ts> tooltip="heuristicDispatch.ts" URL="src/optimisation/heuristicDispatch.ts" fillcolor="#ddfeff"] } }
+    "src/optimisation/heuristicDispatch.ts" -> "src/optimisation/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/optimisation/index.ts" fillcolor="#ddfeff"] } }
+    "src/optimisation/index.ts" -> "src/optimisation/comparison.ts" [arrowhead="inv"]
+    "src/optimisation/index.ts" -> "src/optimisation/heuristicDispatch.ts" [arrowhead="inv"]
+    "src/optimisation/index.ts" -> "src/optimisation/lpModel.ts" [arrowhead="inv"]
+    "src/optimisation/index.ts" -> "src/optimisation/optimisedDispatch.ts" [arrowhead="inv"]
+    "src/optimisation/index.ts" -> "src/optimisation/types.ts" [arrowhead="inv"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/lpModel.ts" [label=<lpModel.ts> tooltip="lpModel.ts" URL="src/optimisation/lpModel.ts" fillcolor="#ddfeff"] } }
+    "src/optimisation/lpModel.ts" -> "src/optimisation/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/optimisedDispatch.ts" [label=<optimisedDispatch.ts> tooltip="optimisedDispatch.ts" URL="src/optimisation/optimisedDispatch.ts" fillcolor="#ddfeff"] } }
+    "src/optimisation/optimisedDispatch.ts" -> "src/optimisation/heuristicDispatch.ts"
+    "src/optimisation/optimisedDispatch.ts" -> "src/optimisation/lpModel.ts"
+    "src/optimisation/optimisedDispatch.ts" -> "src/optimisation/types.ts"
+    "src/optimisation/optimisedDispatch.ts" -> "node_modules/javascript-lp-solver" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/optimisation" {label="optimisation" "src/optimisation/types.ts" [label=<types.ts> tooltip="types.ts" URL="src/optimisation/types.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/billingDemand.ts" [label=<billingDemand.ts> tooltip="billingDemand.ts" URL="src/tariff/billingDemand.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/billingDemand.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/demandCharges.ts" [label=<demandCharges.ts> tooltip="demandCharges.ts" URL="src/tariff/demandCharges.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/demandCharges.ts" -> "src/tariff/billingDemand.ts"
+    "src/tariff/demandCharges.ts" -> "src/tariff/energyCharges.ts"
+    "src/tariff/demandCharges.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/dispatchAdapter.ts" [label=<dispatchAdapter.ts> tooltip="dispatchAdapter.ts" URL="src/tariff/dispatchAdapter.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/dispatchAdapter.ts" -> "src/types/bess.ts"
+    "src/tariff/dispatchAdapter.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/energyCharges.ts" [label=<energyCharges.ts> tooltip="energyCharges.ts" URL="src/tariff/energyCharges.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/energyCharges.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/exportRules.ts" [label=<exportRules.ts> tooltip="exportRules.ts" URL="src/tariff/exportRules.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/exportRules.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" subgraph "cluster_src/tariff/fixtures" {label="fixtures" "src/tariff/fixtures/sampleTariffs.ts" [label=<sampleTariffs.ts> tooltip="sampleTariffs.ts" URL="src/tariff/fixtures/sampleTariffs.ts" fillcolor="#ddfeff"] } } }
+    "src/tariff/fixtures/sampleTariffs.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/tariff/index.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/index.ts" -> "src/tariff/billingDemand.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/demandCharges.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/dispatchAdapter.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/energyCharges.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/exportRules.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/tariffEngine.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/taxesAndDuties.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/types.ts" [arrowhead="inv"]
+    "src/tariff/index.ts" -> "src/tariff/validation.ts" [arrowhead="inv"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/tariffEngine.ts" [label=<tariffEngine.ts> tooltip="tariffEngine.ts" URL="src/tariff/tariffEngine.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/tariffEngine.ts" -> "src/tariff/billingDemand.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/demandCharges.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/energyCharges.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/exportRules.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/taxesAndDuties.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/types.ts"
+    "src/tariff/tariffEngine.ts" -> "src/tariff/validation.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/taxesAndDuties.ts" [label=<taxesAndDuties.ts> tooltip="taxesAndDuties.ts" URL="src/tariff/taxesAndDuties.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/taxesAndDuties.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/types.ts" [label=<types.ts> tooltip="types.ts" URL="src/tariff/types.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/tariff" {label="tariff" "src/tariff/validation.ts" [label=<validation.ts> tooltip="validation.ts" URL="src/tariff/validation.ts" fillcolor="#ddfeff"] } }
+    "src/tariff/validation.ts" -> "src/tariff/types.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/types" {label="types" "src/types/bess.ts" [label=<bess.ts> tooltip="bess.ts" URL="src/types/bess.ts" fillcolor="#ddfeff"] } }
+    "url" [label=<url> tooltip="url" URL="https://nodejs.org/api/url.html" color="grey" fontcolor="grey"]
+}
