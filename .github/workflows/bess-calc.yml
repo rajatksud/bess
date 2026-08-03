@@ -11,6 +11,17 @@ on:
       - "bess-calc/**"
       - ".github/workflows/bess-calc.yml"
 
+# NOTE: this workflow's trigger set (push to main/dev/bess-calc) overlaps with
+# .github/workflows/ci.yml (PRs to main, push to feature/**/dev/**), which is the
+# actively-maintained one - it provisions an ephemeral Postgres service, applies
+# Prisma migrations, and runs the full test suite (including the persistence-backed
+# tests that self-skip here without DATABASE_URL) plus a Docker build+health-check.
+# This file was left using npm/package-lock.json after the repo's package manager
+# moved to pnpm (see package.json "packageManager"), which broke it outright once
+# package-lock.json was removed as dead weight. Updated in place to pnpm rather than
+# deleted, since removing a CI workflow file requires human sign-off. Whoever reviews
+# this should decide whether to keep both workflows or retire this one in favour of
+# ci.yml's more complete coverage.
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -22,9 +33,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: bess-calc/package-lock.json
-      - run: npm ci
-      - run: npm test
-      - run: npm run lint
-      - run: npm run build
+      - run: corepack enable
+      - run: npx --yes pnpm@11.18.0 install --frozen-lockfile
+      - run: npx --yes pnpm@11.18.0 prisma generate
+      - run: npx --yes pnpm@11.18.0 test
+      - run: npx --yes pnpm@11.18.0 lint
+      - run: npx --yes pnpm@11.18.0 build
