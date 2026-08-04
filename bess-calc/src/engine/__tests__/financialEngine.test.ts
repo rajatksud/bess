@@ -15,6 +15,8 @@ function makeSavings(overrides: Partial<SavingsBreakdown> = {}): SavingsBreakdow
     auxiliaryEnergyCost: 0,
     degradationCost: 0,
     omCost: 0,
+    solarProcurementCost: 0,
+    solarCurtailmentCost: 0,
     grossSaving: 0,
     netOperatingSaving: 0,
     ...overrides
@@ -29,6 +31,7 @@ function makeTechnical(overrides: Partial<TechnicalResult> = {}): TechnicalResul
     peakAfterKva: 0,
     energyChargedKwh: 0,
     energyDischargedKwh: 0,
+    solarGeneratedKwh: 0,
     solarEnergyStoredKwh: 0,
     dgEnergyDisplacedKwh: 0,
     equivalentFullCycles: 0,

@@ -92,10 +92,11 @@ describe('diesel displacement saving', () => {
 });
 
 describe('solar self-consumption saving', () => {
-  it('values stored solar at (import tariff - export credit) per kWh, not the full tariff', () => {
+  it('values stored solar at (import tariff - export credit) per kWh when export is permitted', () => {
     const system = makeSystem({ ratedPowerKw: 200, ratedEnergyKwh: 1000, initialSocPct: 0, minSocPct: 0, reserveSocPct: 0 });
     const tariff = makeTariff({ energyChargePerKwh: 10 });
-    const solar = makeSolar({ exportCreditPerKwh: 4 });
+    // Export permitted: storing the kWh forgoes an export credit it could have earned.
+    const solar = makeSolar({ exportCreditPerKwh: 4, exportAllowed: true });
     const intervals = [makeInterval({ loadKw: 0, solarKw: 100, gridAvailable: true })];
 
     const { savings, technical } = runIntervalDispatch(
@@ -110,6 +111,26 @@ describe('solar self-consumption saving', () => {
 
     const expectedSaving = annualSolarStoredKwh * (tariff.energyChargePerKwh - solar.exportCreditPerKwh);
     expect(savings.solarSelfConsumptionSaving).toBeCloseTo(expectedSaving, 2);
+  });
+
+  it('values stored solar at the FULL import tariff when export is prohibited', () => {
+    const system = makeSystem({ ratedPowerKw: 200, ratedEnergyKwh: 1000, initialSocPct: 0, minSocPct: 0, reserveSocPct: 0 });
+    const tariff = makeTariff({ energyChargePerKwh: 10 });
+    // Zero-export site: the alternative to storing the kWh is curtailing it, which
+    // recovers nothing. Netting off an export credit the site cannot earn would
+    // understate the battery's benefit - the capacity is paid for either way.
+    const solar = makeSolar({ exportCreditPerKwh: 4, exportAllowed: false });
+    const intervals = [makeInterval({ loadKw: 0, solarKw: 100, gridAvailable: true })];
+
+    const { savings, technical } = runIntervalDispatch(
+      intervals, system, tariff, makeDiesel({ enableDieselDisplacement: false }), solar, makeFinancial(),
+      ['solar_self_consumption'],
+      15
+    );
+
+    const annualSolarStoredKwh = 100 * 0.25 * 365;
+    expect(technical.solarEnergyStoredKwh).toBeCloseTo(annualSolarStoredKwh, 5);
+    expect(savings.solarSelfConsumptionSaving).toBeCloseTo(annualSolarStoredKwh * tariff.energyChargePerKwh, 2);
   });
 
   it('produces zero solar saving when solar integration is disabled in dispatch priorities', () => {

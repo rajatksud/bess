@@ -11,6 +11,8 @@ import {
   TechnicalResult,
   FinancialResult
 } from '../types/bess';
+import { resolveTurnkeyCapex } from './capexModel';
+import { solarProcurementModelOf, solarUnitCostPerKwh } from './solarProcurement';
 
 export function validateBessConfig(
   system: BessSystemInput,
@@ -112,15 +114,69 @@ export function validateBessConfig(
     });
   }
 
+  // On-site solar is bounded by available roof/land; open access is not.
+  if (
+    solar.enableSolarIntegration &&
+    solarProcurementModelOf(solar) === 'onsite_capex' &&
+    solar.maxOnsiteCapacityKwp !== undefined &&
+    solar.installedCapacityKwp > solar.maxOnsiteCapacityKwp
+  ) {
+    warnings.push({
+      id: 'comm-05',
+      level: 'error',
+      category: 'commercial',
+      code: 'ONSITE_SOLAR_EXCEEDS_SITE_CAPACITY',
+      message: `On-site solar of ${solar.installedCapacityKwp} kWp exceeds the ${solar.maxOnsiteCapacityKwp} kWp the site can physically host.`,
+      recommendation: 'Reduce installed capacity to the site limit, or procure the balance through open access.'
+    });
+  }
+
+  // Open access is contracted per kWh; without a contracted tariff the generation
+  // appears free, which it is not - the whole contracted capacity is payable.
+  if (
+    solar.enableSolarIntegration &&
+    solarProcurementModelOf(solar) === 'open_access' &&
+    solarUnitCostPerKwh(solar) <= 0
+  ) {
+    warnings.push({
+      id: 'comm-06',
+      level: 'warning',
+      category: 'commercial',
+      code: 'OPEN_ACCESS_SOLAR_WITHOUT_TARIFF',
+      message: 'Solar is procured through open access but no contracted tariff or open-access charges are configured, so its generation is being treated as free.',
+      recommendation: 'Enter the contracted generation tariff and wheeling/open-access charges per kWh.'
+    });
+  }
+
+  // Solar-only charging removes every grid charge path, so with no solar array the
+  // battery has no permitted energy source at all beyond its initial state of charge.
+  if (solar.solarOnlyCharging && (!solar.enableSolarIntegration || solar.installedCapacityKwp <= 0)) {
+    warnings.push({
+      id: 'comm-04',
+      level: 'error',
+      category: 'commercial',
+      code: 'SOLAR_ONLY_CHARGING_WITHOUT_SOLAR',
+      message: 'Solar-only charging is enabled but no solar array is configured, leaving the battery with no permitted charging source.',
+      recommendation: 'Enable solar integration with a non-zero installed capacity, or allow grid charging.'
+    });
+  }
+
   // Financial Checks
-  if (financial.initialCapex <= 0) {
+  // Checked against the RESOLVED turnkey figure so a derived-model scenario with
+  // missing or zeroed rates is caught, not just a zeroed fixed CapEx field.
+  const resolvedCapex = resolveTurnkeyCapex(system, financial, solar);
+  if (resolvedCapex <= 0) {
     warnings.push({
       id: 'fin-01',
       level: 'warning',
       category: 'financial',
       code: 'ZERO_CAPEX',
-      message: 'Initial project CapEx is set to zero or unassigned.',
-      recommendation: 'Enter estimated turnkey BESS installation cost.'
+      message: financial.capexModel === 'derived'
+        ? 'Turnkey CapEx derived from rated power and energy resolves to zero or less.'
+        : 'Initial project CapEx is set to zero or unassigned.',
+      recommendation: financial.capexModel === 'derived'
+        ? 'Enter non-zero CapEx rates per kWh and/or per kW, or switch to a fixed turnkey CapEx.'
+        : 'Enter estimated turnkey BESS installation cost.'
     });
   }
 

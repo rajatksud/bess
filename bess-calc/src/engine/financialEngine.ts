@@ -6,6 +6,7 @@ import {
   AnnualCashFlow,
   BessSystemInput
 } from '../types/bess';
+import { resolveTurnkeyCapex } from './capexModel';
 
 export function calculateFinancialMetrics(
   savings: SavingsBreakdown,
@@ -14,7 +15,10 @@ export function calculateFinancialMetrics(
   system: BessSystemInput
 ): FinancialResult {
   const projectYears = system.projectLifeYears || 10;
-  const initialCapex = financial.initialCapex;
+  // Resolved here rather than read straight off financial.initialCapex so that every
+  // caller (UI, server routes, scenario replay) gets the size-linked figure under the
+  // derived model. Idempotent for inputs already passed through withResolvedCapex().
+  const initialCapex = resolveTurnkeyCapex(system, financial);
   const discountRate = financial.discountRatePct / 100;
   const tariffEsc = financial.tariffEscalationPct / 100;
   const dieselEsc = financial.dieselEscalationPct / 100;

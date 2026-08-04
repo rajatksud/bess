@@ -8,24 +8,10 @@
 // that is the only existing precedent for constructing a pre-simulation IntervalRecord.
 import { IntervalRecordImport } from './types';
 import { IntervalRecord, TariffInput } from '../types/bess';
+import { resolveTouRate } from '../engine/touPeriods';
 
-function resolveTariffRate(timestamp: Date, tariff: TariffInput): { importRate: number; periodName: string } {
-  if (!tariff.enableTou || tariff.touPeriods.length === 0) {
-    return { importRate: tariff.energyChargePerKwh, periodName: 'Standard' };
-  }
-
-  const currentMins = timestamp.getHours() * 60 + timestamp.getMinutes();
-  const activePeriod = tariff.touPeriods.find(p => {
-    const [startHour, startMin] = p.startTime.split(':').map(Number);
-    const [endHour, endMin] = p.endTime.split(':').map(Number);
-    const startMins = startHour * 60 + startMin;
-    const endMins = endHour * 60 + endMin;
-    return currentMins >= startMins && currentMins < endMins;
-  });
-
-  return activePeriod
-    ? { importRate: activePeriod.importRatePerKwh, periodName: activePeriod.name }
-    : { importRate: tariff.energyChargePerKwh, periodName: 'Standard' };
+function resolveTariffRate(timestamp: Date, tariff: TariffInput) {
+  return resolveTouRate(timestamp.getHours() * 60 + timestamp.getMinutes(), tariff);
 }
 
 /**
@@ -36,7 +22,7 @@ function resolveTariffRate(timestamp: Date, tariff: TariffInput): { importRate: 
 export function toEngineIntervals(records: IntervalRecordImport[], tariff: TariffInput): IntervalRecord[] {
   return records.map((record, index) => {
     const timestamp = new Date(record.timestamp);
-    const { importRate, periodName } = resolveTariffRate(timestamp, tariff);
+    const { importRatePerKwh: importRate, periodName, kind: tariffPeriodKind } = resolveTariffRate(timestamp, tariff);
 
     const loadKw = record.loadKw;
     const pf = record.powerFactor ?? tariff.powerFactor ?? 0.9;
@@ -57,6 +43,7 @@ export function toEngineIntervals(records: IntervalRecordImport[], tariff: Tarif
       dgRequiredKw,
       tariffImportRate: importRate,
       tariffPeriod: record.tariffPeriod ?? periodName,
+      tariffPeriodKind,
 
       // Pre-simulation defaults - overwritten by runIntervalDispatch. Mirrors
       // presetProfiles.ts's own defaults exactly for consistency.

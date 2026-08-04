@@ -22,6 +22,7 @@ import { PRESET_PROFILES, ProfilePreset } from './engine/presetProfiles';
 import { validateBessConfig, validateSimulationResult } from './engine/validationEngine';
 import { runIntervalDispatch } from './engine/dispatchEngine';
 import { calculateFinancialMetrics } from './engine/financialEngine';
+import { withResolvedCapex } from './engine/capexModel';
 
 // Default Reference Configuration (125 kW / 261 kWh LiFePO4 BESS)
 const INITIAL_SYSTEM: BessSystemInput = {
@@ -42,9 +43,18 @@ const INITIAL_SYSTEM: BessSystemInput = {
   cycleLife: 6000
 };
 
+const BASE_ENERGY_CHARGE_PER_KWH = 9.5;
+
+// Time-of-Use structure expressed as deltas against the base energy charge, which is
+// how Indian C&I TOU slabs are actually published: a night rebate and a peak surcharge
+// per kWh, not standalone rates. Morning and evening peaks both carry the surcharge.
+// The night slab deliberately spans midnight (22:00 -> 06:00) - see engine/touPeriods.ts.
+const TOU_NIGHT_REBATE_PER_KWH = 1.0;
+const TOU_PEAK_SURCHARGE_PER_KWH = 1.0;
+
 const INITIAL_TARIFF: TariffInput = {
   currency: '₹',
-  energyChargePerKwh: 9.5,
+  energyChargePerKwh: BASE_ENERGY_CHARGE_PER_KWH,
   demandChargePerKvaMonth: 450,
   contractDemandKva: 300,
   billingDemandWindowMinutes: 15,
@@ -54,10 +64,38 @@ const INITIAL_TARIFF: TariffInput = {
   demandRatchetPct: 80,
   enableTou: true,
   touPeriods: [
-    { id: '1', name: 'Off-Peak Discount', startTime: '00:00', endTime: '06:00', importRatePerKwh: 7.0 },
-    { id: '2', name: 'Standard', startTime: '06:00', endTime: '18:00', importRatePerKwh: 9.5 },
-    { id: '3', name: 'Peak Surge', startTime: '18:00', endTime: '22:00', importRatePerKwh: 14.0 },
-    { id: '4', name: 'Standard', startTime: '22:00', endTime: '24:00', importRatePerKwh: 9.5 }
+    {
+      id: 'night-rebate',
+      name: 'Night Rebate',
+      startTime: '22:00',
+      endTime: '06:00',
+      importRatePerKwh: BASE_ENERGY_CHARGE_PER_KWH - TOU_NIGHT_REBATE_PER_KWH,
+      kind: 'off_peak'
+    },
+    {
+      id: 'morning-peak',
+      name: 'Morning Peak',
+      startTime: '06:00',
+      endTime: '09:00',
+      importRatePerKwh: BASE_ENERGY_CHARGE_PER_KWH + TOU_PEAK_SURCHARGE_PER_KWH,
+      kind: 'peak'
+    },
+    {
+      id: 'day-standard',
+      name: 'Standard',
+      startTime: '09:00',
+      endTime: '18:00',
+      importRatePerKwh: BASE_ENERGY_CHARGE_PER_KWH,
+      kind: 'standard'
+    },
+    {
+      id: 'evening-peak',
+      name: 'Evening Peak',
+      startTime: '18:00',
+      endTime: '22:00',
+      importRatePerKwh: BASE_ENERGY_CHARGE_PER_KWH + TOU_PEAK_SURCHARGE_PER_KWH,
+      kind: 'peak'
+    }
   ]
 };
 
@@ -79,11 +117,37 @@ const INITIAL_SOLAR: SolarInput = {
   dailySurplusSolarKwh: 240,
   exportAllowed: false,
   exportCreditPerKwh: 3.0,
-  curtailmentEnabled: true
+  curtailmentEnabled: true,
+  solarOnlyCharging: false,
+  procurementModel: 'onsite_capex',
+  maxOnsiteCapacityKwp: 200,
+  solarCapexPerKwp: 35000,
+  contractedTariffPerKwh: 4.5,
+  openAccessChargesPerKwh: 1.8
+};
+
+// Reference INR CapEx rates. Against the 125 kW / 261 kWh reference system these
+// resolve to exactly the historical fixed figure of Rs 4,000,000:
+//   261 kWh * 10,000 + 125 kW * 8,000 + 390,000 = 4,000,000.
+const INR_CAPEX_RATES = {
+  capexPerKwh: 10000,
+  capexPerKw: 8000,
+  balanceOfPlantCost: 390000
+};
+
+// USD equivalents at the same 1:83.33 ratio the other USD defaults use, so the
+// reference system resolves to the historical $48,000.
+const USD_CAPEX_RATES = {
+  capexPerKwh: 120,
+  capexPerKw: 96,
+  balanceOfPlantCost: 4680
 };
 
 const INITIAL_FINANCIAL: FinancialInput = {
   initialCapex: 4000000,
+  capexModel: 'derived',
+  ...INR_CAPEX_RATES,
+  epcMarkupPct: 0,
   fixedAnnualOm: 200000,
   variableOmPerKwhThroughput: 0.15,
   annualOmEscalationPct: 5.0,
@@ -131,11 +195,11 @@ export function App() {
     if (newCurrency === '$') {
       setTariff(prev => ({ ...prev, energyChargePerKwh: 0.14, demandChargePerKvaMonth: 18 }));
       setDiesel(prev => ({ ...prev, dieselPricePerLitre: 1.15 }));
-      setFinancial(prev => ({ ...prev, initialCapex: 48000, fixedAnnualOm: 2400 }));
+      setFinancial(prev => ({ ...prev, initialCapex: 48000, fixedAnnualOm: 2400, ...USD_CAPEX_RATES }));
     } else if (newCurrency === '₹') {
       setTariff(prev => ({ ...prev, energyChargePerKwh: 9.5, demandChargePerKvaMonth: 450 }));
       setDiesel(prev => ({ ...prev, dieselPricePerLitre: 92 }));
-      setFinancial(prev => ({ ...prev, initialCapex: 4000000, fixedAnnualOm: 200000 }));
+      setFinancial(prev => ({ ...prev, initialCapex: 4000000, fixedAnnualOm: 200000, ...INR_CAPEX_RATES }));
     }
   };
 
@@ -166,9 +230,12 @@ export function App() {
       dieselPricePerLitre: diesel.dieselPricePerLitre * sensitivityMults.dieselPriceMult
     };
 
+    // Resolve the derived CapEx FIRST so the sensitivity multiplier scales the
+    // size-linked figure, not a stale fixed field that the derived model ignores.
+    const resolvedFinancial = withResolvedCapex(adjustedSystem, financial, solar);
     const adjustedFinancial: FinancialInput = {
-      ...financial,
-      initialCapex: financial.initialCapex * sensitivityMults.capexMult
+      ...resolvedFinancial,
+      initialCapex: resolvedFinancial.initialCapex * sensitivityMults.capexMult
     };
 
     // 1. Validation & Audit (static input configuration)

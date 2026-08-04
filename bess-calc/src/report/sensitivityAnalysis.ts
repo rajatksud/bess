@@ -1,4 +1,5 @@
 import { calculateFinancialMetrics } from '../engine/financialEngine';
+import { withResolvedCapex } from '../engine/capexModel';
 import { SimulationResult, FinancialInput, BessSystemInput } from '../types/bess';
 import { SensitivityScenario } from './types';
 
@@ -33,10 +34,14 @@ const SCENARIO_DEFINITIONS: SensitivityScenarioDefinition[] = [
  * to re-run runIntervalDispatch too; that's out of scope for this three-point outlook.
  */
 export function buildSensitivityMatrix(result: SimulationResult): SensitivityScenario[] {
+  // Resolve first so the CapEx multiplier scales the turnkey figure the engine will
+  // actually invest, including when the source result carries a derived CapEx model.
+  const baseFinancial = withResolvedCapex(result.system, result.financialInput);
+
   return SCENARIO_DEFINITIONS.map(def => {
     const adjustedFinancial: FinancialInput = {
-      ...result.financialInput,
-      initialCapex: result.financialInput.initialCapex * def.capexMultiplier,
+      ...baseFinancial,
+      initialCapex: baseFinancial.initialCapex * def.capexMultiplier,
       tariffEscalationPct: Math.max(0, result.financialInput.tariffEscalationPct + def.tariffEscalationDeltaPct)
     };
     const adjustedSystem: BessSystemInput = {

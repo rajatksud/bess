@@ -71,6 +71,7 @@ export function makeSolar(overrides: Partial<SolarInput> = {}): SolarInput {
     exportAllowed: false,
     exportCreditPerKwh: 3.0,
     curtailmentEnabled: true,
+    solarOnlyCharging: false,
     ...overrides
   };
 }

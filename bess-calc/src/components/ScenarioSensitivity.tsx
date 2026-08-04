@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { SimulationResult, CurrencySymbol } from '../types/bess';
 import { buildSensitivityMatrix } from '../report';
+import { resolveTurnkeyCapex } from '../engine/capexModel';
 import { Sliders, Sparkles, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 
 interface ScenarioSensitivityProps {
@@ -74,7 +75,9 @@ export const ScenarioSensitivity: React.FC<ScenarioSensitivityProps> = ({
   const conservativeScenario = sensitivityMatrix.find(s => s.label === 'conservative')!;
   const optimisticScenario = sensitivityMatrix.find(s => s.label === 'optimistic')!;
 
-  const baseCapex = baseResult.financialInput.initialCapex;
+  // Resolved rather than read raw, so the displayed CapEx matches the derived turnkey
+  // figure the sensitivity matrix and financial engine used.
+  const baseCapex = resolveTurnkeyCapex(baseResult.system, baseResult.financialInput);
   const conservativeCapex = baseCapex * conservativeScenario.capexMultiplier;
   const optimisticCapex = baseCapex * optimisticScenario.capexMultiplier;
 

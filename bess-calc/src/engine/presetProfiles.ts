@@ -1,4 +1,5 @@
 import { IntervalRecord, TariffInput, SolarInput } from '../types/bess';
+import { resolveTouRate } from './touPeriods';
 
 export interface ProfilePreset {
   id: string;
@@ -50,24 +51,14 @@ export const PRESET_PROFILES: ProfilePreset[] = [
         // DG requirement if grid is unavailable
         const dgRequiredKw = isOutage ? baseKw : 0;
 
-        // Tariff rate
-        let importRate = tariff.energyChargePerKwh;
-        let tariffPeriodName = 'Standard';
-
-        if (tariff.enableTou && tariff.touPeriods.length > 0) {
-          const activeTou = tariff.touPeriods.find(p => {
-            const [sH, sM] = p.startTime.split(':').map(Number);
-            const [eH, eM] = p.endTime.split(':').map(Number);
-            const currentMins = hour * 60 + mins;
-            const startMins = sH * 60 + sM;
-            const endMins = eH * 60 + eM;
-            return currentMins >= startMins && currentMins < endMins;
-          });
-          if (activeTou) {
-            importRate = activeTou.importRatePerKwh;
-            tariffPeriodName = activeTou.name;
-          }
-        }
+        // Tariff rate. Uses the shared TOU resolver so midnight-spanning periods (a
+        // 22:00-06:00 night rebate) match correctly and the dispatch-relevant period
+        // kind travels with the interval.
+        const {
+          importRatePerKwh: importRate,
+          periodName: tariffPeriodName,
+          kind: tariffPeriodKind
+        } = resolveTouRate(minuteOfDay, tariff);
 
         const pf = tariff.powerFactor || 0.90;
 
@@ -81,7 +72,8 @@ export const PRESET_PROFILES: ProfilePreset[] = [
           dgRequiredKw,
           tariffImportRate: importRate,
           tariffPeriod: tariffPeriodName,
-          
+          tariffPeriodKind,
+
           // Defaults before simulation
           bessPowerKw: 0,
           bessSocPct: 80,

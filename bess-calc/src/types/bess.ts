@@ -11,13 +11,28 @@ export type DispatchPriorityType =
   | 'solar_self_consumption'
   | 'tou_arbitrage';
 
+/**
+ * Dispatch-relevant classification of a TOU period. 'peak' is a discharge opportunity,
+ * 'off_peak' a grid-charging opportunity, 'standard' neither. See
+ * `engine/touPeriods.ts` - when a period does not declare a kind it is classified by
+ * its rate relative to `TariffInput.energyChargePerKwh`.
+ */
+export type TouPeriodKind = 'peak' | 'standard' | 'off_peak';
+
 export interface TouPeriod {
   id: string;
   name: string;
+  /** "HH:MM". A period may wrap past midnight (e.g. 22:00 -> 06:00). */
   startTime: string; // "08:00"
   endTime: string;   // "12:00"
   importRatePerKwh: number;
   exportRatePerKwh?: number;
+  /**
+   * Optional explicit classification. When absent the period is classified from its
+   * rate against the base energy charge, so a surcharge or rebate of any size is
+   * actionable. Set this to force a classification the rate alone would not imply.
+   */
+  kind?: TouPeriodKind;
 }
 
 export interface BessSystemInput {
@@ -64,6 +79,21 @@ export interface DieselInput {
   avgOutageLoadKw: number;            // e.g., 120
 }
 
+/**
+ * How the solar capacity is procured. Either way the site pays for the ENTIRE
+ * capacity, not just the energy it manages to consume - which is what makes curtailed
+ * generation a real financial loss rather than a merely technical one.
+ *
+ *   'onsite_capex'  — invested on site. Capacity is limited by available roof/land
+ *                     (`maxOnsiteCapacityKwp`) and paid for once, up front, as CapEx.
+ *                     Every generated kWh is then already paid for.
+ *   'open_access'   — contracted from a third-party generator and wheeled to site.
+ *                     No CapEx; instead every contracted kWh is paid for at the
+ *                     contracted tariff plus wheeling/open-access charges, whether or
+ *                     not the site consumes it.
+ */
+export type SolarProcurementModel = 'onsite_capex' | 'open_access';
+
 export interface SolarInput {
   enableSolarIntegration: boolean;
   installedCapacityKwp: number;       // e.g., 150
@@ -71,10 +101,78 @@ export interface SolarInput {
   exportAllowed: boolean;
   exportCreditPerKwh: number;         // e.g., 3.0
   curtailmentEnabled: boolean;
+  /** Defaults to 'onsite_capex' when absent. */
+  procurementModel?: SolarProcurementModel;
+  /**
+   * On-site only: the largest array the site can physically host (roof/land limit).
+   * Configuring `installedCapacityKwp` above this raises a validation error.
+   */
+  maxOnsiteCapacityKwp?: number;      // e.g., 200
+  /** On-site only: installed cost per kWp, folded into the project's turnkey CapEx. */
+  solarCapexPerKwp?: number;          // e.g., 35,000 (INR/kWp)
+  /** Open access only: contracted generation tariff, currency/kWh. */
+  contractedTariffPerKwh?: number;    // e.g., 4.5
+  /**
+   * Open access only: wheeling, banking, cross-subsidy and additional surcharges,
+   * currency/kWh. Added to the contracted tariff to give the delivered unit cost.
+   */
+  openAccessChargesPerKwh?: number;   // e.g., 1.8
+  /**
+   * Solar-only charging constraint. When true the battery may charge ONLY from surplus
+   * solar (generation above site load); every grid-sourced charge path is disabled, so
+   * `gridBatteryChargeKw` is 0 in every interval and the battery only gains energy while
+   * the array is generating a surplus. Optional: absent/false preserves the legacy
+   * behaviour where TOU off-peak grid charging is permitted.
+   */
+  solarOnlyCharging?: boolean;
+}
+
+/**
+ * How turnkey CapEx is arrived at.
+ *   'fixed'   — `FinancialInput.initialCapex` is used verbatim; rated power/energy
+ *               have no effect on it. This is the default and the behaviour any
+ *               scenario authored before the derived model resolves to.
+ *   'derived' — CapEx is built from per-kWh and per-kW rates against the configured
+ *               system size, plus balance-of-plant and an optional EPC markup.
+ *               See `engine/capexModel.ts`.
+ */
+export type CapexModelType = 'fixed' | 'derived';
+
+/** Component-level turnkey CapEx breakdown; see `engine/capexModel.ts`. */
+export interface CapexBreakdown {
+  model: CapexModelType;
+  /** capexPerKwh * ratedEnergyKwh — the energy block (cells, racks, modules). */
+  energyCapex: number;
+  /** capexPerKw * ratedPowerKw — power conversion (PCS, switchgear, thermal). */
+  powerCapex: number;
+  /** Size-independent civil/EPC/commissioning/freight component. */
+  balanceOfPlantCost: number;
+  /** epcMarkupPct applied to the sum of the three components above (BESS scope only). */
+  epcMarkup: number;
+  /** On-site solar investment (installedCapacityKwp * solarCapexPerKwp); 0 for open access. */
+  solarCapex: number;
+  /** The turnkey figure the financial engine actually invests. */
+  totalCapex: number;
 }
 
 export interface FinancialInput {
+  /**
+   * Turnkey CapEx. Under `capexModel: 'fixed'` (the default) this is the figure used
+   * directly. Under `capexModel: 'derived'` it is ignored and recomputed from the
+   * rates below against rated power/energy - use `resolveTurnkeyCapex()` rather than
+   * reading this field when the model may be derived.
+   */
   initialCapex: number;               // e.g., 4,000,000 (INR) or 48,000 (USD)
+  /** Defaults to 'fixed' when absent. */
+  capexModel?: CapexModelType;
+  /** Energy-block rate, currency/kWh of rated energy. Derived model only. */
+  capexPerKwh?: number;               // e.g., 10,000 (INR/kWh)
+  /** Power-conversion rate, currency/kW of rated power. Derived model only. */
+  capexPerKw?: number;                // e.g., 8,000 (INR/kW)
+  /** Size-independent balance-of-plant / EPC cost. Derived model only. */
+  balanceOfPlantCost?: number;        // e.g., 390,000 (INR)
+  /** Percentage markup applied to the sum of the components. Derived model only. */
+  epcMarkupPct?: number;              // e.g., 0
   fixedAnnualOm: number;              // e.g., 200,000
   variableOmPerKwhThroughput: number; // e.g., 0.15
   annualOmEscalationPct: number;      // e.g., 5.0
@@ -97,6 +195,13 @@ export interface IntervalRecord {
   dgRequiredKw: number;
   tariffImportRate: number;
   tariffPeriod?: string;
+  /**
+   * Dispatch-relevant classification of this interval's TOU period. Populated from the
+   * matched TouPeriod where one exists. When absent, the dispatch engine classifies the
+   * interval from `tariffImportRate` against the base energy charge instead, so
+   * CSV-imported intervals carrying only rates still drive TOU dispatch correctly.
+   */
+  tariffPeriodKind?: TouPeriodKind;
 
   // Post-BESS values
   bessPowerKw: number; // positive = discharge, negative = charge
@@ -155,7 +260,18 @@ export interface SavingsBreakdown {
   auxiliaryEnergyCost: number;
   degradationCost: number;
   omCost: number;
-  
+
+  /**
+   * Annual cost of the ENTIRE procured solar generation, consumed or not (open access
+   * only; on-site solar is paid through CapEx instead). Reported at project level and
+   * deliberately NOT included in netOperatingSaving - the same cost is incurred with
+   * and without the battery, so it cancels in a BESS-attributable comparison. See
+   * engine/solarProcurement.ts.
+   */
+  solarProcurementCost: number;
+  /** The share of solarProcurementCost paid for generation that was curtailed - pure waste. */
+  solarCurtailmentCost: number;
+
   grossSaving: number;
   netOperatingSaving: number;
 }
@@ -167,6 +283,8 @@ export interface TechnicalResult {
   peakAfterKva: number;
   energyChargedKwh: number;
   energyDischargedKwh: number;
+  /** TOTAL annual solar generation, before allocation to load/battery/export/curtailment. */
+  solarGeneratedKwh: number;
   solarEnergyStoredKwh: number;
   dgEnergyDisplacedKwh: number;
   equivalentFullCycles: number;

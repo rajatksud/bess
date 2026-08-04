@@ -10,6 +10,8 @@ import {
   DispatchPriorityType,
   ReactivePowerBasis
 } from '../types/bess';
+import { classifyTouRate, peakImportRate, offPeakImportRate, isArbitrageEconomic } from './touPeriods';
+import { priceSolarProcurement } from './solarProcurement';
 
 /**
  * Resolves the kW -> kVA billing basis per the deterministic reactive-power policy
@@ -72,6 +74,12 @@ export function runIntervalDispatch(
   let totalArbitrageDischargedKwh = 0;
   let totalArbitrageChargedKwh = 0;
 
+  // TOTAL solar generation, before any of it is allocated to load, battery, export or
+  // curtailment. The whole procured capacity is paid for regardless of where each kWh
+  // ends up (see solarProcurement.ts), so this - not the consumed share - is the
+  // quantity the procurement cost is levied on.
+  let totalSolarGeneratedKwh = 0;
+
   // Reactive-power (kW -> kVA) billing basis, resolved once for the whole profile per
   // the deterministic policy: measured kVA > measured PF > configured site PF >
   // unavailable. The MVP only ever supplies tariff.powerFactor (configured), so solar
@@ -80,7 +88,54 @@ export function runIntervalDispatch(
   // `assumptions` and, when no basis at all is available, in `warnings`-worthy output.
   const reactivePowerBasis = resolveReactivePowerBasis(undefined, undefined, tariff.powerFactor);
   const pf = reactivePowerBasis !== 'unavailable' ? tariff.powerFactor : undefined;
+
+  // Solar-only charging constraint: the battery may gain energy ONLY from surplus solar
+  // (the 'solar_self_consumption' branch below), never from the grid. This gates the TOU
+  // off-peak charge branch, which is currently the only grid-sourced charge path in the
+  // priority loop - any future grid-charging branch must be gated here too, and the
+  // invariant that holds regardless is gridBatteryChargeKw === 0 in every interval.
+  const solarOnlyCharging = solar.solarOnlyCharging === true;
+
+  // Peak/off-peak extremes, and whether the spread between them is wide enough for
+  // grid-charged arbitrage to create value after round-trip losses. Resolved once for
+  // the profile: a spread that cannot cover losses should suppress off-peak charging
+  // for the whole day, not interval by interval.
+  //
+  // Taken from the rates OBSERVED in the profile as well as the configured periods,
+  // because an interval's tariffImportRate is not required to appear in
+  // tariff.touPeriods - CSV-imported intervals carry their own per-interval rates, and
+  // a profile may price a period the tariff config never enumerates. Using the config
+  // alone would miss those rates and mis-judge both the spread and the pricing below.
+  const observedImportRates = intervals
+    .map(inv => inv.tariffImportRate)
+    .filter(rate => Number.isFinite(rate));
+  const tariffPeakRate = Math.max(peakImportRate(tariff), ...observedImportRates);
+  const tariffOffPeakRate = Math.min(offPeakImportRate(tariff), ...observedImportRates);
+  const arbitrageIsEconomic = isArbitrageEconomic(tariffPeakRate, tariffOffPeakRate, etaCharge, etaDischarge);
+
   const assumptions: string[] = [];
+  if (tariff.enableTou && !arbitrageIsEconomic && !solarOnlyCharging) {
+    assumptions.push(
+      `Off-peak grid charging is suppressed: the peak/off-peak spread ` +
+      `(${tariffOffPeakRate} to ${tariffPeakRate} per kWh) does not cover the ` +
+      `${Math.round(etaCharge * etaDischarge * 1000) / 10}% round-trip efficiency, so ` +
+      'buying energy off-peak to discharge on-peak would lose money on every kWh.'
+    );
+  }
+  if (solarOnlyCharging) {
+    assumptions.push(
+      'Solar-only charging is enabled: the battery charges exclusively from surplus ' +
+      'solar generation (above site load). Grid charging - including TOU off-peak ' +
+      'charging - is disabled, so the battery only accumulates energy while the array ' +
+      'is generating a surplus.'
+    );
+  }
+  if (solarOnlyCharging && !solar.enableSolarIntegration) {
+    assumptions.push(
+      'Solar-only charging is enabled but solar integration is disabled, so the battery ' +
+      'has no permitted charging source and can only discharge its initial state of charge.'
+    );
+  }
   if (reactivePowerBasis === 'configured_pf') {
     assumptions.push(
       'kVA billing quantities are derived from the configured site power factor ' +
@@ -155,6 +210,7 @@ export function runIntervalDispatch(
     const gridAvailable = inv.gridAvailable;
     const preBessGridImportKw = preBessGridImportSeries[intervalIdx];
     const solarGenerationServingLoadKw = Math.min(Math.max(solarKw, 0), Math.max(loadKw, 0));
+    totalSolarGeneratedKwh += Math.max(0, solarKw) * dtHours;
 
     let bessPowerKw = 0; // Positive = discharging, Negative = charging
     let bessAction = 'Idle';
@@ -217,15 +273,31 @@ export function runIntervalDispatch(
       }
 
       else if (priority === 'tou_arbitrage' && gridAvailable && bessPowerKw === 0) {
-        // Charge off-peak (if rate < standard or during night), Discharge peak
-        if (inv.tariffPeriod === 'Peak Surge' || inv.tariffImportRate > tariff.energyChargePerKwh * 1.2) {
-          const dischargeKw = Math.min(loadKw, remainingDischargeKw);
+        // Discharge during peak periods, charge during off-peak ones. The period kind
+        // comes from the interval's declared TOU classification where present, else
+        // from its rate against the base energy charge - NOT from a period name or a
+        // +/-20% rate threshold, both of which ignored modest per-kWh surcharges and
+        // rebates entirely (see engine/touPeriods.ts).
+        const periodKind = classifyTouRate(
+          inv.tariffImportRate,
+          tariff.energyChargePerKwh,
+          inv.tariffPeriodKind
+        );
+
+        if (periodKind === 'peak') {
+          // Sized against METER-SIDE import, not gross load: solar already serving load
+          // needs no battery support, and discharging beyond the import would push
+          // energy back through the meter rather than avoid a peak-rate purchase.
+          const dischargeKw = Math.min(preBessGridImportKw, remainingDischargeKw);
           if (dischargeKw > 0) {
             bessPowerKw = dischargeKw;
             bessAction = 'TOU Arbitrage Discharge';
             totalArbitrageDischargedKwh += dischargeKw * dtHours;
           }
-        } else if (inv.tariffPeriod === 'Off-Peak Discount' || inv.tariffImportRate < tariff.energyChargePerKwh * 0.8) {
+        } else if (periodKind === 'off_peak' && !solarOnlyCharging && arbitrageIsEconomic) {
+          // Grid-sourced charge. Suppressed entirely under the solar-only charging
+          // constraint (see solarOnlyCharging above), and when the peak/off-peak spread
+          // is too narrow to cover round-trip losses (see arbitrageIsEconomic).
           const chargeKw = remainingChargeKw;
           if (chargeKw > 0) {
             bessPowerKw = -chargeKw;
@@ -355,11 +427,50 @@ export function runIntervalDispatch(
   const annualDgMaintenanceSaving = avoidedDgRunHours * (diesel.maintenanceCostPerRunHour || 150);
 
   // 3. Solar Self-Consumption Saving
+  //
+  // Each kWh the battery absorbs from surplus solar avoids importing a kWh later, worth
+  // the energy charge. What that kWh would otherwise have earned depends on whether the
+  // site may export:
+  //
+  //   export allowed    — the alternative is exporting it for exportCreditPerKwh, so the
+  //                       battery's incremental benefit is (energy charge - credit).
+  //   export prohibited — the alternative is CURTAILING it, which recovers nothing. The
+  //                       full energy charge is the benefit. Netting off an export credit
+  //                       the site is not permitted to earn understated this case, and
+  //                       understated it most where it matters: the capacity was paid for
+  //                       in full either way (see solarProcurement.ts), so rescuing an
+  //                       otherwise-wasted kWh is worth the whole avoided import.
   const annualSolarStoredKwh = totalSolarStoredKwh * daysInYear;
   const avoidedImportTariff = tariff.energyChargePerKwh;
-  const exportCredit = solar.exportCreditPerKwh || 3.0;
-  const netSolarBenefitPerKwh = Math.max(0, avoidedImportTariff - exportCredit);
+  const forgoneExportCredit = solar.exportAllowed ? (solar.exportCreditPerKwh || 0) : 0;
+  const netSolarBenefitPerKwh = Math.max(0, avoidedImportTariff - forgoneExportCredit);
   const annualSolarSelfConsumptionSaving = annualSolarStoredKwh * netSolarBenefitPerKwh;
+
+  // 3b. Solar procurement cost, at project level.
+  //
+  // The whole procured capacity is paid for whether or not it is consumed, so this is
+  // levied on TOTAL generation. It is reported, not deducted from netOperatingSaving:
+  // the same solar cost is incurred in the baseline and with-BESS cases, so it cancels
+  // in a BESS-attributable comparison. What the battery changes is how much of that
+  // paid-for energy is rescued instead of curtailed, which is credited above.
+  const annualSolarGeneratedKwh = totalSolarGeneratedKwh * daysInYear;
+  const annualCurtailedSolarKwh = totalCurtailedSolarKwh * daysInYear;
+  const solarProcurement = priceSolarProcurement(solar, annualSolarGeneratedKwh, annualCurtailedSolarKwh);
+  if (solarProcurement.unitCostPerKwh > 0) {
+    assumptions.push(
+      `Solar is procured under open access at ${solarProcurement.unitCostPerKwh} per kWh ` +
+      'delivered (contracted tariff plus wheeling and open-access charges), payable on ' +
+      'the entire contracted generation whether or not the site consumes it. This cost ' +
+      'is reported at project level, not deducted from the BESS saving, because it is ' +
+      'incurred identically with and without the battery.'
+    );
+  }
+  if (solarProcurement.annualCurtailedCost > 0) {
+    assumptions.push(
+      `${Math.round(annualCurtailedSolarKwh)} kWh/yr of contracted solar is curtailed but ` +
+      `still paid for, wasting ${Math.round(solarProcurement.annualCurtailedCost)} per year.`
+    );
+  }
 
   // 4. Energy Arbitrage Saving
   //
@@ -378,12 +489,10 @@ export function runIntervalDispatch(
   // charged x off-peak rate), consistent with CALCULATION_ENGINE_DESIGN.md section on
   // Arbitrage and the coding spec's net-arbitrage-value formula. Falls back to the
   // standard energy charge if no TOU periods are configured for this interval set.
-  const peakRate = tariff.enableTou
-    ? Math.max(tariff.energyChargePerKwh, ...tariff.touPeriods.map(p => p.importRatePerKwh))
-    : tariff.energyChargePerKwh;
-  const offPeakRate = tariff.enableTou && tariff.touPeriods.length > 0
-    ? Math.min(...tariff.touPeriods.map(p => p.importRatePerKwh))
-    : tariff.energyChargePerKwh;
+  // Same extremes the dispatch loop's economic guard used, so pricing and dispatch can
+  // never disagree about what the peak and off-peak rates are.
+  const peakRate = tariffPeakRate;
+  const offPeakRate = tariffOffPeakRate;
   // This is the GROSS arbitrage saving (avoided peak-rate import only). The cost of
   // the off-peak grid energy used to charge is deducted once, below, via
   // annualChargingCost - it must not also be netted out here or it would be
@@ -407,6 +516,8 @@ export function runIntervalDispatch(
   const annualOmCost = financial.fixedAnnualOm;
 
   const grossSaving = annualDemandSaving + annualDieselFuelSaving + annualDgMaintenanceSaving + annualSolarSelfConsumptionSaving + annualEnergyArbitrageSaving;
+  // solarProcurementCost is deliberately absent from this deduction - it is a
+  // project-level figure common to the baseline and with-BESS cases (see 3b above).
   const netOperatingSaving = grossSaving - annualChargingCost - annualAuxiliaryCost - annualDegradationCost - annualOmCost;
 
   const equivalentFullCycles = annualDischargedKwh / Math.max(1, system.ratedEnergyKwh);
@@ -424,6 +535,8 @@ export function runIntervalDispatch(
       auxiliaryEnergyCost: annualAuxiliaryCost,
       degradationCost: annualDegradationCost,
       omCost: annualOmCost,
+      solarProcurementCost: solarProcurement.annualEnergyCost,
+      solarCurtailmentCost: solarProcurement.annualCurtailedCost,
       grossSaving,
       netOperatingSaving
     },
@@ -434,6 +547,7 @@ export function runIntervalDispatch(
       peakAfterKva,
       energyChargedKwh: annualChargedKwh,
       energyDischargedKwh: annualDischargedKwh,
+      solarGeneratedKwh: annualSolarGeneratedKwh,
       solarEnergyStoredKwh: annualSolarStoredKwh,
       dgEnergyDisplacedKwh: annualDgEnergyDisplacedKwh,
       equivalentFullCycles,

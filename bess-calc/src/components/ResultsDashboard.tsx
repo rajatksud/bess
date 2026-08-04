@@ -198,11 +198,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, curr
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                   
-                  {/* Site Load Before BESS */}
-                  <Line yAxisId="power" type="monotone" dataKey="loadKw" name="Site Load Before BESS (kW)" stroke="#f43f5e" strokeWidth={2} dot={false} />
-                  
-                  {/* Post-BESS Load */}
-                  <Line yAxisId="power" type="monotone" dataKey="postBessLoadKw" name="Grid Load After BESS (kW)" stroke="#06b6d4" strokeWidth={2} dot={false} strokeDasharray="4 4" />
+                  {/* Gross site load: total site demand before any PV set-off or BESS action. */}
+                  <Line yAxisId="power" type="monotone" dataKey="grossSiteLoadKw" name="Gross Site Load (kW)" stroke="#f43f5e" strokeWidth={2} dot={false} />
+
+                  {/* Metered grid import: gross load net of PV self-consumption AND the
+                      battery. This is the billing quantity the peak KPIs below are taken
+                      from - NOT postBessLoadKw, which nets the battery but not solar. */}
+                  <Line yAxisId="power" type="monotone" dataKey="postBessGridImportKw" name="Net Grid Import, after PV + BESS (kW)" stroke="#06b6d4" strokeWidth={2} dot={false} strokeDasharray="4 4" />
                   
                   {/* Solar Power */}
                   <Area yAxisId="power" type="monotone" dataKey="solarKw" name="Solar PV (kW)" fill="#eab308" stroke="#eab308" fillOpacity={0.2} />

@@ -8,6 +8,8 @@ import {
   CurrencySymbol 
 } from '../types/bess';
 import { Battery, Zap, Fuel, Sun, DollarSign, SlidersHorizontal, Info } from 'lucide-react';
+import { resolveCapexBreakdown } from '../engine/capexModel';
+import { solarProcurementModelOf, solarUnitCostPerKwh } from '../engine/solarProcurement';
 
 const FieldLabel: React.FC<{ label: string; tooltip: string }> = ({ label, tooltip }) => (
   <label className="flex items-center gap-1 text-slate-400 mb-1">
@@ -50,6 +52,13 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
   setFinancial,
   onResetToReference
 }) => {
+  // Live CapEx breakdown, so the panel shows the same figure the financial engine
+  // will invest rather than re-deriving it with a second, drifting formula.
+  const capex = resolveCapexBreakdown(system, financial, solar);
+  const isDerivedCapex = financial.capexModel === 'derived';
+  const isOpenAccessSolar = solarProcurementModelOf(solar) === 'open_access';
+  const solarUnitCost = solarUnitCostPerKwh(solar);
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -259,7 +268,78 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
             <span>4. Solar PV Absorption</span>
           </div>
 
+          {/* Procurement route. Either way the entire capacity is paid for. */}
+          <div className="flex items-center justify-between text-xs">
+            <FieldLabel
+              label="Procurement Route"
+              tooltip="On-site: the array is built on your roof/land, limited by available space, and paid for once as CapEx. Open Access: capacity is contracted from a third-party generator and wheeled to site, paid per kWh. Under both routes the ENTIRE capacity is paid for whether or not you consume it, so curtailed generation is a real cash loss."
+            />
+            <div className="flex gap-1">
+              <button
+                onClick={() => setSolar({ ...solar, procurementModel: 'onsite_capex' })}
+                className={`px-3 py-1 rounded text-xs font-semibold ${
+                  !isOpenAccessSolar ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                On-Site
+              </button>
+              <button
+                onClick={() => setSolar({ ...solar, procurementModel: 'open_access' })}
+                className={`px-3 py-1 rounded text-xs font-semibold ${
+                  isOpenAccessSolar ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                Open Access
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 text-xs">
+            {isOpenAccessSolar ? (
+              <>
+                <div>
+                  <FieldLabel label={`Contracted Tariff (${currency}/kWh)`} tooltip="Generation tariff in the open-access PPA. Payable on the entire contracted generation, consumed or not." />
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={solar.contractedTariffPerKwh ?? 0}
+                    onChange={e => setSolar({ ...solar, contractedTariffPerKwh: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <FieldLabel label={`Open-Access Charges (${currency}/kWh)`} tooltip="Wheeling, banking, cross-subsidy and additional surcharges levied on open-access power. Added to the contracted tariff to give the delivered unit cost." />
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={solar.openAccessChargesPerKwh ?? 0}
+                    onChange={e => setSolar({ ...solar, openAccessChargesPerKwh: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <FieldLabel label={`Solar CapEx (${currency}/kWp)`} tooltip="Installed cost per kWp of the on-site array. Added to the project's turnkey CapEx when the derived CapEx model is active." />
+                  <input
+                    type="number"
+                    value={solar.solarCapexPerKwp ?? 0}
+                    onChange={e => setSolar({ ...solar, solarCapexPerKwp: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <FieldLabel label="Site Capacity Limit (kWp)" tooltip="The largest array the site can physically host, given available roof or land. Configuring installed capacity above this raises a validation error." />
+                  <input
+                    type="number"
+                    value={solar.maxOnsiteCapacityKwp ?? 0}
+                    onChange={e => setSolar({ ...solar, maxOnsiteCapacityKwp: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <FieldLabel label="Installed Capacity (kWp)" tooltip="Installed rooftop/ground-mount solar array size. This is what actually drives the solar generation curve in the Interval Simulation and dashboard results — scales the preset's hourly solar profile up or down." />
               <input
@@ -307,9 +387,40 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
                 {!solar.exportAllowed ? 'Zero Export Active' : 'Export Permitted'}
               </button>
             </div>
+            <div className="col-span-2 flex items-center justify-between pt-1">
+              <span className="flex items-center gap-1 text-slate-400">
+                Solar-Only Charging
+                <span className="group relative inline-flex">
+                  <Info className="w-3 h-3 text-slate-600 cursor-help" />
+                  <span className="pointer-events-none absolute left-1/2 bottom-full z-20 mb-1.5 w-56 -translate-x-1/2 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[11px] font-normal normal-case text-slate-200 opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
+                    When active, the battery charges only from surplus solar (generation above site load). Grid charging, including TOU off-peak charging, is disabled — so the daily charge only happens while the array is generating.
+                  </span>
+                </span>
+              </span>
+              <button
+                onClick={() => setSolar({ ...solar, solarOnlyCharging: !solar.solarOnlyCharging })}
+                className={`px-3 py-1 rounded text-xs font-semibold ${
+                  solar.solarOnlyCharging ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {solar.solarOnlyCharging ? 'Solar Charging Only' : 'Grid Charging Allowed'}
+              </button>
+            </div>
           </div>
-          <div className="pt-2 text-[11px] text-slate-400 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-            Absorbing surplus solar saves <span className="text-yellow-400 font-bold font-mono">{currency}{tariff.energyChargePerKwh - solar.exportCreditPerKwh} / kWh</span> vs import grid power
+          <div className="pt-2 text-[11px] text-slate-400 bg-slate-900/80 p-2 rounded-lg border border-slate-800 space-y-1">
+            <div>
+              Absorbing surplus solar saves{' '}
+              <span className="text-yellow-400 font-bold font-mono">
+                {currency}{solar.exportAllowed ? tariff.energyChargePerKwh - solar.exportCreditPerKwh : tariff.energyChargePerKwh} / kWh
+              </span>{' '}
+              vs import grid power
+              {!solar.exportAllowed && ' — the full import tariff, since export is prohibited and the alternative is curtailment'}
+            </div>
+            <div>
+              {isOpenAccessSolar
+                ? `Contracted at ${currency}${solarUnitCost}/kWh delivered, payable on the entire contracted generation whether consumed, exported or curtailed.`
+                : `On-site investment of ${currency}${Math.round(solar.installedCapacityKwp * (solar.solarCapexPerKwp ?? 0)).toLocaleString()} — paid once, so every generated kWh is already bought and curtailing it recovers nothing.`}
+            </div>
           </div>
         </div>
 
@@ -320,16 +431,110 @@ export const QuickEstimateWizard: React.FC<QuickEstimateWizardProps> = ({
             <span>5. Financial Investment & Project Parameters</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div>
-              <FieldLabel label={`Turnkey CapEx (${currency})`} tooltip="Total upfront installed cost of the BESS project (battery, PCS, EPC, integration). The numerator in the simple payback calculation." />
-              <input
-                type="number"
-                value={financial.initialCapex}
-                onChange={e => setFinancial({ ...financial, initialCapex: Number(e.target.value) })}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+          {/* Turnkey CapEx: derived from rated power/energy, or a fixed override. */}
+          <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <FieldLabel
+                label={`Turnkey CapEx (${currency})`}
+                tooltip="Total upfront installed cost of the BESS project and the numerator in the simple payback calculation. In derived mode it scales with the rated energy (kWh) and rated power (kW) configured in section 1, so resizing the battery resizes the CapEx."
               />
+              <button
+                onClick={() => setFinancial({ ...financial, capexModel: isDerivedCapex ? 'fixed' : 'derived' })}
+                className={`px-3 py-1 rounded text-xs font-semibold ${
+                  isDerivedCapex ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {isDerivedCapex ? 'Derived from kW / kWh' : 'Fixed Override'}
+              </button>
             </div>
+
+            {isDerivedCapex ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <FieldLabel label={`Energy Block (${currency}/kWh)`} tooltip="Cost per kWh of rated energy: cells, racks, modules, BMS. Multiplied by the rated energy (kWh) from section 1." />
+                    <input
+                      type="number"
+                      value={financial.capexPerKwh ?? 0}
+                      onChange={e => setFinancial({ ...financial, capexPerKwh: Number(e.target.value) })}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label={`Power Conversion (${currency}/kW)`} tooltip="Cost per kW of rated power: PCS/inverter, switchgear, thermal management. Multiplied by the rated power (kW) from section 1." />
+                    <input
+                      type="number"
+                      value={financial.capexPerKw ?? 0}
+                      onChange={e => setFinancial({ ...financial, capexPerKw: Number(e.target.value) })}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label={`Balance of Plant (${currency})`} tooltip="Largely size-independent cost: civil works, container or room, cabling, freight, commissioning. Added once, not scaled by kW or kWh." />
+                    <input
+                      type="number"
+                      value={financial.balanceOfPlantCost ?? 0}
+                      onChange={e => setFinancial({ ...financial, balanceOfPlantCost: Number(e.target.value) })}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="EPC Markup (%)" tooltip="Percentage markup applied on top of the energy, power and balance-of-plant components combined (integrator margin, contingency)." />
+                    <input
+                      type="number"
+                      value={financial.epcMarkupPct ?? 0}
+                      onChange={e => setFinancial({ ...financial, epcMarkupPct: Number(e.target.value) })}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded-lg border border-slate-800 space-y-1 font-mono">
+                  <div className="flex justify-between">
+                    <span>{system.ratedEnergyKwh} kWh &times; {currency}{financial.capexPerKwh ?? 0}/kWh</span>
+                    <span className="text-slate-300">{currency}{Math.round(capex.energyCapex).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{system.ratedPowerKw} kW &times; {currency}{financial.capexPerKw ?? 0}/kW</span>
+                    <span className="text-slate-300">{currency}{Math.round(capex.powerCapex).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Balance of plant</span>
+                    <span className="text-slate-300">{currency}{Math.round(capex.balanceOfPlantCost).toLocaleString()}</span>
+                  </div>
+                  {capex.epcMarkup !== 0 && (
+                    <div className="flex justify-between">
+                      <span>EPC markup ({financial.epcMarkupPct ?? 0}%)</span>
+                      <span className="text-slate-300">{currency}{Math.round(capex.epcMarkup).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {capex.solarCapex !== 0 && (
+                    <div className="flex justify-between">
+                      <span>On-site solar ({system.ratedPowerKw > 0 ? `${solar.installedCapacityKwp} kWp` : 'solar'})</span>
+                      <span className="text-slate-300">{currency}{Math.round(capex.solarCapex).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-1 border-t border-slate-800 font-bold">
+                    <span className="text-slate-300">Turnkey CapEx</span>
+                    <span className="text-indigo-300">{currency}{Math.round(capex.totalCapex).toLocaleString()}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <FieldLabel label={`Fixed Turnkey CapEx (${currency})`} tooltip="Flat installed cost, independent of rated power and energy. Switch to derived mode to have CapEx scale with battery sizing." />
+                  <input
+                    type="number"
+                    value={financial.initialCapex}
+                    onChange={e => setFinancial({ ...financial, initialCapex: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div>
               <FieldLabel label={`Fixed Annual O&M (${currency})`} tooltip="Yearly fixed operations & maintenance cost (service contracts, monitoring, insurance), independent of how much the battery is cycled. Subtracted from gross savings each year." />
               <input
