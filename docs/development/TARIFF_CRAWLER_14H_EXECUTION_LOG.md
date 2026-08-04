@@ -9,7 +9,8 @@ worktree on branch `worktree-india-tariff-data`.
 **Explicit scope decision (agreed with user at session start):** this session
 completes staging-side work only — PostgreSQL foundation, registry expansion,
 crawler hardening, tests, staging validation, deployment packaging and docs.
-Production deployment to `prjxn2` and connection to production PostgreSQL are
+Production deployment to `prjxn1` (the deployment target; `prjxn2` is not a
+deployment target) and connection to production PostgreSQL are
 held for a separate, supervised session where the user is actively present,
 because that step has irreversible/shared-system blast radius that shouldn't be
 taken unattended. This is a deviation from the original "14 hour unattended
@@ -346,8 +347,9 @@ Updated before/after registry counts (supersedes the table above):
 | Crawler unit tests | 13 | 53 |
 | Migration version | none | `0004_acquisition_provenance` |
 
-Production deployment to `prjxn2` (beyond the read-only inspection and
-Docker install described above) remains explicitly held for a separate,
+Production deployment — now targeted at `prjxn1`, not `prjxn2` (beyond the
+read-only inspection and Docker install on `prjxn2` described above, which
+are recorded here as history) — remains explicitly held for a separate,
 supervised session where the user is actively present, per the scope
 agreement at the top of this log.
 

@@ -1,9 +1,25 @@
-# India Tariff Crawler — Deployment Runbook (prjxn2)
+# India Tariff Crawler — Deployment Runbook (prjxn1)
+
+## Deployment target
+
+**The deployment target is `prjxn1`.** `prjxn2` is not a deployment target
+for this service.
+
+Two dated sections below — "Firecrawl (self-hosted) — assessment and
+decision (2026-07-31)" and "Deployed-image verification on prjxn2
+(2026-07-31)" — describe work that was actually carried out on `prjxn2`
+before this target change. They are left naming `prjxn2` deliberately,
+because they are a record of what happened, not instructions to repeat.
+Every forward-looking instruction in this runbook targets `prjxn1`.
+
+Note that the resource findings in those sections (956Mi total RAM, 2 vCPU)
+apply to `prjxn1` as well — it is the same VM size — so the Firecrawl
+sizing conclusion carries over unchanged.
 
 ## Status
 
 This runbook documents the intended deployment procedure for the India
-tariff crawler on `prjxn2`. **Production deployment has not yet been
+tariff crawler on `prjxn1`. **Production deployment has not yet been
 executed** as of the writing of this document — it is held for a separate,
 supervised session where the operator is actively present, per the explicit
 scope agreement recorded in
@@ -16,12 +32,12 @@ history.
 
 - Staging gate passed (migrations, registry load, idempotency — see the
   execution log for evidence already collected).
-- SSH access to `prjxn2` as an operator who can inspect existing services
+- SSH access to `prjxn1` as an operator who can inspect existing services
   before changing anything.
 - The exact commit SHA to deploy has passed CI (`.github/workflows/india-tariffs-crawler.yml`):
   format/lint, unit tests, integration tests against a disposable Postgres,
   registry validation, and a Docker build.
-- Production database connection details, provided only on the `prjxn2` host
+- Production database connection details, provided only on the `prjxn1` host
   via a server-side `.env` (never committed — see `.env.example`).
 
 ## Image
@@ -57,12 +73,12 @@ The image:
   an operator invokes it explicitly once a batch of candidates has actually
   been reviewed and approved.
 
-## Pre-change inspection on prjxn2
+## Pre-change inspection on prjxn1
 
 Before touching anything, inspect (do not assume):
 
 ```bash
-ssh prjxn2
+ssh prjxn1
 docker ps -a
 docker network ls
 ls -la /opt /srv  # or wherever deployments conventionally live on this host
@@ -194,7 +210,7 @@ decision.
 
 ## Service launch (planned)
 
-1. Choose an isolated, clearly named directory on `prjxn2` for this
+1. Choose an isolated, clearly named directory on `prjxn1` for this
    deployment (do not reuse an unrelated directory).
 2. Pull or build the SHA-tagged image.
 3. Install the server-side `.env` outside Git with restricted permissions
@@ -292,9 +308,17 @@ environment against real staging Postgres (see the PR description's
 morning-report section for exact evidence) — only the "run the container
 specifically from prjxn2 against staging" leg remains undone.
 
-**Follow-up**: before `prjxn2` can run scheduled crawls against staging in
+**Follow-up** (now scoped to `prjxn1`, the current deployment target):
+before `prjxn1` can run scheduled crawls against staging in
 production-like fashion, one of the following needs an explicit decision:
-(a) a reviewed, intentional network path from `prjxn2` to the staging
+(a) a reviewed, intentional network path from `prjxn1` to the staging
 Postgres host, (b) relocating/replicating staging Postgres to a host
-`prjxn2` can already reach, or (c) provisioning a `prjxn2`-local staging
-Postgres instance separate from its existing native PostgreSQL.
+`prjxn1` can already reach, or (c) provisioning a `prjxn1`-local staging
+Postgres instance.
+
+Note that the staging Postgres for this crawler ran on the local
+development machine (`localhost:5433`) at the time of writing. Separately,
+the BESS calculator's own staging Postgres is a native service on `prjxn2`
+and its production cluster is reachable from `prjxn1` over the netbird
+network — so option (a) may already be partly satisfied, but that must be
+verified rather than assumed before relying on it.
