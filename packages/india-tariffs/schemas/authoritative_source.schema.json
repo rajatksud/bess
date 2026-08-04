@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/authoritative_source.schema.json",
+  "title": "AuthoritativeSource",
+  "description": "Monitored listing page, API, feed or document source. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "url",
+    "source_type",
+    "authority_rank",
+    "monitoring_status",
+    "allowed_domains",
+    "discovery_method",
+    "adapter"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string"
+    },
+    "jurisdiction_code": {
+      "type": "string",
+      "description": "Code from jurisdictions.yaml this source primarily concerns. Required for jurisdiction-scoped validation even when regulator_code/licensee_code also identify it."
+    },
+    "regulator_code": {
+      "type": "string",
+      "description": "Code from regulators.yaml, if this source is regulator-owned."
+    },
+    "licensee_code": {
+      "type": "string",
+      "description": "Code from licensees.yaml, if this source is licensee-owned."
+    },
+    "licensee_codes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Codes from licensees.yaml, when a single source (e.g. a shared commission tariff order) covers multiple licensees."
+    },
+    "discovery_method_note": {
+      "type": "string",
+      "description": "How this source was found (e.g. regulator site navigation, FoR directory, licensee website search)."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Listing URL to discover documents from."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "TARIFF_ORDER",
+        "TARIFF_SCHEDULE",
+        "GAZETTE_NOTIFICATION",
+        "LICENSEE_CIRCULAR",
+        "BILL_CALCULATOR",
+        "SECONDARY_SUMMARY"
+      ]
+    },
+    "authority_rank": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "description": "Position in the authoritative source hierarchy (section 4): 1=commission tariff order, 6=secondary summary."
+    },
+    "monitoring_status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "PAUSED",
+        "DEGRADED",
+        "BLOCKED",
+        "NOT_CONFIGURED"
+      ]
+    },
+    "allowed_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Hostnames the fetcher may contact for this source. Redirects outside this list must be refused (crawler architecture section 5.3, 8)."
+    },
+    "discovery_method": {
+      "type": "string",
+      "enum": [
+        "HTML_LINKS",
+        "PAGINATED_LISTING",
+        "SITEMAP",
+        "RSS_ATOM",
+        "JSON_API",
+        "DIRECT_DOCUMENT",
+        "SEARCH_ENDPOINT",
+        "BROWSER_RENDERED"
+      ]
+    },
+    "adapter": {
+      "type": "string",
+      "description": "Name of the discovery adapter implementation, e.g. generic_regulator_listing."
+    },
+    "acquisition_mode": {
+      "type": "string",
+      "enum": ["HTTP", "FIRECRAWL", "AUTO"],
+      "default": "AUTO",
+      "description": "How the source's pages are acquired, distinct from the adapter (which describes how a page is interpreted once acquired). HTTP uses the plain fetch path only; FIRECRAWL always uses the self-hosted Firecrawl service; AUTO tries HTTP first and falls back to Firecrawl per documented heuristics (SPA-shell detection, no matching links found, or discovery_method BROWSER_RENDERED)."
+    },
+    "schedule": {
+      "type": "string",
+      "enum": [
+        "HOURLY",
+        "EVERY_6_HOURS",
+        "DAILY",
+        "WEEKLY"
+      ],
+      "default": "DAILY"
+    },
+    "rate_limit_requests_per_minute": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 6
+    },
+    "include_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Substrings/keywords a discovered link's URL or text must contain to be a candidate document."
+    },
+    "exclude_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Substrings/keywords that disqualify an otherwise-matching link (e.g. petition, public-hearing)."
+    },
+    "permitted_content_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": ["text/html", "application/pdf"]
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date",
+      "description": "Date a human last confirmed this source configuration still matches the live site."
+    },
+    "source_health": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "BLOCKED", "MANUAL", "NOT_CHECKED"],
+      "default": "NOT_CHECKED",
+      "description": "Result of the most recent live probe. HEALTHY requires an actual successful fetch, not just a syntactically valid URL."
+    },
+    "last_live_check_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent live probe, regardless of outcome."
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
