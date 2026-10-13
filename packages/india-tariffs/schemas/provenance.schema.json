@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/provenance.schema.json",
+  "title": "SourceCitation",
+  "description": "Field/rule-level provenance pointing to an immutable source document. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1 and 9.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "citation_id",
+    "document_id",
+    "verification_status"
+  ],
+  "properties": {
+    "citation_id": {
+      "type": "string",
+      "description": "Unique citation identifier, referenced from charge_component.source_citation_id and similar fields."
+    },
+    "document_id": {
+      "type": "string",
+      "description": "Identifier of the immutable SourceDocument this citation points to."
+    },
+    "page": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Page number in the source document, where applicable."
+    },
+    "table": {
+      "type": "string",
+      "description": "Table or schedule identifier within the page, where applicable."
+    },
+    "paragraph": {
+      "type": "string",
+      "description": "Paragraph or clause reference, where applicable (e.g. for narrative rules)."
+    },
+    "quoted_text": {
+      "type": "string",
+      "description": "Optional verbatim excerpt supporting the extracted value or rule."
+    },
+    "extraction_method": {
+      "type": "string",
+      "enum": [
+        "NATIVE_TEXT",
+        "NATIVE_TABLE",
+        "OCR",
+        "MANUAL"
+      ],
+      "description": "How this value/rule was obtained from the source document."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "UNREVIEWED",
+        "REVIEWED",
+        "DISPUTED",
+        "REJECTED"
+      ],
+      "description": "Human review status of this citation."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Identifier of the reviewer who last set verification_status."
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

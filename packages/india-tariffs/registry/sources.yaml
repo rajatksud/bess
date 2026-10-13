@@ -1,0 +1,447 @@
+# Registry of monitored authoritative sources (listing pages, APIs, feeds, documents).
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 4 and 5.1, and
+# docs/architecture/AUTHORITATIVE_TARIFF_CRAWLER_ARCHITECTURE.md section 4.
+# Validated against schemas/authoritative_source.schema.json.
+#
+# Seeded from the URLs explicitly listed in the strategy document. Each entry's
+# authority_rank, source_type, include/exclude patterns and adapter are
+# provisional pending an actual crawl/review pass (section 8) — these are
+# listing pages, not yet-classified individual documents. monitoring_status
+# stays NOT_CONFIGURED until a source has been through at least one manual
+# verification run (crawler:verify) and last_verified is set.
+
+schema_version: "1.0.0"
+sources:
+  - source_id: FOR-DIRECTORY
+    url: "https://forumofregulators.gov.in/important-websites.html"
+    source_type: SECONDARY_SUMMARY
+    authority_rank: 6
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["forumofregulators.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: WEEKLY
+    notes: "Forum of Regulators directory. Discovery only, per section 4 — never a source of record."
+
+  - source_id: GERC-TARIFF-SCHEDULES
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    url: "https://gercin.org/tariff-schedules/"
+    source_type: TARIFF_SCHEDULE
+    authority_rank: 2
+    monitoring_status: DEGRADED
+    allowed_domains: ["gercin.org"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "schedule", "order", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing", "public-notice"]
+    source_health: DEGRADED
+    last_verified: "2026-07-31"
+    notes: "Live-crawl attempted 2026-07-31, twice: both attempts failed at the listing-page fetch with a raw connection reset (ECONNRESET), confirmed independently via a direct WebFetch attempt at the same time (also ECONNRESET) and via a manual openssl-adjacent check -- this points to the server itself resetting connections (possibly rate-limiting or blocking the requesting IP/User-Agent) rather than a client-side TLS/config issue, since the earlier DERC-class fix (--use-system-ca) does not apply here (this is a connection-level reset, not a certificate error). Left DEGRADED rather than ACTIVE or BLOCKED: source_health was HEALTHY on a prior probe pass, so this may be intermittent -- needs a retry from a different network path before either activating or giving up on it."
+
+  - source_id: KERC-TARIFF-ORDERS
+    regulator_code: KERC
+    jurisdiction_code: KA
+    url: "https://kerc.karnataka.gov.in/96/tariff-order/en"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: DEGRADED
+    allowed_domains: ["kerc.karnataka.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "retail-supply", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    notes: "Live-crawled 2026-07-31: this top-level listing page is a year-index page (links to 'tariff-order-YYYY' sub-pages, one per year, not directly to PDF documents) -- confirmed by a real crawl run (31 links discovered, all fetched successfully, all text/html, zero PDFs). Kept as DEGRADED (not ACTIVE) rather than deleted: it is still useful for discovering which years exist, but the generic single-level adapter cannot reach the actual tariff-order PDFs through this URL alone. See KERC-TARIFF-ORDERS-2025 for the year-specific source that reaches real PDF documents directly."
+
+  - source_id: KERC-TARIFF-ORDERS-2025
+    regulator_code: KERC
+    jurisdiction_code: KA
+    url: "https://kerc.karnataka.gov.in/143/tariff-order-2025/en"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: ACTIVE
+    allowed_domains: ["kerc.karnataka.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    permitted_content_types: ["application/pdf"]
+    include_patterns: [".pdf"]
+    exclude_patterns: ["petition", "public-hearing", "public-notice"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    evidence_url: "https://kerc.karnataka.gov.in/143/tariff-order-2025/en"
+    notes: "ACTIVATED 2026-07-31 after a real crawl+archive+idempotency validation pass (see docs/data/INDIA_TARIFF_COVERAGE.md and the crawler vertical-slice PR for evidence). This year-specific page links directly to real PDF documents: the 2025 Combined ESCOMs/KPTCL/HRECS tariff orders, corrigenda, amendments, and review-petition orders -- confirmed by a manual fetch of this exact page listing 16 distinct PDF links including 'Combined ESCOMs Tariff Order' (the current final/effective order) and a corrigendum postdating it. include_patterns narrowed to '.pdf' specifically (rather than keyword matching against link text/URL) because this page's own link text is inconsistent (some entries say 'Order', 'Addendum', 'Corrigendum' with no shared keyword) but every real document link ends in .pdf, while every non-document nav link on the page does not."
+
+  - source_id: DERC-TARIFF-ORDERS
+    regulator_code: DERC
+    jurisdiction_code: DL
+    url: "https://www.derc.gov.in/tarriff-orders"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: ACTIVE
+    allowed_domains: ["www.derc.gov.in", "derc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    evidence_url: "https://www.derc.gov.in/tarriff-orders"
+    notes: "ACTIVATED 2026-07-31 after a real crawl+archive validation pass: 19 links discovered, 19 fetched, 18 new documents archived (2 real application/pdf True-up Order documents for FY2022-23/FY2021-22 confirmed with correct SHA-256 and %PDF- magic bytes; the remaining 16 are HTML sub-category/pagination pages, expected and harmless since the crawler only archives what it fetches, not a failure). The listing is paginated (?page=1..13+) and links out to per-category sub-pages (under-section-142, other-than-142, general-order, supply-code) that themselves contain more per-licensee order PDFs (BRPL/BYPL/TPDDL/NDMC/IPGCL/PPCL per a live page inspection) -- full pagination/sub-page traversal is a follow-up improvement for the generic adapter, not required to confirm this source is genuinely live and yields real authoritative documents. NOTE: fetching this domain from a strict-TLS-verification client (Node's bundled CA store) fails with SELF_SIGNED_CERT_IN_CHAIN because derc.gov.in's server does not send its full certificate chain (confirmed via openssl s_client: only 2 certs sent, no root) -- the crawler's package.json crawl script now runs with --use-system-ca to resolve this by using the OS trust store's chain-completion instead of relying solely on Node's bundled Mozilla roots. This is a real fix for a documented class of Indian .gov.in TLS misconfiguration, not a security weakening (chain validation is still fully enforced, just against a more complete trust anchor)."
+
+  - source_id: MSEDCL-TARIFF-DETAILS
+    licensee_code: MSEDCL
+    jurisdiction_code: MH
+    url: "https://www.mahadiscom.in/consumer/en/tariff-details/"
+    source_type: TARIFF_SCHEDULE
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.mahadiscom.in", "mahadiscom.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: BLOCKED
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Licensee publication; confirm against MERC order before treating values as authoritative (section 4 ranks licensee circulars below commission orders/schedules). Live-probed 2026-07-31: this exact URL now returns HTTP 404 -- MSEDCL has restructured its site since this source was seeded. Needs a fresh URL discovery pass before monitoring_status can move off NOT_CONFIGURED."
+
+  # --- Newly-verified regulator sources (2026-07-31 research/probe pass) ---
+  # jurisdiction_code set on every entry below per the referential-validation
+  # requirement (no source mapped to the wrong/missing jurisdiction).
+
+  - source_id: MERC-TARIFF-FAC
+    regulator_code: MERC
+    jurisdiction_code: MH
+    url: "https://merc.gov.in/electricity-tariff-and-fac/"
+    source_type: TARIFF_SCHEDULE
+    authority_rank: 2
+    monitoring_status: DEGRADED
+    allowed_domains: ["merc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: DEGRADED
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): combined Tariff/FAC page, not a standalone tariff-orders listing. A real crawl attempt the same day stalled indefinitely on the listing-page fetch (killed after ~14 minutes with no progress, versus KERC's comparable page completing in under 5) -- inconclusive whether this is a genuinely slow/rate-limiting server or a transient network condition; not yet activated pending a retry with a longer timeout or at a different time. Corrects the prior MSEDCL-only source with MERC's own commission-level source."
+
+  - source_id: APERC-TARIFF-ORDERS
+    regulator_code: APERC
+    jurisdiction_code: AP
+    url: "https://aperc.gov.in/page/Tariff_Orders"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: ACTIVE
+    allowed_domains: ["aperc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch), then ACTIVATED after a real crawl+archive validation pass: 38 links discovered, 36 fetched, 35 new documents archived (25 confirmed application/pdf tariff-order documents with correct SHA-256/PDF magic bytes; 10 HTML sub-pages, harmless). Two documents (RSTOrder23_24_LWFILE-BL.pdf at 238MB and RSTOrderVolumeI24052022.pdf at 68MB) were correctly rejected by the crawler's 50MB download-size cap (ResponseTooLargeError) rather than silently truncated or OOM-risked -- run status is PARTIAL, an accurate reflection of a real, legitimate size-limit rejection, not a crawler defect. dedicated Tariff Orders section with current-year and year-wise archive."
+
+  - source_id: RERC-TARIFF-ORDERS
+    regulator_code: RERC
+    jurisdiction_code: RJ
+    url: "https://rerc.rajasthan.gov.in/rerc-user-files/tariff-orders"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["rerc.rajasthan.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): dedicated tariff-orders path confirmed live."
+
+  - source_id: OERC-TARIFF-ORDERS
+    regulator_code: OERC
+    jurisdiction_code: OD
+    url: "https://www.orierc.org"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.orierc.org", "orierc.org"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "distribution", "retail-supply"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Tariff Orders menu covers OHPC/OPGC/GRIDCO/OPTCL/SLDC/Distribution & Retail Supply -- crawl adapter will need to scope specifically to the Distribution & Retail Supply sub-section to avoid generation/transmission noise."
+
+  - source_id: WBERC-TARIFF-ORDERS
+    regulator_code: WBERC
+    jurisdiction_code: WB
+    url: "https://www.wberc.gov.in"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.wberc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Orders > Tariff Related Order section confirmed."
+
+  - source_id: BERC-TARIFF-ORDERS
+    regulator_code: BERC
+    jurisdiction_code: BR
+    url: "https://www.berc.co.in"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.berc.co.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "sbpdcl", "nbpdcl"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Orders menu lists a current FY2026-27 SBPDCL/NBPDCL tariff order."
+
+  - source_id: SIKKIM-POWERSIKKIM-TARIFF
+    licensee_code: SK-PD
+    jurisdiction_code: SK
+    url: "https://selfservice.powersikkim.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["selfservice.powersikkim.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Power Department self-service portal. A direct tariff-schedule PDF (Tariff-Schedule-FY-2025-26.pdf) was fetched successfully (3.9MB, binary, not text-extractable via this tool but confirmed reachable) -- used as this jurisdiction's working document source given SSERC's own site (sserc.in) is confirmed dead. Ranked as a licensee/department circular (authority_rank 4), below a commission tariff order, since SSERC's own approval documents were not directly confirmed at this URL -- treat rates found here as provisional pending SSERC-side confirmation once/if a working SSERC site is found."
+
+  - source_id: TGERC-TARIFF-ORDERS
+    regulator_code: TGERC
+    jurisdiction_code: TS
+    url: "https://www.tgerc.telangana.gov.in/currentyearorders.php"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.tgerc.telangana.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["tariff", "order", "schedule", "amendment", "corrigendum"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch), confirming a user-supplied correction: this commission is now called Telangana Electricity Regulatory Commission (TGERC), not TSERC -- resolves review-queue item RQ-006. Tariff Orders navigation confirmed with Tariff Schedule, Current Year Orders and Earlier Orders sub-sections."
+
+  - source_id: JSERC-TARIFF
+    regulator_code: JSERC
+    jurisdiction_code: JH
+    url: "https://jserc.org/tariff.aspx"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["jserc.org"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (WebFetch): Tariff navigation link (tariff.aspx) confirmed."
+
+  - source_id: APSERC-ORDERS
+    regulator_code: APSERC
+    jurisdiction_code: AR
+    url: "https://apserc.nic.in/"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["apserc.nic.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["order", "tariff"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): orders posted under /pdf/Orders/; no dedicated tariff-only sub-listing found."
+
+  - source_id: MSERC-TARIFF-ORDERS
+    regulator_code: MSERC
+    jurisdiction_code: ML
+    url: "https://mserc.gov.in/tarifforders.html"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["mserc.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): active postings for the FY2024-25 to FY2026-27 control period."
+
+  - source_id: MZERC-HOME
+    regulator_code: MZERC
+    jurisdiction_code: MZ
+    url: "https://mzerc.mizoram.gov.in/"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["mzerc.mizoram.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): Tariff Orders, Notified Regulations and draft-regulation sections confirmed. See licensee_review_queue for the open MZERC-vs-JERC-MN-MZ jurisdictional question -- this source record is not affected by that question (MZERC is confirmed live and actively issuing Mizoram-specific content regardless of how the split is ultimately resolved)."
+
+  - source_id: HPERC-ORDERS
+    regulator_code: HPERC
+    jurisdiction_code: HP
+    url: "https://hperc.org"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["hperc.org"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    include_patterns: ["order", "tariff", "distribution"]
+    exclude_patterns: ["petition", "public-hearing"]
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): Orders menu with Generation/Distribution/Transmission/SLDC sub-sections plus 'All Orders'/'Search Orders' -- no single standalone tariff-only URL, adapter will need to scope to Distribution sub-section."
+
+  - source_id: UERC-HOME
+    regulator_code: UERC
+    jurisdiction_code: UK
+    url: "https://uerc.uk.gov.in"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["uerc.uk.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch; uerc.gov.in issues a 301 redirect to this domain). Tariff orders under the Orders/Petitions menu and 'Other Links' sidebar."
+
+  - source_id: JERCUTS-GOA-ORDERS
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: GA
+    url: "https://jercuts.gov.in/order_category/goa/"
+    source_type: TARIFF_ORDER
+    authority_rank: 1
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["jercuts.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): Goa-specific order category page. JERC-GOA-UT publishes per-jurisdiction order categories under /order_category/<slug>/ -- see also the licensee-level Goa Electricity Department source below for the department's own mirrored copy."
+
+  - source_id: GOA-ELECTRICITY-REGULATIONS
+    licensee_code: GA-ED
+    jurisdiction_code: GA
+    url: "https://www.goaelectricity.gov.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["www.goaelectricity.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): department's own site hosts a mirrored copy of the current tariff order (e.g. 'TARIFF ORDER w.e.f 1st October 2025'). Ranked below JERC-GOA-UT's own order pages per section-4 hierarchy (commission order outranks licensee/department circular)."
+
+  - source_id: LPDD-LADAKH-HOME
+    licensee_code: LA-LPDD
+    jurisdiction_code: LA
+    url: "https://lpdd.ladakh.gov.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["lpdd.ladakh.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): Ladakh Power Development Department's own site; department filed Petition JERC/03 of 2025 before JERC-JKL (19 Dec 2024) -- JERC-JKL itself (jercjkl.nic.in / jercjkl.jk.gov.in) had intermittent DNS resolution during research and is not yet added as a separate source pending a clean re-probe."
+
+  - source_id: LAKSHADWEEP-ELECTRICITY-DEPT
+    licensee_code: LD-ED
+    jurisdiction_code: LD
+    url: "https://lakshadweep.gov.in/departments/electricity/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["lakshadweep.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): department page confirmed, hosts public notices naming JERC-GOA-UT as the tariff-approval body."
+
+  - source_id: AN-ELECTRICITY-DEPT
+    licensee_code: AN-ED
+    jurisdiction_code: AN
+    url: "https://nec.andamannicobar.gov.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 4
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["nec.andamannicobar.gov.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: DAILY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch). An alternate/older domain vidyut.andaman.gov.in also surfaced during research -- canonical domain not conclusively determined between the two; this entry uses the one that was directly fetched and confirmed."
+
+  - source_id: DNHDDPCL-TRANSMISSION-HOME
+    licensee_code: DNHDDPCL
+    jurisdiction_code: DN
+    url: "https://dnhddpcl.in/"
+    source_type: LICENSEE_CIRCULAR
+    authority_rank: 5
+    monitoring_status: NOT_CONFIGURED
+    allowed_domains: ["dnhddpcl.in"]
+    discovery_method: HTML_LINKS
+    adapter: generic_html_link_listing
+    schedule: WEEKLY
+    source_health: HEALTHY
+    last_verified: "2026-07-31"
+    last_live_check_at: "2026-07-31T00:00:00Z"
+    notes: "Live-probed 2026-07-31 (research pass, direct fetch): transmission-only entity, NOT the distribution licensee (see DNHDDPCL licensee note) -- kept as a low-rank identity/disambiguation source only, not a tariff source of record. Retail tariff for DN is set via JERC-GOA-UT's own order pages for DNHDDPDCL, which have not yet been added as a distinct source pending a URL-specific (not just root-domain) confirmation."

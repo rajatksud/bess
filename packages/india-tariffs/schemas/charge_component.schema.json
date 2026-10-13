@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/charge_component.schema.json",
+  "title": "ChargeComponent",
+  "description": "A typed tariff charge rule, not a free-text amount. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "charge_id",
+    "type",
+    "value",
+    "currency",
+    "unit",
+    "behaviour",
+    "effective_from",
+    "source_citation_id",
+    "verification_status"
+  ],
+  "properties": {
+    "charge_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "FIXED",
+        "DEMAND",
+        "ENERGY",
+        "TOD_SURCHARGE",
+        "TOD_REBATE",
+        "SEASONAL_SURCHARGE",
+        "EXCESS_DEMAND",
+        "MINIMUM_CHARGE",
+        "POWER_FACTOR_PENALTY",
+        "POWER_FACTOR_INCENTIVE",
+        "LOAD_FACTOR_INCENTIVE",
+        "VOLTAGE_REBATE",
+        "REACTIVE_ENERGY",
+        "FUEL_ADJUSTMENT",
+        "DUTY",
+        "TAX",
+        "CESS",
+        "PROMPT_PAYMENT_REBATE",
+        "DELAYED_PAYMENT_SURCHARGE",
+        "OTHER"
+      ]
+    },
+    "value": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string. Money must never be represented as binary floating point."
+    },
+    "currency": {
+      "type": "string",
+      "const": "INR"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "INR_PER_CONNECTION_MONTH",
+        "INR_PER_KW_MONTH",
+        "INR_PER_KVA_MONTH",
+        "INR_PER_KWH",
+        "INR_PER_KVAH",
+        "INR_PER_KVARH",
+        "PERCENT_OF_ENERGY_CHARGE",
+        "PERCENT_OF_DEMAND_CHARGE",
+        "PERCENT_OF_BILL"
+      ]
+    },
+    "behaviour": {
+      "type": "string",
+      "enum": [
+        "ADDITIVE",
+        "MULTIPLICATIVE",
+        "REBATE"
+      ]
+    },
+    "applicability_predicate": {
+      "type": "string",
+      "description": "Machine-evaluable condition under which this charge applies (e.g. contract_demand_kva > 100). Free text permitted only when not yet made executable; see min/max limits below for simple numeric bounds."
+    },
+    "time_band_id": {
+      "type": "string",
+      "description": "Reference to a TimeBand.band_id, if this charge is time-band scoped."
+    },
+    "min_limit": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$"
+    },
+    "max_limit": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$"
+    },
+    "taxable": {
+      "type": "boolean",
+      "description": "Whether this charge is itself subject to duty/tax, where known."
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "source_citation_id": {
+      "type": "string",
+      "description": "Reference to a SourceCitation.citation_id."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "UNREVIEWED",
+        "REVIEWED",
+        "DISPUTED",
+        "REJECTED"
+      ]
+    }
+  }
+}

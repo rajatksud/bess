@@ -1,0 +1,53 @@
+# Registry of shared-tariff groupings: sets of licensees governed by one
+# common commission-approved schedule (e.g. several state DISCOMs on a single
+# MYT order, a deemed licensee adopting another licensee's ceiling tariff, or
+# one electricity department serving a whole Union Territory).
+# Validated against schemas/shared_tariff_group.schema.json.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5 ("Shared and
+# multiple tariff schedules").
+#
+# IMPORTANT: membership here is a structural/organizational grouping
+# (common holding company, common regulator-approved MYT order format,
+# common promoter group filing a single petition) identified during
+# registry research on 2026-07-31. It does NOT itself confirm that the
+# member licensees' CURRENT rate schedules are identical -- each still
+# needs its own tariff-order review before rates are treated as shared.
+# See each group's `notes` for the specific basis and caveat.
+
+schema_version: "1.0.0"
+shared_tariff_groups:
+  - group_id: GUVNL-DISCOMS
+    name: GUVNL subsidiary distribution companies (Gujarat)
+    regulator_code: GERC
+    jurisdiction_codes: ["GJ"]
+    licensee_codes: ["UGVCL", "MGVCL", "DGVCL", "PGVCL"]
+    basis: COMMON_MYT_ORDER
+    authoritative_source_ids: ["GERC-TARIFF-SCHEDULES"]
+    notes: "UGVCL/MGVCL/DGVCL/PGVCL are the four regional distribution subsidiaries of Gujarat Urja Vikas Nigam Limited (GUVNL), the state's power-sector holding company formed under the 2003 unbundling of the erstwhile Gujarat Electricity Board. GERC has historically approved these four discoms' retail tariffs through a common/parallel MYT order process with shared rate structures (subject to per-circle variations) -- grouped here as an organizational/regulatory fact; individual rate confirmation is still pending per-licensee tariff-order review (all four remain coverage_status NOT_STARTED)."
+
+  - group_id: TORRENT-GJ-CIRCLES
+    name: Torrent Power distribution circles (Gujarat)
+    regulator_code: GERC
+    jurisdiction_codes: ["GJ"]
+    licensee_codes: ["TORRENT-AHM", "TORRENT-SUR"]
+    basis: COMMON_MYT_ORDER
+    authoritative_source_ids: ["GERC-TARIFF-SCHEDULES"]
+    notes: "Torrent Power Limited's Ahmedabad and Surat distribution circles are both private licensees under the same corporate group (Torrent Power) and regulator (GERC); licensees.yaml's TORRENT-AHM entry already records shares_schedule_with: TORRENT-SUR. Grouped here for the many-to-many source/order linkage the flat shares_schedule_with field can't express. Not yet independently verified that the two circles' filed schedules are byte-identical -- treat as an organizational grouping pending tariff-order-level confirmation."
+
+  - group_id: BSES-DELHI
+    name: BSES group distribution licensees (Delhi)
+    regulator_code: DERC
+    jurisdiction_codes: ["DL"]
+    licensee_codes: ["BRPL", "BYPL"]
+    basis: COMMON_MYT_ORDER
+    authoritative_source_ids: ["DERC-TARIFF-ORDERS"]
+    notes: "BSES Rajdhani Power Limited (South & West Delhi) and BSES Yamuna Power Limited (East & Central Delhi) are both part of the BSES group; licensees.yaml's BYPL entry already records shares_schedule_with: BRPL. DERC has historically issued closely aligned (though not always identical) tariff orders for both entities in the same annual cycle. Grouped here for many-to-many source linkage; BSES group ownership/stake structure has periodically been subject to government/private disputes -- verify current ownership before treating as a stable long-term fact."
+
+  - group_id: JERC-GOA-UT-DEPARTMENTS
+    name: Single-department UT licensees under JERC (Goa and UTs)
+    regulator_code: JERC-GOA-UT
+    jurisdiction_codes: ["AN", "LD", "PY"]
+    licensee_codes: ["AN-ED", "LD-ED", "PY-ED"]
+    basis: SINGLE_ELECTRICITY_DEPARTMENT
+    authoritative_source_ids: []
+    notes: "Andaman & Nicobar, Lakshadweep and Puducherry are each served by a single UT government Electricity Department (not a corporatized DISCOM), and each files its own tariff petition individually before the same regulator, JERC-GOA-UT, under that commission's common Multi Year Tariff Regulations framework. Grouped here to reflect the 'one electricity department operating across a Union Territory, regulated by a shared JERC' pattern explicitly called out in the strategy document -- each department's specific approved rates are still separate per-jurisdiction facts, not identical figures; this group records the shared regulatory framework and JERC MYT Regulations basis, not shared rates. Goa (GA-ED) and Chandigarh/DN (CPDL/DNHDDPDCL) are deliberately excluded from this particular group: Goa's department has its own long-standing distinct arrangement history, and Chandigarh/DN both have privatized/mixed-ownership corporate licensees rather than plain government departments, which changes their tariff-filing posture even though they share the same regulator."

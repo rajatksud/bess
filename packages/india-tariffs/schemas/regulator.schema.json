@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/regulator.schema.json",
+  "title": "Regulator",
+  "description": "SERC/JERC responsible for tariff approval. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "name",
+    "type",
+    "jurisdiction_codes"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Short regulator code, e.g. KERC, DERC."
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "SERC",
+        "JERC"
+      ]
+    },
+    "short_name": {
+      "type": "string",
+      "description": "Commonly used abbreviation, e.g. KERC, JERC (Goa/UTs)."
+    },
+    "jurisdiction_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Jurisdiction codes (jurisdictions.yaml) served by this regulator. JERCs serve more than one."
+    },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "order_portal_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tariff-order portal, if distinct from the main website."
+    },
+    "schedule_portal_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Tariff-schedule portal, if separate from the order portal."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "evidence_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Authoritative source confirming this regulator's identity and jurisdiction."
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date"
+    },
+    "source_health": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "BLOCKED", "MANUAL", "NOT_CHECKED"],
+      "default": "NOT_CHECKED"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes on shared or changing jurisdictional responsibility (e.g. JERC covering multiple UTs)."
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/time_band.schema.json",
+  "title": "TimeBand",
+  "description": "Time, day, season and holiday applicability for ToD/seasonal charges. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.5.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "band_id",
+    "time_zone",
+    "start_time",
+    "end_time",
+    "adjustment_kind"
+  ],
+  "properties": {
+    "band_id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string",
+      "description": "Regulator's original label for this band, e.g. 'Peak', 'Off-Peak', 'Night'."
+    },
+    "time_zone": {
+      "type": "string",
+      "const": "Asia/Kolkata",
+      "description": "All Indian tariffs use IST; kept explicit rather than assumed by calculation code."
+    },
+    "start_time": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+      "description": "Local start time, HH:MM, 24-hour."
+    },
+    "end_time": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+      "description": "Local end time, HH:MM, 24-hour. May be less than start_time to indicate a span crossing midnight."
+    },
+    "crosses_midnight": {
+      "type": "boolean",
+      "default": false
+    },
+    "applicable_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "MON",
+          "TUE",
+          "WED",
+          "THU",
+          "FRI",
+          "SAT",
+          "SUN",
+          "HOLIDAY"
+        ]
+      },
+      "minItems": 1,
+      "description": "Days this band applies to. Include HOLIDAY only where the source explicitly defines holiday treatment."
+    },
+    "season_start_date": {
+      "type": "string",
+      "pattern": "^--\\d{2}-\\d{2}$",
+      "description": "Recurring annual season start as --MM-DD, if this band is seasonal."
+    },
+    "season_end_date": {
+      "type": "string",
+      "pattern": "^--\\d{2}-\\d{2}$",
+      "description": "Recurring annual season end as --MM-DD, if this band is seasonal."
+    },
+    "adjustment_kind": {
+      "type": "string",
+      "enum": [
+        "ADDITIVE_SURCHARGE",
+        "ADDITIVE_REBATE",
+        "RATE_REPLACEMENT",
+        "MULTIPLICATIVE"
+      ]
+    },
+    "smart_meter_required": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

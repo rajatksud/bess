@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bess.dev/schemas/india-tariffs/tariff.schema.json",
+  "title": "Tariff",
+  "description": "Normalized tariff record for one category, licensee and effective interval. See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5 and 6.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tariff_id",
+    "schema_version",
+    "jurisdiction_code",
+    "regulator_code",
+    "licensee_code",
+    "category_code",
+    "category_name",
+    "consumer_class",
+    "supply_level",
+    "effective_from",
+    "billing",
+    "charges",
+    "source_citations",
+    "confidence_grade"
+  ],
+  "properties": {
+    "tariff_id": {
+      "type": "string",
+      "description": "Stable identifier, e.g. IN-KA-BESCOM-HT2A-2026-04-01."
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "jurisdiction_code": {
+      "type": "string"
+    },
+    "regulator_code": {
+      "type": "string"
+    },
+    "licensee_code": {
+      "type": "string"
+    },
+    "category_code": {
+      "type": "string",
+      "description": "Regulator's original category code, preserved verbatim."
+    },
+    "category_name": {
+      "type": "string",
+      "description": "Regulator's original category wording, preserved verbatim."
+    },
+    "consumer_class": {
+      "type": "string",
+      "enum": [
+        "INDUSTRIAL",
+        "COMMERCIAL",
+        "MIXED",
+        "OTHER"
+      ]
+    },
+    "supply_level": {
+      "type": "string",
+      "enum": [
+        "LT",
+        "HT",
+        "EHT"
+      ]
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Identifier of the governing TariffOrder / SourceDocument."
+    },
+    "supersedes_tariff_id": {
+      "type": "string"
+    },
+    "applicability": {
+      "type": "object",
+      "description": "Free-form key/value applicability conditions (voltage range, contract demand bounds, activity restrictions, etc.) per section 5.2.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "billing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "energy_basis",
+        "demand_basis"
+      ],
+      "properties": {
+        "energy_basis": {
+          "type": "string",
+          "enum": ["KWH", "KVAH"]
+        },
+        "demand_basis": {
+          "type": "string",
+          "enum": ["KW", "KVA", "HP", "NONE"]
+        },
+        "demand_window_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "billing_demand_rule": {
+          "$ref": "billing_demand_rule.schema.json"
+        }
+      }
+    },
+    "charges": {
+      "type": "array",
+      "items": {
+        "$ref": "charge_component.schema.json"
+      },
+      "minItems": 1
+    },
+    "time_bands": {
+      "type": "array",
+      "items": {
+        "$ref": "time_band.schema.json"
+      }
+    },
+    "source_citations": {
+      "type": "array",
+      "items": {
+        "$ref": "provenance.schema.json"
+      },
+      "minItems": 1
+    },
+    "confidence_grade": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "X"],
+      "description": "Per section 9.2. The BESS calculator must surface this grade with every result."
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,847 @@
+# Registry of distribution licensees and their service territories.
+# See docs/data/INDIA_CI_TARIFF_DATA_STRATEGY.md section 5.1.
+# Validated against schemas/licensee.schema.json.
+#
+# IMPORTANT -- sourcing status: entries below were seeded from general/model
+# knowledge, NOT from a live crawl of each licensee's or regulator's own
+# website, and are candidates pending independent verification per the
+# strategy document's authoritative source hierarchy (section 4). Ownership
+# structures for several licensees (notably Odisha's Tata Power discoms and
+# Uttar Pradesh's PuVVNL/DVVNL privatization status) have changed multiple
+# times in recent years and may have changed again since this file was
+# seeded -- treat `coverage_status: NOT_STARTED` and the per-entry notes as
+# the operative signal, not the presence of an entry itself.
+#
+# Karnataka's Mysuru-area discom is coded CESCK (not CESC) specifically to
+# avoid collision with West Bengal's CESC Limited (Kolkata).
+
+schema_version: "1.0.0"
+licensees:
+  # --- Maharashtra (MH), regulator MERC ---
+  - code: MSEDCL
+    name: Maharashtra State Electricity Distribution Company Limited
+    regulator_code: MERC
+    jurisdiction_code: MH
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "Carried over from prior registry version. Statewide licensee outside Mumbai's private-discom areas."
+  - code: TATA-MUM
+    name: Tata Power Company Limited (Mumbai Distribution)
+    regulator_code: MERC
+    jurisdiction_code: MH
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Serves suburban Mumbai."
+  - code: ADANI-MUM
+    name: Adani Electricity Mumbai Limited
+    regulator_code: MERC
+    jurisdiction_code: MH
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Formerly Reliance Infrastructure / Reliance Energy's Mumbai distribution business; acquired by Adani circa 2018. Verify current name/ownership against MERC filings."
+  - code: BEST
+    name: Brihanmumbai Electric Supply and Transport Undertaking
+    regulator_code: MERC
+    jurisdiction_code: MH
+    licensee_type: MUNICIPAL
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Municipal undertaking distributing power in Mumbai's island city area."
+
+  # --- Gujarat (GJ), regulator GERC ---
+  - code: UGVCL
+    name: Uttar Gujarat Vij Company Limited
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
+    notes: "UNVERIFIED. Subsidiary of Gujarat Urja Vikas Nigam Limited (GUVNL)."
+  - code: MGVCL
+    name: Madhya Gujarat Vij Company Limited
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
+    notes: "UNVERIFIED. Subsidiary of GUVNL."
+  - code: DGVCL
+    name: Dakshin Gujarat Vij Company Limited
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
+    notes: "UNVERIFIED. Subsidiary of GUVNL."
+  - code: PGVCL
+    name: Paschim Gujarat Vij Company Limited
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: GUVNL-DISCOMS
+    notes: "UNVERIFIED. Subsidiary of GUVNL."
+  - code: TORRENT-AHM
+    name: Torrent Power Limited (Ahmedabad Distribution Circle)
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shares_schedule_with: TORRENT-SUR
+    shared_tariff_group_id: TORRENT-GJ-CIRCLES
+    notes: "UNVERIFIED. May share a common Torrent Power filed tariff schedule with the Surat circle -- verify before treating as identical."
+  - code: TORRENT-SUR
+    name: Torrent Power Limited (Surat Distribution Circle)
+    regulator_code: GERC
+    jurisdiction_code: GJ
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: TORRENT-GJ-CIRCLES
+    notes: "UNVERIFIED."
+
+  # --- Karnataka (KA), regulator KERC ---
+  - code: BESCOM
+    name: Bangalore Electricity Supply Company Limited
+    regulator_code: KERC
+    jurisdiction_code: KA
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Serves Bengaluru region."
+  - code: MESCOM
+    name: Mangalore Electricity Supply Company Limited
+    regulator_code: KERC
+    jurisdiction_code: KA
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: CESCK
+    name: Chamundeshwari Electricity Supply Corporation Limited
+    regulator_code: KERC
+    jurisdiction_code: KA
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Serves Mysuru area. Coded CESCK, not CESC, to avoid collision with West Bengal's CESC Limited (Kolkata)."
+  - code: HESCOM
+    name: Hubli Electricity Supply Company Limited
+    regulator_code: KERC
+    jurisdiction_code: KA
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: GESCOM
+    name: Gulbarga Electricity Supply Company Limited
+    regulator_code: KERC
+    jurisdiction_code: KA
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Tamil Nadu (TN), regulator TNERC ---
+  - code: TANGEDCO
+    name: Tamil Nadu Generation and Distribution Corporation Limited
+    regulator_code: TNERC
+    jurisdiction_code: TN
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Believed to be the sole statewide distribution licensee (no major private urban discom comparable to Delhi/Mumbai/Kolkata known)."
+
+  # --- Telangana (TS), regulator TGERC ---
+  - code: TSSPDCL
+    name: Telangana State Southern Power Distribution Company Limited
+    regulator_code: TGERC
+    jurisdiction_code: TS
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Covers Hyderabad and southern Telangana; emerged from 2014 AP/Telangana bifurcation."
+  - code: TSNPDCL
+    name: Telangana State Northern Power Distribution Company Limited
+    regulator_code: TGERC
+    jurisdiction_code: TS
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Covers northern Telangana."
+
+  # --- Andhra Pradesh (AP), regulator APERC ---
+  - code: APSPDCL
+    name: Andhra Pradesh Southern Power Distribution Company Limited
+    regulator_code: APERC
+    jurisdiction_code: AP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Post-2014-bifurcation discom count/naming for AP needs confirmation against APERC's own site."
+  - code: APEPDCL
+    name: Andhra Pradesh Eastern Power Distribution Company Limited
+    regulator_code: APERC
+    jurisdiction_code: AP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: APCPDCL
+    name: Andhra Pradesh Central Power Distribution Company Limited
+    regulator_code: APERC
+    jurisdiction_code: AP
+    licensee_type: STATE_UTILITY
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "LOW CONFIDENCE. Some sources describe only two consolidated AP discoms post-2014 rather than three; verify entity's continued existence against APERC before treating as active."
+
+  # --- Delhi (DL), regulator DERC ---
+  - code: BRPL
+    name: BSES Rajdhani Power Limited
+    regulator_code: DERC
+    jurisdiction_code: DL
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    shared_tariff_group_id: BSES-DELHI
+    notes: "UNVERIFIED. Serves South & West Delhi. BSES ownership/stake structure has periodically been subject to government/private disputes -- verify current ownership."
+  - code: BYPL
+    name: BSES Yamuna Power Limited
+    regulator_code: DERC
+    jurisdiction_code: DL
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    shared_tariff_group_id: BSES-DELHI
+    coverage_status: NOT_STARTED
+    shares_schedule_with: BRPL
+    notes: "UNVERIFIED. Serves East & Central Delhi. May share a common BSES-group filed tariff schedule with BRPL -- verify before treating as identical."
+  - code: TPDDL
+    name: Tata Power Delhi Distribution Limited
+    regulator_code: DERC
+    jurisdiction_code: DL
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Serves North & Northwest Delhi; formerly North Delhi Power Limited (NDPL)."
+  - code: NDMC-PWR
+    name: New Delhi Municipal Council (Power Distribution)
+    regulator_code: DERC
+    jurisdiction_code: DL
+    licensee_type: MUNICIPAL
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Distributes power in the NDMC (Lutyens' Delhi) area."
+  - code: MES-DELHI
+    name: Military Engineer Services (Delhi Cantonment Power Distribution)
+    regulator_code: DERC
+    jurisdiction_code: DL
+    licensee_type: SPECIAL_AREA
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "LOW CONFIDENCE. Small cantonment-area licensee; verify current status."
+
+  # --- Rajasthan (RJ), regulator RERC ---
+  - code: JVVNL
+    name: Jaipur Vidyut Vitran Nigam Limited
+    regulator_code: RERC
+    jurisdiction_code: RJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: AVVNL
+    name: Ajmer Vidyut Vitran Nigam Limited
+    regulator_code: RERC
+    jurisdiction_code: RJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: JDVVNL
+    name: Jodhpur Vidyut Vitran Nigam Limited
+    regulator_code: RERC
+    jurisdiction_code: RJ
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Uttar Pradesh (UP), regulator UPERC ---
+  - code: PUVVNL
+    name: Purvanchal Vidyut Vitran Nigam Limited
+    regulator_code: UPERC
+    jurisdiction_code: UP
+    licensee_type: STATE_UTILITY
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "LOW CONFIDENCE ON CURRENT OWNERSHIP. UP has pursued privatization of PuVVNL/DVVNL across several years with contested/stalled bid processes; current (2026) ownership status is unconfirmed -- verify against UPERC before assuming state ownership."
+  - code: PVVNL
+    name: Paschimanchal Vidyut Vitran Nigam Limited
+    regulator_code: UPERC
+    jurisdiction_code: UP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED, but not believed to be part of the current privatization track (unlike PuVVNL/DVVNL)."
+  - code: MVVNL
+    name: Madhyanchal Vidyut Vitran Nigam Limited
+    regulator_code: UPERC
+    jurisdiction_code: UP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED, but not believed to be part of the current privatization track."
+  - code: DVVNL
+    name: Dakshinanchal Vidyut Vitran Nigam Limited
+    regulator_code: UPERC
+    jurisdiction_code: UP
+    licensee_type: STATE_UTILITY
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "LOW CONFIDENCE ON CURRENT OWNERSHIP. See PuVVNL note -- same UP privatization uncertainty applies."
+  - code: KESCO
+    name: Kanpur Electricity Supply Company
+    regulator_code: UPERC
+    jurisdiction_code: UP
+    licensee_type: STATE_UTILITY
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "MEDIUM-LOW CONFIDENCE. Origin/current ownership structure unconfirmed."
+
+  # --- Haryana (HR), regulator HERC ---
+  - code: UHBVN
+    name: Uttar Haryana Bijli Vitran Nigam
+    regulator_code: HERC
+    jurisdiction_code: HR
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: DHBVN
+    name: Dakshin Haryana Bijli Vitran Nigam
+    regulator_code: HERC
+    jurisdiction_code: HR
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Madhya Pradesh (MP), regulator MPERC ---
+  - code: MPPKVVCL
+    name: Madhya Pradesh Poorv Kshetra Vidyut Vitaran Company Limited
+    regulator_code: MPERC
+    jurisdiction_code: MP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Eastern circle (Jabalpur)."
+  - code: MPMKVVCL
+    name: Madhya Pradesh Madhya Kshetra Vidyut Vitaran Company Limited
+    regulator_code: MPERC
+    jurisdiction_code: MP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Central circle (Bhopal)."
+  - code: MPPAKVVCL
+    name: Madhya Pradesh Paschim Kshetra Vidyut Vitaran Company Limited
+    regulator_code: MPERC
+    jurisdiction_code: MP
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Western circle (Indore)."
+
+  # --- Odisha (OD), regulator OERC ---
+  - code: TPCODL
+    name: TP Central Odisha Distribution Limited
+    regulator_code: OERC
+    jurisdiction_code: OD
+    licensee_type: PRIVATE_DISCOM
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "MEDIUM CONFIDENCE. Odisha's discoms went through significant turmoil: originally state-owned (as CESU/NESCO/WESCO/SOUTHCO under GRIDCO), partly privatized to Reliance-linked entities, that arrangement broke down circa 2020 with administrators appointed, then Tata Power won and took over across all four circles by ~2021. Current operator/name needs verification against OERC."
+  - code: TPWODL
+    name: TP Western Odisha Distribution Limited
+    regulator_code: OERC
+    jurisdiction_code: OD
+    licensee_type: PRIVATE_DISCOM
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "MEDIUM CONFIDENCE. See TPCODL note on Odisha discom ownership history."
+  - code: TPSODL
+    name: TP Southern Odisha Distribution Limited
+    regulator_code: OERC
+    jurisdiction_code: OD
+    licensee_type: PRIVATE_DISCOM
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "MEDIUM CONFIDENCE. See TPCODL note on Odisha discom ownership history."
+  - code: TPNODL
+    name: TP Northern Odisha Distribution Limited
+    regulator_code: OERC
+    jurisdiction_code: OD
+    licensee_type: PRIVATE_DISCOM
+    status: UNKNOWN
+    coverage_status: NOT_STARTED
+    notes: "MEDIUM CONFIDENCE. See TPCODL note on Odisha discom ownership history."
+
+  # --- Punjab (PB), regulator PSERC ---
+  - code: PSPCL
+    name: Punjab State Power Corporation Limited
+    regulator_code: PSERC
+    jurisdiction_code: PB
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Believed to be the single statewide distribution utility."
+
+  # --- West Bengal (WB), regulator WBERC ---
+  - code: WBSEDCL
+    name: West Bengal State Electricity Distribution Company Limited
+    regulator_code: WBERC
+    jurisdiction_code: WB
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Covers most of the state outside the Kolkata/Howrah CESC area."
+  - code: CESC
+    name: CESC Limited
+    regulator_code: WBERC
+    jurisdiction_code: WB
+    licensee_type: PRIVATE_DISCOM
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Serves Kolkata and Howrah; RPSG (Sanjiv Goenka) Group. Coded CESC (not CESCK, which is Karnataka's Mysuru discom) -- see Karnataka licensee notes for the collision-avoidance rationale."
+
+  # --- Kerala (KL), regulator KSERC ---
+  - code: KSEB
+    name: Kerala State Electricity Board Limited
+    regulator_code: KSERC
+    jurisdiction_code: KL
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED. Believed to be the sole vertically-integrated utility for the state."
+
+  # --- Chhattisgarh (CG), regulator CSERC ---
+  - code: CSPDCL
+    name: Chhattisgarh State Power Distribution Company Limited
+    regulator_code: CSERC
+    jurisdiction_code: CG
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Bihar (BR), regulator BERC ---
+  - code: NBPDCL
+    name: North Bihar Power Distribution Company Limited
+    regulator_code: BERC
+    jurisdiction_code: BR
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+  - code: SBPDCL
+    name: South Bihar Power Distribution Company Limited
+    regulator_code: BERC
+    jurisdiction_code: BR
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Jharkhand (JH), regulator JSERC ---
+  - code: JBVNL
+    name: Jharkhand Bijli Vitran Nigam Limited
+    regulator_code: JSERC
+    jurisdiction_code: JH
+    licensee_type: STATE_UTILITY
+    status: UNCERTAIN
+    coverage_status: NOT_STARTED
+    notes: "UNVERIFIED."
+
+  # --- Arunachal Pradesh (AR), regulator APSERC ---
+  - code: AR-DOP
+    name: Department of Power, Government of Arunachal Pradesh
+    regulator_code: APSERC
+    jurisdiction_code: AR
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: MEDIUM
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    last_verified: "2026-07-31"
+    evidence_url: "https://apserc.nic.in/"
+    notes: "Research pass 2026-07-31: government department (not corporatized), confirmed as APSERC's tariff petitioner. Canonical website unresolved -- three different domains surfaced (power.arunachal.gov.in, arpdop.gov.in, arunachalpower.com) with no confirmation of which is authoritative; website field left blank pending that check. licensee_type is OTHER rather than STATE_UTILITY because it is a government department, not a corporatized utility -- distinguishing from ML/AS/TR-style corporatized DISCOMs elsewhere in this file."
+
+  # --- Assam (AS), regulator AERC ---
+  - code: APDCL
+    name: Assam Power Distribution Company Limited
+    regulator_code: AERC
+    jurisdiction_code: AS
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://www.apdcl.org/website/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://www.apdcl.org/website/"
+    notes: "Research pass 2026-07-31, confirmed via APDCL's own site: public limited company wholly owned by the Government of Assam, incorporated 23 Oct 2009, successor to the erstwhile Assam State Electricity Board (ASEB). Generation (APGCL) and transmission (AEGCL) are separate corporatized entities, not distribution licensees -- excluded from this registry."
+
+  # --- Manipur (MN), regulator JERC-MN-MZ ---
+  - code: MSPDCL
+    name: Manipur State Power Distribution Company Limited
+    regulator_code: JERC-MN-MZ
+    jurisdiction_code: MN
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://www.mspdcl.in/"
+    parent_licensee_id: null
+    last_verified: "2026-07-31"
+    evidence_url: "https://www.mspdcl.in/"
+    notes: "Research pass 2026-07-31, confirmed via MSPDCL's own profile page: 100% state-owned distribution subsidiary of MSPCL, formed 1 Feb 2014 from unbundling of the erstwhile Electricity Department under the Manipur State Electricity Reforms Transfer Scheme 2013. MSPCL itself (mspcl.in) is the transmission/generation/SLDC holding parent, NOT a distribution licensee -- deliberately excluded from this registry per the classification rules (holding companies vs. operating DISCOMs)."
+
+  # --- Meghalaya (ML), regulator MSERC ---
+  - code: MEPDCL
+    name: Meghalaya Power Distribution Corporation Limited
+    regulator_code: MSERC
+    jurisdiction_code: ML
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://mepdcl.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://meecl.nic.in/index.php/history/"
+    notes: "Research pass 2026-07-31: state-owned distribution subsidiary of the Meghalaya Energy Corporation Limited (MeECL) holding company, formed from unbundling of the erstwhile Meghalaya State Electricity Board (MeSEB) effective 1 April 2012 into MeECL (holding), MePGCL (generation), MePTCL (transmission), MePDCL (distribution). MeECL itself is the holding parent, not a distribution licensee -- excluded per classification rules."
+
+  # --- Mizoram (MZ), regulator MZERC ---
+  - code: MZ-PED
+    name: Power and Electricity Department, Government of Mizoram
+    regulator_code: MZERC
+    jurisdiction_code: MZ
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: MEDIUM
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    website: "https://power.mizoram.gov.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://power.mizoram.gov.in/"
+    notes: "Research pass 2026-07-31: vertically-integrated state government department (not corporatized), 'functioning as an integrated utility... within the state of Mizoram' per search-indexed content. Not independently re-fetched with a direct WebFetch, and regulator-of-record itself is under an open review item (MZERC vs. JERC-MN-MZ) -- see licensee_review_queue."
+
+  # --- Nagaland (NL), regulator NERC ---
+  - code: NL-DOP
+    name: Department of Power, Government of Nagaland
+    regulator_code: NERC
+    jurisdiction_code: NL
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: LOW
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    website: "https://www.dopn.gov.in/"
+    last_verified: "2026-07-31"
+    evidence_url: null
+    notes: "Research pass 2026-07-31: government department (not corporatized), established 9 July 1964 as a full-fledged Electricity Department under a PWD reorganization per search snippets. Direct WebFetch of dopn.gov.in failed (socket hang up) -- content/liveness not independently confirmed, resting on search-engine snippets only. evidence_url left null pending a successful direct fetch."
+
+  # --- Tripura (TR), regulator TERC ---
+  - code: TSECL
+    name: Tripura State Electricity Corporation Limited
+    regulator_code: TERC
+    jurisdiction_code: TR
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: MEDIUM
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://tsecl.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://tsecl.in/"
+    notes: "Research pass 2026-07-31, confirmed via TSECL's own site ('A Govt. of Tripura Enterprise'). Government of Tripura Enterprise, commenced 1 Jan 2005 as a vertically-integrated utility; generation hived off into Tripura Power Generation Limited (TPGL, Jan 2015) and transmission into Tripura Power Transmission Limited (TPTL, 19 Jan 2023) -- TSECL is now the distribution licensee. TPGL/TPTL are generation/transmission entities, excluded from this registry."
+
+  # --- Sikkim (SK), regulator SSERC ---
+  - code: SK-PD
+    name: Power Department, Government of Sikkim
+    regulator_code: SSERC
+    jurisdiction_code: SK
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: LOW
+    status: UNCERTAIN
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: BLOCKED
+    website: null
+    last_verified: "2026-07-31"
+    evidence_url: "https://selfservice.powersikkim.in/assets/home/Tariff-Schedule-FY-2025-26.pdf"
+    notes: "Research pass 2026-07-31 (re-verified on a second pass): also referenced as 'PDS' in tariff-petition filings before SSERC. Direct WebFetch of power.sikkim.gov.in still fails with a TLS certificate error. However, the department's self-service portal (selfservice.powersikkim.in) is confirmed reachable and hosts live tariff PDFs (Tariff-Schedule-FY-2025-26.pdf fetched successfully, 3.9MB, though not text-extractable via this tool) -- upgraded evidence_url and confidence accordingly. coverage_status remains BLOCKED because the regulator (SSERC) itself still has no confirmed live website -- see regulators.yaml SSERC entry and licensee_review_queue RQ-002 (confirmed: Sikkim is a genuine standalone state SERC, not JERC-covered -- ruled out explicitly on the second pass)."
+
+  # --- Himachal Pradesh (HP), regulator HPERC ---
+  - code: HPSEBL
+    name: Himachal Pradesh State Electricity Board Limited
+    regulator_code: HPERC
+    jurisdiction_code: HP
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://www.hpseb.in"
+    last_verified: "2026-07-31"
+    evidence_url: "https://peak-files.estonetech.in/peak-data-files/Himachal%20Pradesh%20State%20Electricity%20Board%20Limited%20Retail%20Supply%20Tariff%20Order%202025-26.pdf"
+    notes: "Research pass 2026-07-31: state-owned company (reorganized 2010 under the Companies Act, 1956, from the erstwhile HP State Electricity Board originally constituted 1 Sept 1971). Confirmed as the retail-supply tariff licensee by HPERC's own FY2025-26 ARR/Tariff Order under the 5th MYT Control Period (FY2024-25 to FY2028-29). No other private/deemed distribution licensees found in HP in this pass (not an exhaustive negative confirmation -- no HPERC 'list of licensees' register was found)."
+
+  # --- Uttarakhand (UK), regulator UERC ---
+  - code: UPCL
+    name: Uttarakhand Power Corporation Limited
+    regulator_code: UERC
+    jurisdiction_code: UK
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://upcl.uk.gov.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://upcl.uk.gov.in/about-department/introduction/"
+    notes: "Research pass 2026-07-31, confirmed via UPCL's own site, which explicitly states 'UPCL...is a sole electricity distribution licensee of the state.' Government of Uttarakhand undertaking, incorporated under the Companies Act, 1956 on 12-02-2001. Transmission hived off in 2004 to Power Transmission Corporation of Uttarakhand Limited (PTCUL, excluded from this registry). An alternate domain upcl.org surfaced in search results but was not independently verified -- treat as unverified/possibly legacy."
+
+  # --- Goa (GA), regulator JERC-GOA-UT ---
+  - code: GA-ED
+    name: Electricity Department, Government of Goa
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: GA
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: MEDIUM
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://www.goaelectricity.gov.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://www.goaelectricity.gov.in/"
+    notes: "Research pass 2026-07-31, confirmed via the department's own site: 'Electricity Department, Government of Goa,' a state government department (not a corporatized DISCOM), office at Vidyut Bhavan, Panaji. Reportedly established 1963; does not generate its own power, procures from central-sector stations under central allocation. A departmental charter PDF (goa.gov.in) reportedly describes it as the state's only transmission/distribution licensee -- found via search summary only, not independently re-fetched to confirm exact wording (medium-high, not full, confidence on the 'sole licensee' claim specifically)."
+
+  # --- Jammu and Kashmir (JK), regulator JERC-JKL ---
+  - code: JPDCL
+    name: Jammu Power Distribution Corporation Limited
+    regulator_code: JERC-JKL
+    jurisdiction_code: JK
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    website: "https://www.jpdcl.co.in/"
+    last_verified: "2026-07-31"
+    evidence_url: null
+    notes: "Research pass 2026-07-31: corporatized government company serving Jammu division, formed by unbundling the erstwhile J&K Power Development Department (PDD) per State Administrative Council Decision No. 258/22/2019 (22.10.2019) and Government Order No. 191-PDD of 2019 (23.10.2019). Direct fetch of jpdcl.co.in failed (empty/SSL issues); identity well-corroborated by multiple independent secondary sources (India Investment Grid, IndiaCustomerCare, JPDCL's own tariff-order PDF filename) but not confirmed by a direct successful fetch of the licensee's own site -- recorded PROVISIONAL."
+  - code: KPDCL
+    name: Kashmir Power Distribution Corporation Limited
+    regulator_code: JERC-JKL
+    jurisdiction_code: JK
+    licensee_type: STATE_UTILITY
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    website: "https://kpdcl.jkpdd.net/"
+    last_verified: "2026-07-31"
+    evidence_url: null
+    notes: "Research pass 2026-07-31: corporatized government company serving the Kashmir valley, same 2019 unbundling origin as JPDCL (see that entry). Direct fetch of kpdcl.jkpdd.net failed (connection reset) -- identity rests on search corroboration only, recorded PROVISIONAL. Parent umbrella department J&K Power Development Department (PDD), https://pdd.jk.gov.in/, still exists but is not itself the distribution licensee post-unbundling."
+
+  # --- Ladakh (LA), regulator JERC-JKL ---
+  - code: LA-LPDD
+    name: Ladakh Power Development Department
+    regulator_code: JERC-JKL
+    jurisdiction_code: LA
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: LOW
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://lpdd.ladakh.gov.in/"
+    last_verified: "2026-07-31"
+    evidence_url: "https://lpdd.ladakh.gov.in/"
+    notes: "Research pass 2026-07-31, confirmed via direct WebFetch of lpdd.ladakh.gov.in: government department (headed by an IAS Secretary, not corporatized), filed its own tariff petition before JERC-JKL (Petition JERC/03 of 2025, filed 19 Dec 2024) -- confirms it functions as Ladakh's distribution licensee. A distinct 'Ladakh Power Corporation Ltd (LPCL)' also appears in one secondary source (from the same 2019 J&K PDD unbundling as JPDCL/KPDCL/JKPCL/JKPTCL) but its relationship to LPDD (dormant shell vs. parallel generation entity vs. the same thing) was not resolved -- see licensee_review_queue. Do not conflate LPCL with LPDD without further verification."
+
+  # --- Chandigarh (CH), regulator JERC-GOA-UT ---
+  - code: CPDL
+    name: Chandigarh Power Distribution Limited
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: CH
+    licensee_type: PRIVATE_DISCOM
+    coverage_tier: TIER_A
+    ownership_type: PRIVATE
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    predecessor_licensee_ids: ["EWEDC"]
+    last_verified: "2026-07-31"
+    evidence_url: "https://jercuts.gov.in/"
+    notes: "Research pass 2026-07-31: MAJOR OWNERSHIP CHANGE -- Chandigarh's distribution was privatized effective 1 February 2025. CPDL is a subsidiary of Eminent Electricity Distribution Limited (EEDL), part of the Kolkata-based RP-Sanjiv Goenka (RPSG) Group, following a Share Purchase Agreement executed 31 January 2025 (~Rs 871 crore acquisition vs. Rs 174 crore reserve price), after Punjab & Haryana High Court (Nov 2024) and Supreme Court (Dec 2024) approvals. Confirmed via multiple independent press sources (Tribune India, teamleaseregtech.com) plus a JERC-GOA-UT-hosted CPDL true-up order PDF ('TRUE-UP ORDER FY 2024-25 (01.02.2025 to 31.03.2025)'). Direct fetch of CPDL's own site was not attempted/confirmed in this pass; recorded VERIFIED based on strong multi-source press + regulator-hosted-document corroboration, not a direct licensee-site fetch -- treat website as unconfirmed (left blank) pending that check."
+  - code: EWEDC
+    name: Electricity Wing of the Engineering Department, Chandigarh
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: CH
+    licensee_type: OTHER
+    coverage_tier: TIER_C
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: NONE
+    status: INACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: BLOCKED
+    successor_licensee_ids: ["CPDL"]
+    last_verified: "2026-07-31"
+    evidence_url: null
+    notes: "TIER_C / historical: the pre-privatization government department that operated Chandigarh's electricity distribution until it was transferred to CPDL (private) effective 1 February 2025. Direct fetch of chdengineering.gov.in failed (SSL certificate error) -- superseded status is corroborated by press coverage and JERC's own order titles, not the department's own site. Retained here as an explicit historical/predecessor record per the licensee data model, not presented as active."
+
+  # --- Lakshadweep (LD), regulator JERC-GOA-UT ---
+  - code: LD-ED
+    name: Lakshadweep Electricity Department
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: LD
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: CENTRAL_GOVERNMENT
+    c_and_i_relevance: LOW
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://lakshadweep.gov.in/departments/electricity/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
+    last_verified: "2026-07-31"
+    evidence_url: "https://lakshadweep.gov.in/departments/electricity/"
+    notes: "Research pass 2026-07-31, confirmed via direct WebFetch of lakshadweep.gov.in and public notices naming this department as the petitioner before 'JERC (for Goa and UTs)'. UT Administration department (function: generation/transmission/distribution across all islands), not corporatized."
+
+  # --- Andaman and Nicobar Islands (AN), regulator JERC-GOA-UT ---
+  - code: AN-ED
+    name: Electricity Department, Andaman and Nicobar Administration
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: AN
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: CENTRAL_GOVERNMENT
+    c_and_i_relevance: LOW
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://nec.andamannicobar.gov.in/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
+    last_verified: "2026-07-31"
+    evidence_url: "https://nec.andamannicobar.gov.in/"
+    notes: "Research pass 2026-07-31, confirmed via direct WebFetch of nec.andamannicobar.gov.in: UT Administration government department. JERC-GOA-UT as regulator confirmed via search results directly quoting Andaman & Nicobar Administration petitions filed 'before the Joint Electricity Regulatory Commission (JERC) for the State of Goa and Union Territories' (Petition No. 119/2024). An alternate/older domain vidyut.andaman.gov.in also surfaced -- canonical domain not conclusively determined between the two."
+
+  # --- Dadra and Nagar Haveli and Daman and Diu (DN), regulator JERC-GOA-UT ---
+  - code: DNHDDPDCL
+    name: Dadra and Nagar Haveli and Daman and Diu Power Distribution Corporation Limited
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: DN
+    licensee_type: PRIVATE_DISCOM
+    coverage_tier: TIER_A
+    ownership_type: MIXED
+    c_and_i_relevance: HIGH
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    last_verified: "2026-07-31"
+    evidence_url: "https://jercuts.gov.in/"
+    notes: "Research pass 2026-07-31: THE distribution/retail-supply licensee for the UT (do not confuse with DNHDDPCL below, the transmission-only entity -- near-identical names are a real confusion risk). 51% equity acquired by Torrent Power Limited effective 1 April 2022 (Share Purchase + Shareholders Agreement with the UT Administrator, who retains 49%); ~1.5 lakh customers, ~9 billion units annual sales, ~Rs 4,500 crore annual revenue. Confirmed via multiple independent financial-news sources (Business Standard, Mercom India, IndiaInfoline) plus JERC-GOA-UT-hosted DNHDDPDCL tariff order/petition PDFs. ownership_type MIXED reflects the 51% private / 49% UT Administration split. website intentionally left blank pending a direct fetch/confirmation of DNHDDPDCL's own site in this pass."
+  - code: DNHDDPCL
+    name: DNH and DD Power Corporation Limited
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: DN
+    licensee_type: OTHER
+    coverage_tier: TIER_B
+    ownership_type: STATE_GOVERNMENT
+    c_and_i_relevance: NONE
+    status: ACTIVE
+    verification_status: VERIFIED
+    confidence: HIGH
+    coverage_status: NOT_STARTED
+    website: "https://dnhddpcl.in/"
+    overlap_licensee_ids: ["DNHDDPDCL"]
+    last_verified: "2026-07-31"
+    evidence_url: "https://dnhddpcl.in/"
+    notes: "Research pass 2026-07-31, confirmed via direct WebFetch of dnhddpcl.in: TRANSMISSION-ONLY entity ('looks after the Transmission function in the UT of Dadra and Nagar Haveli and Daman and Diu'), 100% owned by the UT Administration. NOT a distribution licensee -- included here at TIER_B / c_and_i_relevance NONE purely for disambiguation against the near-identically-named DNHDDPDCL (the actual, 51%-Torrent-owned distribution licensee) given how easily the two are confused in secondary sources. Formerly named 'DNH Power Distribution Corporation Ltd.' despite never having held the retail-distribution function under its current structure -- legacy naming is itself a source of the confusion risk."
+
+  # --- Puducherry (PY), regulator JERC-GOA-UT ---
+  - code: PY-ED
+    name: Electricity Department, Government of Puducherry
+    regulator_code: JERC-GOA-UT
+    jurisdiction_code: PY
+    licensee_type: OTHER
+    coverage_tier: TIER_A
+    ownership_type: CENTRAL_GOVERNMENT
+    c_and_i_relevance: MEDIUM
+    status: ACTIVE
+    verification_status: PROVISIONAL
+    confidence: MEDIUM
+    coverage_status: NOT_STARTED
+    website: "https://electricity.py.gov.in/"
+    shared_tariff_group_id: JERC-GOA-UT-DEPARTMENTS
+    last_verified: "2026-07-31"
+    evidence_url: null
+    notes: "Research pass 2026-07-31: UT government department. JERC-GOA-UT confirmed as regulator via search results describing Puducherry's MYT Petition for FY2025-26-FY2029-30 filed 'under the JERC (Generation, Transmission and Distribution Multi Year Tariff) Regulations, 2024'. Department's own site (electricity.py.gov.in) identified via search-indexed tariff-order page titles/URLs but not directly re-fetched with WebFetch in this pass -- recorded PROVISIONAL pending a direct confirmation fetch."

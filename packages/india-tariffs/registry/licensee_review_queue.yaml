@@ -1,0 +1,79 @@
+# Unresolved-licensee/regulator review queue: entities and questions
+# surfaced during registry research that could not be confirmed against an
+# authoritative source, tracked explicitly rather than guessed or silently
+# resolved one way. See docs/data/INDIA_LICENSEE_REGISTRY.md.
+# Validated against schemas/licensee_review_queue_entry.schema.json.
+
+schema_version: "1.0.0"
+licensee_review_queue:
+  - review_id: RQ-001
+    candidate_name: "Manipur/Mizoram regulatory split: JERC-MN-MZ vs. MZERC"
+    jurisdiction_code: MZ
+    related_licensee_code: MZ-PED
+    reason: "Mizoram appears to have split off its own state commission (MZERC) from the historical Joint Electricity Regulatory Commission for Manipur and Mizoram (JERC-MN-MZ) around 23 July 2024. MZERC's own site is live and actively issuing Mizoram-specific 2026-dated draft regulations, strongly suggesting it is now the operative regulator for MZ. However, JERC-MN-MZ's own site still describes itself in the present tense as covering both Manipur and Mizoram, and no primary gazette/legal notification for the transition was found or fetched in this research pass."
+    evidence_checked: "Direct WebFetch of jerc.mizoram.gov.in/page/jerc-profile (JERC-MN-MZ) and mzerc.mizoram.gov.in (MZERC), both live Government-of-Mizoram-hosted sites. Secondary sources (Vyqon, SolarQuarter, an exploremizoram.com blog post) describe MZERC becoming functional 23 July 2024, but a primary Mizoram Gazette notification (surfaced at mizoramassembly.in/storage/Assembly/Gazette/EO/GZEO38ISS_541.pdf) was found but not fetched/verified."
+    suggested_next_step: "Fetch and read the Mizoram Gazette notification directly (mizoramassembly.in/storage/Assembly/Gazette/EO/GZEO38ISS_541.pdf) to confirm the exact date and legal mechanism of the JERC-to-MZERC transition for Mizoram, and check whether JERC-MN-MZ's jurisdiction_codes in this registry (currently ['MN'] only) should be revisited if MZERC's authority turns out to be only partial or still-transitioning."
+    status: OPEN
+
+  - review_id: RQ-002
+    candidate_name: "Sikkim State Electricity Regulatory Commission (SSERC) -- no confirmed live website"
+    jurisdiction_code: SK
+    related_licensee_code: SK-PD
+    reason: "PARTIALLY RESOLVED 2026-07-31 (second pass): whether Sikkim might instead be covered by a joint commission (JERC) was checked explicitly and ruled out -- Sikkim is a genuine standalone state SERC; India's JERC arrangements cover only Goa+UTs (JERC-GOA-UT) and J&K+Ladakh (JERC-JKL), no JERC exists or has ever existed for Sikkim. SSERC's dead domain issue itself remains UNRESOLVED: sserc.in was re-confirmed dead/squatted (both http/https, root and content paths). A working fallback document source was found instead (selfservice.powersikkim.in, see SIKKIM-POWERSIKKIM-TARIFF source), so Sikkim's tariff data is not entirely inaccessible, but SSERC still has no confirmed primary web presence of its own."
+    evidence_checked: "Direct WebFetch of both http:// and https:// sserc.in (root and /content/energy-power-department-govt-sikkim path) all resolved to the same unrelated gambling content, ruling out a protocol- or path-specific issue. WebSearch for a joint-commission arrangement returned only confirmation of SSERC as Sikkim's own SERC (search snippets referencing 'Shri. K.B. Kunwar took charge as Chairperson of Sikkim State Electricity Regulatory Commission' on sikkim.gov.in, and an SSERC-addressed PDF on recregistryindia.nic.in). Direct WebFetch of selfservice.powersikkim.in/assets/home/Tariff-Schedule-FY-2025-26.pdf succeeded (reachable, though binary/not text-extractable)."
+    suggested_next_step: "Check the Forum of Regulators directory or Ministry of Power's state-commission listing for a current SSERC URL (a sikkim.gov.in subdomain is plausible given the Chairperson-appointment news item lives on sikkim.gov.in, but no such subdomain was found in this pass). Until found, treat selfservice.powersikkim.in as the working (though lower-authority-rank) source for Sikkim tariff documents."
+    status: OPEN
+
+  - review_id: RQ-003
+    candidate_name: "Ladakh Power Corporation Ltd (LPCL) vs. Ladakh Power Development Department (LPDD)"
+    jurisdiction_code: LA
+    related_licensee_code: LA-LPDD
+    reason: "LPDD (a government department, not corporatized) is confirmed as the entity that actually files tariff petitions before JERC-JKL and operates Ladakh's distribution. A separate 'Ladakh Power Corporation Ltd (LPCL)' also appears in one secondary source as one of five corporatized entities from the 2019 J&K Power Development Department unbundling (alongside JPDCL, KPDCL, JKPCL, JKPTCL). Whether LPCL is a dormant/legal shell distinct from the operating LPDD, or whether secondary sources are conflating the two, was not resolved."
+    evidence_checked: "Direct WebFetch of lpdd.ladakh.gov.in confirmed LPDD as a government department that filed Petition JERC/03 of 2025 (19 Dec 2024). 'LPCL' reference came from a single secondary source (India Investment Grid promoter listing) synthesizing the 2019 unbundling order, not independently fetched from a primary gazette or MCA filing."
+    suggested_next_step: "Check the MCA (Ministry of Corporate Affairs) company registry for 'Ladakh Power Corporation Ltd' to determine if it is an active incorporated entity, and if so, what function it performs relative to LPDD (the department that is clearly the operating distribution licensee)."
+    status: OPEN
+
+  - review_id: RQ-004
+    candidate_name: "Uttar Pradesh PuVVNL / DVVNL current ownership status (state vs. privatized)"
+    jurisdiction_code: UP
+    related_licensee_code: PUVVNL
+    reason: "UP has pursued privatization of PuVVNL and DVVNL across several years with contested/stalled bid processes; current (2026) ownership status is unconfirmed in this registry pass -- carried forward from the original registry seeding, not yet independently re-verified during the 2026-07-31 research/probe pass (which focused on jurisdictions that had zero prior licensees)."
+    evidence_checked: "None in this pass -- flagged from pre-existing registry notes, not newly investigated."
+    suggested_next_step: "Check UPERC's current licensee list / recent tariff orders directly for PuVVNL and DVVNL's current legal ownership status before their coverage_status moves past NOT_STARTED."
+    status: OPEN
+
+  - review_id: RQ-005
+    candidate_name: "Andhra Pradesh APCPDCL continued existence (two vs. three post-2014 discoms)"
+    jurisdiction_code: AP
+    related_licensee_code: APCPDCL
+    reason: "Some sources describe only two consolidated AP discoms post-2014 bifurcation (APSPDCL, APEPDCL) rather than three; APCPDCL's continued existence as a separate entity is unconfirmed. Carried forward from original registry seeding, not independently re-verified during the 2026-07-31 research pass."
+    evidence_checked: "None in this pass -- flagged from pre-existing registry notes."
+    suggested_next_step: "Check APERC's Tariff Orders page (now confirmed live at aperc.gov.in/page/Tariff_Orders, see sources.yaml APERC-TARIFF-ORDERS) directly for the current list of licensees it issues orders for."
+    status: OPEN
+
+  - review_id: RQ-006
+    candidate_name: "TSERC (Telangana) -- no resolvable domain found"
+    jurisdiction_code: TS
+    related_licensee_code: TSSPDCL
+    reason: "RESOLVED 2026-07-31 (user-supplied correction): the domain issue was because the commission itself renamed/rebranded from TSERC to Telangana Electricity Regulatory Commission (TGERC), matching the state's broader shift from TS to TG as its official abbreviation -- not a DNS/hosting artifact as originally suspected. Confirmed live at https://www.tgerc.telangana.gov.in/, which self-describes: 'Consequent to the formation of Telangana State, Telangana Electricity Regulatory Commission (TGERC) was constituted on 3rd November, 2014' -- same constitution date as the original TSERC identity, confirming this is a rename of the same legal body, not a new commission. Registry updated: regulator code changed TSERC -> TGERC, source TGERC-TARIFF-ORDERS added, licensees.yaml TSSPDCL/TSNPDCL regulator_code updated."
+    evidence_checked: "Direct WebFetch of https://www.tgerc.telangana.gov.in/ succeeded, confirming legal name, constitution date, and a live Tariff Orders section (Tariff Schedule, Current Year Orders, Earlier Orders)."
+    suggested_next_step: "None -- resolved. Watch for any remaining TSERC references elsewhere in the codebase/docs that should be updated to TGERC."
+    status: RESOLVED
+
+  - review_id: RQ-007
+    candidate_name: "Andaman & Nicobar Electricity Department canonical domain (nec.andamannicobar.gov.in vs. vidyut.andaman.gov.in)"
+    jurisdiction_code: AN
+    related_licensee_code: AN-ED
+    reason: "Two different domains surfaced for the same department during research; nec.andamannicobar.gov.in was directly fetched and confirmed live, but vidyut.andaman.gov.in also appears to be a live government portal and it was not determined which is canonical/current."
+    evidence_checked: "Direct WebFetch of nec.andamannicobar.gov.in succeeded. vidyut.andaman.gov.in was found via search only, not independently fetched."
+    suggested_next_step: "Fetch vidyut.andaman.gov.in directly and compare content/recency against nec.andamannicobar.gov.in to determine which is the current canonical department site (or whether both are legitimately maintained in parallel)."
+    status: OPEN
+
+  - review_id: RQ-008
+    candidate_name: "Arunachal Pradesh Department of Power -- canonical domain unresolved"
+    jurisdiction_code: AR
+    related_licensee_code: AR-DOP
+    reason: "Three different domains surfaced for the same department (power.arunachal.gov.in, arpdop.gov.in, arunachalpower.com) with no confirmation of which is authoritative vs. a mirror/legacy site."
+    evidence_checked: "APSERC's own site (apserc.nic.in, confirmed live) names 'Department of Power, Government of Arunachal Pradesh' as its tariff petitioner, confirming the department's identity, but none of the three candidate department domains were independently fetched and compared in this pass."
+    suggested_next_step: "Directly fetch all three candidate domains and compare; prefer whichever resolves to a .gov.in or arunachal.gov.in government domain over the .com variant if content is otherwise equivalent."
+    status: OPEN
